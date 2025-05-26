@@ -1,6 +1,7 @@
 from transformers import AutoProcessor, SeamlessM4Tv2Model
 import torch
 import torchaudio
+import os
 
 processor = AutoProcessor.from_pretrained(
     "facebook/seamless-m4t-v2-large",  device_map="auto", torch_dtype=torch.float16, low_cpu_mem_usage=True)
