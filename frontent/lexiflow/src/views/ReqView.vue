@@ -57,7 +57,7 @@ export default {
           "url": "https://www.youtube.com/watch?v=9FNRb71akL4",
           "title": "张谦和丝绸之路",
           "description": "(zh) true crime documentary",
-          "eta": "ETA: 96.1 seconds",
+          "eta": "51 mins ETA: 596.1 seconds",
           "thumbnail": "https://i.ytimg.com/vi/9FNRb71akL4/hqdefault.jpg",
         },
         {

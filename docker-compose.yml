@@ -1,0 +1,12 @@
+
+services:
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontent/lexiflow/Dockerfile
+    ports:
+      - "4555:4555"
+    volumes:
+      - ./frontent/lexiflow:/app
+    restart: unless-stopped
