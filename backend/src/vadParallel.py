@@ -110,7 +110,7 @@ class ParallelTranscription(AbstractTranscription):
                             progress_listener: ProgressListener = None):
         total_duration = get_audio_duration(audio)
 
-        # First, get the timestamps for the original audio
+        # First, get the timestamps for the original audio (multi-CPU part remains)
         if (cpu_device_count > 1 and not transcription.is_transcribe_timestamps_fast()):
             merged = self._get_merged_timestamps_parallel(transcription, audio, config, total_duration, cpu_device_count, cpu_parallel_context)
         else:
@@ -118,93 +118,40 @@ class ParallelTranscription(AbstractTranscription):
             merged = transcription.get_merged_timestamps(timestamp_segments, config, total_duration)
 
         # We must make sure the whisper model is downloaded
-        if (len(gpu_devices) > 1):
+        if len(gpu_devices) > 0:
             whisperCallable.model_container.ensure_downloaded()
 
-        # Split into a list for each device
-        # TODO: Split by time instead of by number of chunks
-        merged_split = list(self._split(merged, len(gpu_devices)))
+        # Use only the first GPU device
+        device_id = gpu_devices[0] if len(gpu_devices) > 0 else "cpu"
+        print(f"Using device: {device_id}")
 
-        # Parameters that will be passed to the transcribe function
-        parameters = []
-        segment_index = config.initial_segment_index
-
+        # Parameters for the transcribe function (single GPU)
         processing_manager = multiprocessing.Manager()
         progress_queue = processing_manager.Queue()
 
-        for i in range(len(gpu_devices)):
-            # Note that device_segment_list can be empty. But we will still create a process for it,
-            # as otherwise we run the risk of assigning the same device to multiple processes.
-            device_segment_list = list(merged_split[i]) if i < len(merged_split) else []
-            device_id = gpu_devices[i]
+        segment_index = config.initial_segment_index
+        progress_listener_to_queue = _ProgressListenerToQueue(progress_queue)  # No queue needed for single device
+        merged_split = list(self._split(merged, len(gpu_devices)))
+        device_segment_list = list(merged_split[0])
+        device_config = ParallelTranscriptionConfig(device_id, device_segment_list, segment_index, config)
+        
+        # Run transcription on single GPU
+        perf_start_gpu = time.perf_counter()
+        result = self.transcribe(audio, whisperCallable, device_config, progress_listener_to_queue)
+        perf_end_gpu = time.perf_counter()
 
-            print("Device " + str(device_id) + " (index " + str(i) + ") has " + str(len(device_segment_list)) + " segments")
+        print(f"Transcription took {perf_end_gpu - perf_start_gpu:.2f} seconds")
 
-            # Create a new config with the given device ID
-            device_config = ParallelTranscriptionConfig(device_id, device_segment_list, segment_index, config)
-            segment_index += len(device_segment_list)
-
-            progress_listener_to_queue = _ProgressListenerToQueue(progress_queue)
-            parameters.append([audio, whisperCallable, device_config, progress_listener_to_queue]);
-
+        # Format result to match multi-GPU output structure
         merged = {
-            'text': '',
-            'segments': [],
-            'language': None
+            'text': result.get('text', ''),
+            'segments': result.get('segments', []),
+            'language': result.get('language', None)
         }
 
-        created_context = False
-
-        perf_start_gpu = time.perf_counter()
-
-        # Spawn a separate process for each device
-        try:
-            if (gpu_parallel_context is None):
-                gpu_parallel_context = ParallelContext(len(gpu_devices))
-                created_context = True
-
-            # Get a pool of processes
-            pool = gpu_parallel_context.get_pool()
-
-            # Run the transcription in parallel
-            results_async = pool.starmap_async(self.transcribe, parameters)
-            total_progress = 0
-
-            while not results_async.ready():
-                try:
-                    delta = progress_queue.get(timeout=5)  # Set a timeout of 5 seconds
-                except Empty:
-                    continue
-                
-                total_progress += delta
-                if progress_listener is not None:
-                    progress_listener.on_progress(total_progress, total_duration)
-
-            results = results_async.get()
-
-            # Call the finished callback
-            if progress_listener is not None:
-                progress_listener.on_finished()
-
-            for result in results:
-                # Merge the results
-                if (result['text'] is not None):
-                    merged['text'] += result['text']
-                if (result['segments'] is not None):
-                    merged['segments'].extend(result['segments'])
-                if (result['language'] is not None):
-                    merged['language'] = result['language']
-
-        finally:
-            # Return the pool to the context
-            if (gpu_parallel_context is not None):
-                gpu_parallel_context.return_pool(pool)
-            # Always close the context if we created it
-            if (created_context):
-                gpu_parallel_context.close()
-
-        perf_end_gpu = time.perf_counter()
-        print("Parallel transcription took " + str(perf_end_gpu - perf_start_gpu) + " seconds")
+        # Call the finished callback
+        if progress_listener is not None:
+            progress_listener.on_finished()
 
         return merged
 

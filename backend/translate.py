@@ -1,41 +1,124 @@
-from transformers import AutoProcessor, SeamlessM4Tv2Model
+from transcribe import api_transcribe
+from transformers import SeamlessM4Tv2ForTextToText, AutoProcessor
+import json
+from pypinyin import pinyin
 import torch
-import torchaudio
-import os
-
-from backend.vad import SileroVADProcessor
-
-processor = AutoProcessor.from_pretrained(
-    "facebook/seamless-m4t-v2-large",  device_map="auto", torch_dtype=torch.float16, low_cpu_mem_usage=True)
-model = SeamlessM4Tv2Model.from_pretrained(
-    "facebook/seamless-m4t-v2-large",  device_map="auto", torch_dtype=torch.float16, low_cpu_mem_usage=True)
-folder_path = "temp/chunks"
-len_chunks = len([name for name in os.listdir(folder_path)
-                 if os.path.isfile(os.path.join(folder_path, name))])
-
-# audiofile = '/home/amer/lexiflow/backend/temp/downloads/第93集： 张骞和丝绸之路 Zhang Qian and the Silk Road ｜ intermediate Chinese podcast.m4a'
-# vadProcessor = SileroVADProcessor()
-# vadProcessor.process_audio(
-#     audiofile, min_speech_duration_ms=500, max_speech_duration_s=25, min_silence_duration_ms=1200)
+import gc
 
 
-with open(f"{os.listdir('temp/downloads')[0].split('.')[0]}.txt", 'w') as file:
-    file.seek(0)
-    file.truncate(0)
+class Translator:
+    def __init__(self):
+        self.get_pinyin = False
 
-    for i in range(len_chunks):
-        audio, orig_freq = torchaudio.load(
-            f"temp/chunks/chunk_{i}.wav")
-        audio = torchaudio.functional.resample(
-            audio, orig_freq=orig_freq, new_freq=16_000)  # must be a 16 kHz waveform array
-        audio_inputs = processor(
-            audios=audio, return_tensors="pt", sampling_rate=16_000).to(model.device)
-        output_tokens = model.generate(
-            **audio_inputs, tgt_lang="zh", generate_speech=False, )
-        translated_text_from_audio = processor.decode(
-            output_tokens[0].tolist()[0], skip_special_tokens=True)
-        print(translated_text_from_audio)
-        file.write(f"{translated_text_from_audio}\n")
+    def translate(self, result, model, processor, target_language="en"):
+        if not processor or not model:
+            raise RuntimeError("Model not loaded. Call load_model() first.")
 
-        del audio_inputs
+        if not result or "language" not in result:
+            raise ValueError(
+                "Invalid transcription result or language not detected.")
+
+        source_language = result["language"]
+
+        if source_language == 'zh':
+            source_language = 'cmn'
+            self.get_pinyin = True
+        elif source_language == 'en':
+            source_language = 'eng'
+        elif source_language == 'ms':
+            source_language = 'zsm'
+        else:
+            raise ValueError(
+                f"Unsupported source language: {source_language}")
+
+        print(f"Transcribing audio in {source_language}...")
+
+        text = result["text"]
+
+        for segment in result["segments"]:
+            if "text" not in segment or not segment["text"]:
+                continue
+
+            text = segment["text"]
+            print(f"Translating segment: {text}")
+
+            inputs = processor(text, src_lang=source_language,
+                               return_tensors="pt", padding=True).to(model.device)
+            outputs = model.generate(
+                **inputs, tgt_lang="eng")
+            translated_text_from_text = processor.decode(
+                outputs.tolist()[0], skip_special_tokens=True)
+            print(f"Translated text: {translated_text_from_text}")
+            segment["translated_text"] = translated_text_from_text
+            if self.get_pinyin:
+                pinyin_text = pinyin(text, style='normal')
+                segment["pinyin"] = ' '.join(
+                    [word[0] for word in pinyin_text])
+
+        json.dump(result, open("translated_result.json", "w",
+                  encoding="utf-8"), ensure_ascii=False, indent=4)
+        return result
+
+
+def print_vram_info():
+    free_memory, total_memory = torch.cuda.mem_get_info()
+
+    free_memory_gb = free_memory / 1024**3
+    total_memory_gb = total_memory / 1024**3
+
+    print(f"Free Memory: {free_memory_gb:.2f}/{total_memory_gb:.2f} GB")
+
+
+def clear_vram(variable=None):
+    if variable != None:
+        del variable
+    torch.cuda.empty_cache()
+    gc.collect()
+
+def api_translate(url):
+    print_vram_info()
+    
+    response = api_transcribe(url)
+    # josn_data = '/home/amer/lexiflow/backend/temp/TeaTime News 茶歇新闻 ｜ 2024年12月20日： 习近平去澳门，退休年龄，死刑 [7v2BMJvUhOk].webm-result.json'
+    # josn_data = '/home/amer/lexiflow/backend/translated_result.json'
+    # with open(josn_data, "r") as f:
+    #     response = json.load(f)
+
+    # return response
+
+    try:
+        print(f"Loading facebook/seamless-m4t-v2-large...")
+        # Processor stays on CPU
+        processor = AutoProcessor.from_pretrained(
+            "facebook/seamless-m4t-v2-large")
+        
+        # Model loaded to CPU first
+        model = SeamlessM4Tv2ForTextToText.from_pretrained(
+            "facebook/seamless-m4t-v2-large", 
+            device_map="cpu")
+        
+        # Explicitly move only model to GPU if available
+        if torch.cuda.is_available():
+            model = model.to('cuda')
+        
+        print("Model loaded successfully.")
+        print_vram_info()
+
+        translator = Translator()
+        result = translator.translate(response, model=model, processor=processor)
+        
+        return result
+    finally:
+        # Ensure cleanup happens even if an error occurs
+        print("Cleaning up...")
+        if 'model' in locals():
+            model.to('cpu')  # Move model back to CPU before deletion
+            del model
+        if 'processor' in locals():
+            del processor
+        if 'translator' in locals():
+            del translator
+        
+        gc.collect()
         torch.cuda.empty_cache()
+        print_vram_info()

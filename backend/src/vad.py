@@ -4,7 +4,7 @@ import time
 
 from typing import Any, Deque, Iterator, List, Dict
 
-from pprint import pprint
+# from pprint import pprint
 from src.hooks.progressListener import ProgressListener
 from src.hooks.subTaskProgressListener import SubTaskProgressListener
 from src.hooks.whisperProgressHook import create_progress_listener_handle
@@ -27,6 +27,7 @@ import numpy as np
 
 from src.utils import format_timestamp
 from enum import Enum
+import logging
 
 class NonSpeechStrategy(Enum):
     """
@@ -127,8 +128,8 @@ class AbstractTranscription(ABC):
             else:
                 raise Exception("Unknown non-speech strategy: " + str(config.non_speech_strategy))
 
-            print("Transcribing non-speech:")
-            pprint(merged)
+            # print("Transcribing non-speech:")
+            # pprint(merged)
         return merged
 
     def transcribe(self, audio: str, whisperCallable: AbstractWhisperCallback, config: TranscriptionConfig, 
@@ -158,8 +159,8 @@ class AbstractTranscription(ABC):
             # A deque of transcribed segments that is passed to the next segment as a prompt
             prompt_window = deque()
 
-            print("Processing timestamps:")
-            pprint(merged)
+            # print("Processing timestamps:")
+            # pprint(merged)
 
             result = {
                 'text': "",
@@ -196,8 +197,15 @@ class AbstractTranscription(ABC):
                 # Detected language
                 detected_language = languageCounter.most_common(1)[0][0] if len(languageCounter) > 0 else None
 
-                print("Running whisper from ", format_timestamp(segment_start), " to ", format_timestamp(segment_end), ", duration: ", 
-                    segment_duration, "expanded: ", segment_expand_amount, "prompt: ", segment_prompt, "language: ", detected_language)
+                logging.info(
+                    "Running whisper from %s to %s, duration: %s expanded: %s prompt: %s language: %s",
+                    format_timestamp(segment_start),
+                    format_timestamp(segment_end),
+                    segment_duration,
+                    segment_expand_amount,
+                    segment_prompt,
+                    detected_language
+                )
 
                 perf_start_time = time.perf_counter()
 
