@@ -1,0 +1,30 @@
+{
+    "text": " Stop saying 新年快樂 all the time.  Instead, you can say 恭喜發財。  十年大吉。  年年有餘。",
+    "segments": [
+        {
+            "text": " Stop saying 新年快樂 all the time.",
+            "start": 0.0,
+            "end": 2.46,
+            "words": []
+        },
+        {
+            "text": " Instead, you can say 恭喜發財。",
+            "start": 2.88,
+            "end": 7.24,
+            "words": []
+        },
+        {
+            "text": " 十年大吉。",
+            "start": 7.24,
+            "end": 9.24,
+            "words": []
+        },
+        {
+            "text": " 年年有餘。",
+            "start": 9.24,
+            "end": 10.58,
+            "words": []
+        }
+    ],
+    "language": ""
+}

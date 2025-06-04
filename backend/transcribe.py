@@ -293,20 +293,18 @@ class WhisperTranscriber:
             torch.cuda.empty_cache()
 
 
-# Main Fuction for usage
-def api_transcribe(audio_path: str):
-    app_config = ApplicationConfig.create_default()
-    whisper_models = app_config.get_model_names()
 
-    # For the CLI, we fallback to saving the output to the current directory
-    output_dir = app_config.output_dir if app_config.output_dir is not None else "."
+def create_parser(app_config: ApplicationConfig = None, output_dir: str = '') -> argparse.ArgumentParser:
+
+    whisper_models = app_config.get_model_names()
 
     # Environment variable overrides
     default_whisper_implementation = os.environ.get(
         "WHISPER_IMPLEMENTATION", app_config.whisper_implementation)
 
+
     parser = argparse.ArgumentParser(
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument("--model", default=app_config.default_model_name, choices=whisper_models,
                         help="name of the Whisper model to use")  # medium
@@ -386,6 +384,21 @@ def api_transcribe(audio_path: str):
                         help="(requires --word_timestamps True) underline each word as it is spoken in srt and vtt")
     parser.add_argument("--threads", type=optional_int, default=8,
                         help="number of threads used by torch for CPU inference; supercedes MKL_NUM_THREADS/OMP_NUM_THREADS")
+    return parser
+
+
+
+
+# Main Fuction for usage
+def api_transcribe(audio_path: str):
+    app_config = ApplicationConfig.create_default()
+
+    # For the CLI, we fallback to saving the output to the current directory
+    output_dir = app_config.output_dir if app_config.output_dir is not None else "."
+
+
+    # Create the parser and parse the arguments
+    parser = create_parser(app_config=app_config, output_dir=output_dir)
 
     args = parser.parse_args().__dict__
     model_name: str = args.pop("model")
@@ -441,15 +454,8 @@ def api_transcribe(audio_path: str):
     # audio_path = 'https://www.youtube.com/watch?v=9FNRb71akL4'
     sources = []
 
-    # Detect URL and download the audio
-    if (uri_validator(audio_path)):
-        # Download from YouTube/URL directly
-        for source_path in download_url(audio_path, maxDuration=-1, destinationDirectory=output_dir, playlistItems=None):
-            source_name = os.path.basename(source_path)
-            sources.append({"path": source_path, "name": source_name})
-    else:
-        sources.append(
-            {"path": audio_path, "name": os.path.basename(audio_path)})
+    sources.append(
+        {"path": audio_path, "name": os.path.basename(audio_path)})
 
     for source in sources:
         source_path = source["path"]

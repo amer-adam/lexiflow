@@ -75,10 +75,10 @@ def clear_vram(variable=None):
     torch.cuda.empty_cache()
     gc.collect()
 
-def api_translate(url):
+def api_translate(transcription_result):
     print_vram_info()
     
-    response = api_transcribe(url)
+    # response = api_transcribe(url)
     # josn_data = '/home/amer/lexiflow/backend/temp/TeaTime News 茶歇新闻 ｜ 2024年12月20日： 习近平去澳门，退休年龄，死刑 [7v2BMJvUhOk].webm-result.json'
     # josn_data = '/home/amer/lexiflow/backend/translated_result.json'
     # with open(josn_data, "r") as f:
@@ -105,7 +105,7 @@ def api_translate(url):
         print_vram_info()
 
         translator = Translator()
-        result = translator.translate(response, model=model, processor=processor)
+        result = translator.translate(transcription_result, model=model, processor=processor)
         
         return result
     finally:

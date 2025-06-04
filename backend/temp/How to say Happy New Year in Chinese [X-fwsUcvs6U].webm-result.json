@@ -1,0 +1,30 @@
+{
+    "text": "How to say Happy New Year in Chinese 新年快乐 新年快乐 新年快乐",
+    "segments": [
+        {
+            "text": "How to say Happy New Year in Chinese",
+            "start": 0.0,
+            "end": 2.0,
+            "words": []
+        },
+        {
+            "text": "新年快乐",
+            "start": 2.0,
+            "end": 4.0,
+            "words": []
+        },
+        {
+            "text": "新年快乐",
+            "start": 4.0,
+            "end": 7.5,
+            "words": []
+        },
+        {
+            "text": "新年快乐",
+            "start": 7.5,
+            "end": 9.0,
+            "words": []
+        }
+    ],
+    "language": ""
+}

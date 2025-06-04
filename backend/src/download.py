@@ -84,3 +84,34 @@ def uri_validator(x):
         return all([result.scheme, result.netloc])
     except:
         return False
+
+
+def get_duration(url: str) -> float:
+    """
+    Get the total duration (in seconds) of a YouTube video.
+    
+    Args:
+        url_or_id: Either a YouTube URL or just the video ID
+        
+    Returns:
+        Duration in seconds as a float
+        
+    Raises:
+        yt_dlp.utils.DownloadError: If the video cannot be accessed
+        ValueError: If the input is not a valid URL/ID
+    """
+    
+    ydl_opts = {
+        'quiet': True,
+        'no_warnings': True,
+        'extract_flat': True,
+    }
+    
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=False)
+        
+        # Handle playlists (return total duration of all videos)
+        if 'entries' in info:
+            return sum(float(entry['duration']) for entry in info['entries'] if entry)
+        
+        return float(info['duration'])

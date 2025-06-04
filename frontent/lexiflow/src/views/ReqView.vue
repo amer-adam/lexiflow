@@ -20,38 +20,79 @@
   <div class="request">
     <h1>This is request page</h1>
     <p>Here you can request a video to be added to the LexiFlow.</p>
-    <div>
+    <div style="display: flex; flex-direction: row; align-items: center; gap: 10px;">
       <input v-model="url" placeholder="Enter URL" class="urlInput" />
-      <button :disabled="loading" @click="fetchWithGet">Request</button>
+      <button v-if="state === 'idle'" @click="fetchWithGet">Request</button>
+      <hollow-dots-spinner v-if="state !== 'idle' && state !== 'completed' && !error" :animation-duration="1000" :dot-size="10" :dots-num="3"
+        color="green" />
+
     </div>
 
-    <div v-if="loading">Loading data...</div>
+    <div v-if="state === 'processing' || state === 'completed'">
+      <!-- Progress bars container -->
+      <div class="progress-container">
+        <!-- Downloading progress -->
+        <div class="progress-stage">
+          <div class="progress-text"> Downloading </div>
+          <fingerprint-spinner v-if="progress <= 25" :animation-duration="1500" :size="42" color="green" />
+          <!-- Show check icon if progress > 25 -->
+          <svg-icon v-if="progress > 25" type="mdi" :path="path" :size="42"></svg-icon>
+        </div>
 
+        <!-- Transcribing progress -->
+        <div class="progress-stage">
+          <div class="progress-text"> Transcribing </div>
+          <fingerprint-spinner v-if="progress > 25 && progress <= 50" :animation-duration="1500" :size="42"
+            color="green" />
+          <!-- Show check icon if progress > 25 -->
+          <svg-icon v-if="progress > 50" type="mdi" :path="path" :size="42"></svg-icon>
+        </div>
+
+        <!-- Translating progress -->
+        <div class="progress-stage">
+          <div class="progress-text"> Translating </div>
+          <fingerprint-spinner v-if="progress > 50 && progress <= 75" :animation-duration="1500" :size="42"
+            color="green" />
+          <!-- Show check icon if progress > 25 -->
+          <svg-icon v-if="progress > 75" type="mdi" :path="path" :size="42"></svg-icon>
+        </div>
+        <p v-if="state === 'proccessing'">Estimated Time: {{ formatETA }}</p>
+      </div>
+    </div>
+    <div v-else-if="state === 'queued'">
+      <p>Video is queued for processing. Please wait...</p>
+      <p>requests ahead: {{ queue_number }}</p>
+      <p>Estimated Time: {{ formatETA }}</p>
+    </div>
     <div v-else-if="error" class="error">{{ error }}</div>
-    <div v-else>
-      <button v-if="loaded" @click="goToVideo">Watch Video</button>
-
-    </div>
-    <div v-if="loading || loaded" class="terminal-output" ref="terminalOutput">
-      <pre v-for="(line, index) in outputLines" :key="index">{{ line }}</pre>
-    </div>
+    <button v-if="state === 'completed'" @click="goToVideo">Watch Video</button>
   </div>
 </template>
 
 
 <script>
+import { FingerprintSpinner, HollowDotsSpinner } from 'epic-spinners'
+
+import SvgIcon from '@jamescoyle/vue-icon'
+import { mdiCheckAll } from '@mdi/js';
+
 export default {
+  components: {
+    FingerprintSpinner,
+    HollowDotsSpinner,
+    SvgIcon
+  },
   data() {
     return {
       url: '',  // Default URL
       jsonData: null,
-      loading: false,
       error: null,
-      loaded: false,
+      state: 'idle', // Reset state
       outputLines: [],
       eventSource: null,
       jobId: null,
       jobStatusInterval: null,
+      progress: 0,
       recommended: [
         {
           "url": "https://www.youtube.com/watch?v=9FNRb71akL4",
@@ -95,25 +136,41 @@ export default {
           "eta": "1.1 mins ETA: 38.4 seconds",
           "thumbnail": "https://i.ytimg.com/vi/kq1E_KANpZw/hqdefault.jpg",
         }
-      ]
+      ],
+      path: mdiCheckAll,
+      queue_number: 0, // Number of jobs in the queue
+      eta: 0, // Estimated time for the job
+      time_counter: 0, // Counter for the time elapsed
+      time_counter_interval: null, // Interval for the time counter
     }
   },
   methods: {
     async fetchWithGet() {
-      this.loading = true;
+      // Reset states before starting a new request
       this.error = null;
-      this.connectStream();
-      this.loaded = false;
+      this.state = 'idle'; // Reset state
+      this.progress = 0; // Reset progress
+      this.queue_number = 0; // Reset queue number
+      this.eta = 0; // Reset ETA
+      this.time_counter = 0; // Reset time counter
+      if (this.jobStatusInterval) {
+        clearInterval(this.jobStatusInterval);
+      }
+      if (this.time_counter_interval) {
+        clearInterval(this.time_counter_interval);
+      }
+
+      // Start the request
+      this.state = 'requesting'; // Set state to requesting
 
       if (!this.url) {
         this.error = 'Please enter a valid URL.';
-        this.loading = false;
         return;
       }
 
       try {
         const response = await fetch(
-          `https://api.amerai.top/lexiflow/data/jobs`,
+          `https://api.amerai.top/lexiflow/jobs`,
           {
             method: 'POST',
             mode: 'cors',
@@ -128,21 +185,40 @@ export default {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
+        if (response.status === 200) {
+          const data = await response.json();
+          this.jsonData = data.result;
+          localStorage.setItem('subtitleJSON', JSON.stringify(this.jsonData));
+          this.state = 'completed'; // Set state to completed
+          this.progress = 100; // Set progress to 100% when completed
+          clearInterval(this.jobStatusInterval);
+          clearInterval(this.time_counter_interval);
+        }
+        else if (response.status === 201) {
+          const data = await response.json();
+          this.jobId = data.job_id;
+          if (data.queue_number > 0) {
+            this.state = 'queued'; // Set state to queued
+            this.queue_number = data.queue_number || 0; // Set queue number if available
+          } else {
+            this.state = 'processing'; // Set state to processing
+          }
+          this.eta = parseInt(data.eta) || 0;
+          this.startJobStatusPolling();
+          this.startTimeUpdatePolling();
+          console.log('data:', data);
+        }
 
-        const data = await response.json();
-        this.jobId = data.job_id;
-        this.startJobStatusPolling();
       } catch (err) {
         this.error = err.message;
         this.loading = false;
-        this.disconnectStream();
       }
     },
     startJobStatusPolling() {
       this.jobStatusInterval = setInterval(async () => {
         try {
           const response = await fetch(
-            `https://api.amerai.top/lexiflow/data/jobs/${this.jobId}`,
+            `https://api.amerai.top/lexiflow/jobs/${this.jobId}`,
             {
               mode: 'cors',
               headers: {
@@ -155,49 +231,34 @@ export default {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
 
-          const statusData = await response.json();
+          const responseData = await response.json();
+          this.progress = responseData.progress || 0;
 
-          if (statusData.status === 'completed') {
-            this.getJobResult();
+          if (responseData.status === 'completed') {
+            this.jsonData = responseData.result;
+            localStorage.setItem('subtitleJSON', JSON.stringify(this.jsonData));
+            this.state = 'completed'; // Set state to completed
+            this.progress = 100; // Set progress to 100% when completed
             clearInterval(this.jobStatusInterval);
-          } else if (statusData.status === 'failed') {
-            this.error = statusData.error || 'Job failed';
-            this.loading = false;
-            this.disconnectStream();
+            clearInterval(this.time_counter_interval);
+          } else if (responseData.status === 'queued') {
+            this.state = 'queued'; // Set state to queued
+            this.queue_number = responseData.queue_number || 0; // Update queue number
+            this.eta = parseInt(responseData.eta) || 0; // Update ETA if available
+          } else if (responseData.status === 'processing') {
+            this.state = 'processing'; // Set state to processing
+            this.eta = parseInt(responseData.eta) || 0; // Update ETA if available
+          }
+          else if (responseData.status === 'failed') {
+            this.error = responseData.error || 'Job failed';
+            this.state = 'idle'; // reSet state 
             clearInterval(this.jobStatusInterval);
+            clearInterval(this.time_counter_interval);
           }
         } catch (err) {
           console.error('Error checking job status:', err);
         }
-      }, 2500); // Check every 2.5 seconds
-    },
-
-    async getJobResult() {
-      try {
-        const response = await fetch(
-          `https://api.amerai.top/lexiflow/data/jobs/${this.jobId}/result`,
-          {
-            mode: 'cors',
-            headers: {
-              'Accept': 'application/json',
-            }
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        this.jsonData = await response.json();
-        localStorage.setItem('subtitleJSON', JSON.stringify(this.jsonData));
-        this.loading = false;
-        this.loaded = true;
-        this.disconnectStream();
-      } catch (err) {
-        this.error = err.message;
-        this.loading = false;
-        this.disconnectStream();
-      }
+      }, this.fetchTimeInterval); // Check every 10 seconds
     },
 
     goToVideo() {
@@ -215,49 +276,56 @@ export default {
       var match = url.match(regExp);
       return (match && match[7].length == 11) ? match[7] : false;
     },
-    connectStream() {
-      if (this.eventSource) return;
-
-      this.eventSource = new EventSource('https://api.amerai.top/lexiflow/data/logs');
-
-      this.eventSource.onmessage = (event) => {
-        this.outputLines.push(event.data);
-        // Keep only the last 100 lines
-        if (this.outputLines.length > 100) {
-          this.outputLines.shift();
-        }
-        // Auto-scroll to bottom
-        this.$nextTick(() => {
-          const terminal = this.$refs.terminalOutput;
-          if (terminal) {
-            terminal.scrollTop = terminal.scrollHeight;
-          }
-        });
-      };
-
-      this.eventSource.onerror = (error) => {
-        console.error('EventSource failed:', error);
-        this.reconnect();
-      };
-    },
-    disconnectStream() {
-      if (this.eventSource) {
-        this.eventSource.close();
-        this.eventSource = null;
-      }
-    },
-    reconnect() {
-      this.disconnectStream();
-      setTimeout(() => this.connectStream(), 5000);
-    },
     openVideo(url) {
       this.url = url; // Set the URL to the clicked video
+      // clear any previous error or loading state
+      this.error = null;
+      this.state = 'idle'; // Reset state
+      this.progress = 0; // Reset progress
+      this.queue_number = 0; // Reset queue number
+      this.eta = 0; // Reset ETA
+      this.time_counter = 0; // Reset time counter
+      if (this.jobStatusInterval) {
+        clearInterval(this.jobStatusInterval);
+      }
+      if (this.time_counter_interval) {
+        clearInterval(this.time_counter_interval);
+      }
     },
+
+    startTimeUpdatePolling() {
+      this.time_counter_interval = setInterval(async () => {
+        this.time_counter += 1; // Increment the time counter every second
+      }, 1000); // Check every 1 seconds
+    },
+
   },
   beforeUnmount() {
-    this.disconnectStream(); // Clean up
+    this.state = 'idle'; // Reset state
     if (this.jobStatusInterval) {
       clearInterval(this.jobStatusInterval);
+    }
+    if (this.time_counter_interval) {
+      clearInterval(this.time_counter_interval);
+    }
+  },
+  computed: {
+    progressMessage() {
+      if (this.progress <= 33) return `Downloading video... (${this.progress}%)`;
+      if (this.progress <= 66) return `Transcribing audio... (${this.progress}%)`;
+      return `Translating text... (${this.progress}%)`;
+    },
+    fetchTimeInterval() {
+      // if (this.progress <= 33) return 3000; // 2.5 seconds for downloading
+      return 10000; // 10 second for translating
+    },
+    formatETA() {
+      if (this.eta <= 0) return 'Calculating...';
+      let remainingTime = this.eta - this.time_counter;
+      if (remainingTime <= 0) remainingTime = 0;
+      const minutes = Math.floor(remainingTime / 60);
+      const seconds = remainingTime % 60;
+      return `${minutes} mins ${seconds.toFixed(2)} seconds`;
     }
   },
 }
@@ -305,6 +373,32 @@ export default {
   font-family: monospace;
   white-space: pre-wrap;
 }
+
+
+.progress-container {
+  width: 100%;
+  margin: 20px 0;
+}
+
+.progress-stage {
+  margin-bottom: 10px;
+  /* position: relative; */
+  display: flex;
+  flex-direction: row;
+  align-self: start;
+  /* justify-content: center; */
+  align-items: center;
+  min-height: 50px;
+}
+
+.progress-text {
+  /* margin-top: 30px; */
+  min-width: 100px;
+  font-weight: bold;
+  /* text-align: center; */
+  margin-right: 20px;
+}
+
 
 .sidebar {
   position: fixed;
