@@ -5,6 +5,7 @@ import uuid
 import subprocess
 import json
 import os
+import requests
 from pathlib import Path
 from datetime import datetime
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,17 +13,21 @@ from pymongo import MongoClient
 from bson import ObjectId
 import asyncio
 
+from lingua import Language, LanguageDetectorBuilder
+from pypinyin import pinyin
+
+
 from time import sleep
 
 from transcribe import api_transcribe
-from translate import api_translate
+from postprocces import api_postprocess
+# from translate import Translator
 from src.download import download_url, uri_validator, get_duration
 
 app = FastAPI()
 
 active_jobs = {}  # Format: {job_id: {"status": ..., "result": ...}}
 
-# Models
 
 
 class JobRequest(BaseModel):
@@ -43,6 +48,7 @@ class DurationResponse(BaseModel):
     duration_seconds: float
     success: bool
     error: Optional[str] = None
+
 
 class DurationRequest(BaseModel):
     url: str
@@ -80,6 +86,66 @@ def download_video(url: str, job_id: str) -> str:
         url, maxDuration=-1, destinationDirectory=output_dir, playlistItems=None)
     return file_path[0]
 
+def api_translate(transcription_result):
+    url = "http://127.0.0.1:5000/translate"
+    get_pinyin = False
+
+    # detect source language
+    source_language = transcription_result["language"]
+
+    if source_language == '':
+        languages = [Language.ENGLISH, Language.ARABIC,
+                        Language.MALAY, Language.CHINESE]
+        detector = LanguageDetectorBuilder.from_languages(
+            *languages).build()
+        source_language = detector.detect_language_of(
+            transcription_result["text"]).name.lower()
+        print(f"Detected language: {source_language}")
+
+    if source_language == 'arabic' or source_language == 'ar':
+        source_language = 'ar'
+    elif source_language == 'english' or source_language == 'en':
+        source_language = 'en'
+    elif source_language == 'malay' or source_language == 'ms':
+        source_language = 'ms'
+    elif source_language == 'chinese' or source_language == 'zh':
+        source_language = 'zh'
+        get_pinyin = True
+    else:
+        raise ValueError(
+            f"Unsupported source language: {source_language}")
+
+    
+    transcription_result["language"] = source_language
+
+    # translate segments
+    for segment in transcription_result['segments']:
+        text = segment['text']
+        # text = json.dumps(text, ensure_ascii=False)
+        print(f"Translating text: {text}")
+
+        payload = {
+            "q": text,
+            "source": source_language,
+            "target": "en"
+        }
+        headers = {"Content-Type": "application/json"}
+
+        response = requests.post(url, json=payload, headers=headers)
+
+        if response.status_code != 200:
+            raise Exception(f"Translation failed: {response.text}")
+
+        segment['translated_text'] = response.json()['translatedText']
+        print(f"Translated text: {segment['translated_text']}")
+
+        if get_pinyin:
+                pinyin_text = pinyin(text, style='normal')
+                segment["pinyin"] = ' '.join(
+                    [word[0] for word in pinyin_text])
+
+    return transcription_result
+
 
 @app.post("/process")
 async def start_processing(request: JobRequest) -> JobStatus:
@@ -92,8 +158,8 @@ async def start_processing(request: JobRequest) -> JobStatus:
     }
 
     # Run pipeline in background
-    # asyncio.create_task(run_pipeline(job_id, request.url))
-    asyncio.create_task(run_dummy_pipeline(job_id, request.url))
+    asyncio.create_task(run_pipeline(job_id, request.url))
+    # asyncio.create_task(run_dummy_pipeline(job_id, request.url))
 
     return JobStatus(
         job_id=job_id,
@@ -117,17 +183,20 @@ async def run_pipeline(job_id: str, url: str):
         })
         transcription = await asyncio.to_thread(api_transcribe, file_path)
 
-        # 3. Translate (100%)
+        # 3. Translate (99%)
         active_jobs[job_id].update({
             "progress": 75,
             "current_step": "translate"
         })
         translation = await asyncio.to_thread(api_translate, transcription)
 
+        # 4. Post-process (100%)
+        end_result = await asyncio.to_thread(api_postprocess, translation)
+
         # Success
         active_jobs[job_id].update({
             "status": "completed",
-            "result": translation,
+            "result": end_result,
             "progress": 100,
         })
 
@@ -147,21 +216,21 @@ async def run_dummy_pipeline(job_id: str, url: str):
             "progress": 25,
             "current_step": "download"
         })
-        await asyncio.sleep(10)
+        await asyncio.sleep(2)
         # Simulate transcription
         active_jobs[job_id].update({
             "progress": 50,
             "current_step": "transcribe"
         })
-        await asyncio.sleep(10)
+        await asyncio.sleep(2)
         # Simulate translation
         active_jobs[job_id].update({
             "progress": 75,
             "current_step": "translate"
         })
-        await asyncio.sleep(10)
+        await asyncio.sleep(2)
 
-        josn_data = '/home/amer/lexiflow/backend/translated_result.json'
+        josn_data = '/home/amer/lexiflow/backend/pinyin_result.json'
         with open(josn_data, "r") as f:
             response = json.load(f)
 
@@ -197,5 +266,12 @@ app.add_middleware(
 )
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=4557)
+    try:
+        import uvicorn
+        uvicorn.run(app, host="0.0.0.0", port=4557)
+        print("Server started successfully")
+    except Exception as e:
+        print(f"Failed to start server: {e}")
+        exit(1)
+    finally:
+        print("Server stopped and resources cleaned up.")

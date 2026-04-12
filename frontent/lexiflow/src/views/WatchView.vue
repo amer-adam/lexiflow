@@ -1,12 +1,13 @@
 <script>
 import SubBox from '@/components/SubBox.vue';
 import VideoBox from '@/components/VideoBox.vue';
-
+import CharacterDisplay from '@/components/CharacterDisplay.vue';
 
 export default {
   components: {
     VideoBox,
-    SubBox,
+    SubBox, 
+    CharacterDisplay,
   },
   props: {
     videoId: {
@@ -41,7 +42,7 @@ export default {
         this.currentTime >= segment.start && this.currentTime < segment.end
       );
 
-      return currentSegment?.text || '';
+      return currentSegment?.characters || {};
     },
     currentTranslation() {
       if (!this.subtitlesJson?.segments || this.subtitlesJson.segments.length === 0) return '';
@@ -52,28 +53,6 @@ export default {
 
       return currentSegment?.translated_text || '';
     },
-    currentPinyin() {
-      if (!this.subtitlesJson?.segments || this.subtitlesJson.segments.length === 0) return '';
-
-      const currentSegment = this.subtitlesJson.segments.find(segment =>
-        this.currentTime >= segment.start && this.currentTime < segment.end
-      );
-
-      return currentSegment?.pinyin || '';
-    },
-    showPinyin() {
-      if (!this.subtitlesJson?.language || this.subtitlesJson.segments.length === 0) return false;
-
-      const source_language = this.subtitlesJson.language.toLowerCase();
-      console.log('Source Language:', source_language);
-      // Check if the source language is Chinese 
-      if (source_language === 'zh') {
-        return true;
-      }
-      else {
-        return false;;
-      }
-    },
   }
 
 };
@@ -82,9 +61,10 @@ export default {
 <template>
   <div class="watch">
     <VideoBox :videoId=videoId @time-update="handleTimeUpdate" />
-    <SubBox :subtitle=currentText />
-    <SubBox v-if="showPinyin" :subtitle=currentPinyin />
-    <SubBox :subtitle=currentTranslation />
+    <!-- <SubBox :subtitle=currentText /> -->
+    <CharacterDisplay :characters="currentText" :translated_text="currentTranslation"/>
+    <!-- <SubBox v-if="showPinyin" :subtitle=currentPinyin /> -->
+    <!-- <SubBox :subtitle=currentTranslation /> -->
   </div>
 </template>
 

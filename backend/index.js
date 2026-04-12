@@ -31,7 +31,6 @@ const agenda = new Agenda({
     processEvery: '1 second',
     maxConcurrency: 1,       // Max total concurrency (for all jobs)
     defaultConcurrency: 1,    // Max concurrency per job type
-    lockLimit: 10,            // Max number of jobs that can be locked at once
 });
 
 agenda.define('process video', { concurrency: 1, lockLifetime: 200000 }, async (job) => {
@@ -78,6 +77,7 @@ async function monitorJobProgress(jobId, url) {
                             status: pythonStatus.data.status,
                             progress: pythonStatus.data.progress,
                             current_step: pythonStatus.data.current_step,
+                            result: pythonStatus.data.result || null,
                             updated_at: new Date(),
                         },
                     }
@@ -160,7 +160,7 @@ async function checkJobInQueue(url) {
 
         totalETA += jobETA;
     }
-    
+
     return { found: false };
 }
 
@@ -217,6 +217,12 @@ async function estimateWaitTime(jobId) {
     }
     console.log(`~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`);
 
+    if (totalETA < 0) {
+        totalETA = 0; // Ensure non-negative ETA
+    } else if (totalETA < 60) {
+        totalETA = 60; // Minimum ETA of 1 minute
+    }
+
 
     return [totalETA, jobsAheadCount]; // in seconds
 }
@@ -241,6 +247,9 @@ async function connectToMongoDB() {
 
         console.log('Connected to MongoDB');
 
+        const numRemoved1 = await agenda.purge();
+        const numRemoved2 = await agenda.cancel({ "name": "process video" });
+        console.log(`Purged ${numRemoved1} jobs and cancelled ${numRemoved2} jobs from Agenda`);
         await agenda.start();
         console.log('Agenda started'); 1
     } catch (err) {
@@ -269,20 +278,27 @@ app.post('/lexiflow/jobs', async (req, res) => {
             });
         }
 
+
+        const jobQueue = await jobsCollection.findOne({ url });
+        if (jobQueue) {
+            // Check if job is already in queue
+            const existingJob = await checkJobInQueue(url);
+            if (existingJob.found) {
+                console.log(job.job_id);
+                return res.status(201).json({
+                    status: 'queued',
+                    eta: existingJob.eta,
+                    job_id: job.job_id,
+                    queue_position: existingJob.position,
+                    message: 'This URL is already in the queue'
+                });
+            }
+        }
+
+
         const response = await axios.post(`${PYTHON_API}/duration`, { url });
         const duration = response.data.duration_seconds; // Duration in seconds
         if (duration <= 0) return res.status(400).json({ error: 'Invalid video duration' });
-
-        // Check if job is already in queue
-        const existingJob = await checkJobInQueue(url);
-        if (existingJob.found) {
-            return res.status(200).json({
-                status: 'queued',
-                eta: existingJob.eta,
-                queue_position: existingJob.position,
-                message: 'This URL is already in the queue'
-            });
-        }
 
         const jobId = uuidv4();
         const job = {
@@ -327,92 +343,34 @@ app.get('/lexiflow/jobs/:jobId', async (req, res) => {
 
         if (!job) return res.status(404).json({ error: 'Job not found' });
 
+        const responseJSON = {
+            job_id: job.job_id,
+            status: job.status,
+            progress: job.progress || 0,
+            current_step: job.current_step || null,
+            result: job.result || null
+        };
+
 
         // If job is completed locally, return the result
         if (job.status === 'completed') {
-            return res.json({
-                job_id: jobId,
-                status: job.status,
-                progress: job.progress,
-                current_step: job.current_step,
-                result: job.result
-            });
+            return res.json(responseJSON);
         }
 
-        const targetJob = await agenda._collection.findOne({ 'data.jobId': jobId });
+        const [eta, queueNumber] = await estimateWaitTime(jobId);
+        responseJSON.eta = eta;
+        responseJSON.queue_number = queueNumber;
 
+
+        const targetJob = await agenda._collection.findOne({ 'data.jobId': jobId });
         if (!targetJob) {
             return res.status(404).json({ error: 'Job not found in queue' });
         } else if (targetJob.nextRunAt !== null) {
-            // Count how many pending jobs were created before this one
-            // const jobsAhead = await agenda._collection.countDocuments({
-            //     lastFinishedAt: { $exists: false }, // Pending jobs
-            //     lastRunAt: { $lt: targetJob.lastRunAt } ||  // Use lastRunAt if exists
-            //         { _id: { $lt: targetJob._id } }  // Fallback to insertion order
-            // });
 
-            const [eta, queueNumber] = await estimateWaitTime(jobId);
-
-            return res.json({
-                job_id: jobId,
-                status: 'queued',
-                queue_number: queueNumber,
-                eta: eta,
-                progress: 0,
-                current_step: null
-            });
+            responseJSON.status = 'queued';
         }
 
-
-
-
-        // Check status with Python service - now using simplified endpoint
-        const pythonStatus = await axios.get(`${PYTHON_API}/status/${jobId}`);
-
-        // Update our local job status
-        const updateData = {
-            status: pythonStatus.data.status,
-            progress: pythonStatus.data.progress,
-            current_step: pythonStatus.data.current_step,
-            updated_at: new Date()
-        };
-
-        // Only update result if job is completed
-        // if (pythonStatus.data.status === 'completed') {
-        //     updateData.result = pythonStatus.data.result;
-
-        //     // Cache the result for future requests
-        //     await resultsCollection.updateOne(
-        //         { url: job.url },
-        //         { 
-        //             $set: { 
-        //                 job_id: jobId,
-        //                 result: pythonStatus.data.result,
-        //                 created_at: new Date(),
-        //                 updated_at: new Date()
-        //             } 
-        //         },
-        //         { upsert: true }
-        //     );
-        // }
-
-        const [eta, queueNumber] = await estimateWaitTime(jobId);
-
-
-        await jobsCollection.updateOne(
-            { job_id: jobId },
-            { $set: updateData }
-        );
-
-        res.json({
-            job_id: jobId,
-            status: pythonStatus.data.status,
-            progress: pythonStatus.data.progress,
-            current_step: pythonStatus.data.current_step,
-            result: pythonStatus.data.result,
-            eta: eta,
-            queue_number: queueNumber
-        });
+        return res.json(responseJSON);
 
     } catch (error) {
         console.error('Error getting job status:', error);

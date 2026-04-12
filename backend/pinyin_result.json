@@ -1,0 +1,1129 @@
+{
+    "text": "这是啥 我在刘大龙枕头底下发现的 上面还画着饮料的标识 芮芮 你用啥搅咖啡的 搅拌棒啊 搅拌棒 你从哪拿的 从你枕头底下啊 我枕头底下啊 一个败家娘们 这不是搅拌棒啊 这不是搅拌棒 这是啥 你自己拿出来看看 咋画了 这是啥",
+    "segments": [
+        {
+            "text": "这是啥",
+            "start": 0.0,
+            "end": 0.76,
+            "words": [],
+            "translated_text": "This is a chicken.",
+            "pinyin": "zhè shì shá",
+            "characters": {
+                "这": {
+                    "pinyin": "zhè",
+                    "translations": [
+                        "this",
+                        "these",
+                        "(commonly pr.  before a classifier, esp. in Beijing)"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "是": {
+                    "pinyin": "shì",
+                    "translations": [
+                        "is",
+                        "are",
+                        "am",
+                        "yes",
+                        "to be"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "啥": {
+                    "pinyin": "shá",
+                    "translations": [
+                        "dialectal equivalent of 什麼|什么[shén me]"
+                    ],
+                    "hsk_level": 6,
+                    "is_phrase": false
+                }
+            }
+        },
+        {
+            "text": "我在刘大龙枕头底下发现的",
+            "start": 0.76,
+            "end": 2.6,
+            "words": [],
+            "translated_text": "I found it under my pillow.",
+            "pinyin": "wǒ zài liú dà lóng zhěn tou dǐ xià fā xiàn de",
+            "characters": {
+                "我": {
+                    "pinyin": "wǒ",
+                    "translations": [
+                        "I",
+                        "me",
+                        "my"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "在": {
+                    "pinyin": "zài",
+                    "translations": [
+                        "(located) at",
+                        "(to be) in",
+                        "to exist",
+                        "in the middle of doing sth",
+                        "(indicating an action in progress)"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "刘": {
+                    "pinyin": "liú",
+                    "translations": [
+                        "(classical) a type of battle-ax",
+                        "to kill",
+                        "to slaughter"
+                    ],
+                    "hsk_level": null,
+                    "is_phrase": false
+                },
+                "大": {
+                    "pinyin": "dà",
+                    "translations": [
+                        "big",
+                        "huge",
+                        "large",
+                        "major",
+                        "great",
+                        "wide",
+                        "deep",
+                        "oldest",
+                        "eldest"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "龙": {
+                    "pinyin": "lóng",
+                    "translations": [
+                        "dragon",
+                        "CL:條|条[tiáo]",
+                        "imperial"
+                    ],
+                    "hsk_level": 5,
+                    "is_phrase": false
+                },
+                "枕头": {
+                    "pinyin": "zhěn tou",
+                    "translations": [
+                        "pillow"
+                    ],
+                    "hsk_level": 5,
+                    "is_phrase": true
+                },
+                "底": {
+                    "pinyin": "dǐ",
+                    "translations": [
+                        "background",
+                        "bottom",
+                        "base",
+                        "the end of a period of time",
+                        "towards the end of (last month)"
+                    ],
+                    "hsk_level": 4,
+                    "is_phrase": false
+                },
+                "下": {
+                    "pinyin": "xià",
+                    "translations": [
+                        "down",
+                        "downwards",
+                        "below",
+                        "lower",
+                        "later",
+                        "next (week etc)",
+                        "second (of two parts)",
+                        "to decline",
+                        "to go down"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "发现": {
+                    "pinyin": "fā xiàn",
+                    "translations": [
+                        "to find",
+                        "to discover"
+                    ],
+                    "hsk_level": 3,
+                    "is_phrase": true
+                },
+                "的": {
+                    "pinyin": "de",
+                    "translations": [
+                        "of",
+                        "~'s (possessive particle)",
+                        "(used after an attribute)",
+                        "(used to form a nominal expression)",
+                        "(used at the end of a declarative sentence for emphasis)"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                }
+            }
+        },
+        {
+            "text": "上面还画着饮料的标识",
+            "start": 2.6,
+            "end": 4.5600000000000005,
+            "words": [],
+            "translated_text": "There's also a drink logo on it.",
+            "pinyin": "shàng miàn hái huà zhe yǐn liào de biāo zhì",
+            "characters": {
+                "上": {
+                    "pinyin": "shàng",
+                    "translations": [
+                        "on top",
+                        "upon",
+                        "above",
+                        "upper",
+                        "previous",
+                        "first (of multiple parts)",
+                        "to climb",
+                        "to get onto",
+                        "to go up",
+                        "to attend (class or university)"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "面": {
+                    "pinyin": "miàn",
+                    "translations": [
+                        "flour",
+                        "noodles",
+                        "(of food) soft (not crunchy)",
+                        "(slang) (of a person) ineffectual",
+                        "spineless"
+                    ],
+                    "hsk_level": null,
+                    "is_phrase": false
+                },
+                "还": {
+                    "pinyin": "hái",
+                    "translations": [
+                        "still",
+                        "still in progress",
+                        "still more",
+                        "yet",
+                        "even more",
+                        "in addition",
+                        "fairly",
+                        "passably (good)",
+                        "as early as",
+                        "even",
+                        "also",
+                        "else"
+                    ],
+                    "hsk_level": 2,
+                    "is_phrase": false
+                },
+                "画": {
+                    "pinyin": "huà",
+                    "translations": [
+                        "to draw",
+                        "picture",
+                        "painting",
+                        "CL:幅",
+                        "張|张[zhāng]"
+                    ],
+                    "hsk_level": 3,
+                    "is_phrase": false
+                },
+                "着": {
+                    "pinyin": "zhe",
+                    "translations": [
+                        "aspect particle indicating action in progress"
+                    ],
+                    "hsk_level": 2,
+                    "is_phrase": false
+                },
+                "饮料": {
+                    "pinyin": "yǐn liào",
+                    "translations": [
+                        "drink",
+                        "beverage"
+                    ],
+                    "hsk_level": 4,
+                    "is_phrase": true
+                },
+                "的": {
+                    "pinyin": "de",
+                    "translations": [
+                        "of",
+                        "~'s (possessive particle)",
+                        "(used after an attribute)",
+                        "(used to form a nominal expression)",
+                        "(used at the end of a declarative sentence for emphasis)"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "标": {
+                    "pinyin": "biāo",
+                    "translations": [
+                        "mark",
+                        "sign",
+                        "label",
+                        "to mark with a symbol, label, lettering etc",
+                        "to bear (a brand name, registration number etc)",
+                        "prize",
+                        "award",
+                        "bid",
+                        "target",
+                        "quota",
+                        "(old) the topmost branches of a tree",
+                        "visible symptom",
+                        "classifier for military units"
+                    ],
+                    "hsk_level": null,
+                    "is_phrase": false
+                },
+                "识": {
+                    "pinyin": "shí",
+                    "translations": [
+                        "to record",
+                        "to write a footnote"
+                    ],
+                    "hsk_level": null,
+                    "is_phrase": false
+                }
+            }
+        },
+        {
+            "text": "芮芮",
+            "start": 4.5600000000000005,
+            "end": 5.16,
+            "words": [],
+            "translated_text": "What is the name of the song?",
+            "pinyin": "ruì ruì",
+            "characters": {
+                "芮": {
+                    "pinyin": "ruì",
+                    "translations": [
+                        "small"
+                    ],
+                    "hsk_level": null,
+                    "is_phrase": false
+                }
+            }
+        },
+        {
+            "text": "你用啥搅咖啡的",
+            "start": 5.16,
+            "end": 6.24,
+            "words": [],
+            "translated_text": "You're using coffee beans.",
+            "pinyin": "nǐ yòng shá jiǎo kā fēi de",
+            "characters": {
+                "你": {
+                    "pinyin": "nǐ",
+                    "translations": [
+                        "you (informal, as opposed to courteous 您)"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "用": {
+                    "pinyin": "yòng",
+                    "translations": [
+                        "to use",
+                        "to employ",
+                        "to have to",
+                        "to eat or drink",
+                        "expense or outlay",
+                        "usefulness",
+                        "hence",
+                        "therefore"
+                    ],
+                    "hsk_level": 3,
+                    "is_phrase": false
+                },
+                "啥": {
+                    "pinyin": "shá",
+                    "translations": [
+                        "dialectal equivalent of 什麼|什么[shén me]"
+                    ],
+                    "hsk_level": 6,
+                    "is_phrase": false
+                },
+                "搅": {
+                    "pinyin": "jiǎo",
+                    "translations": [
+                        "to disturb",
+                        "to annoy",
+                        "to mix",
+                        "to stir"
+                    ],
+                    "hsk_level": null,
+                    "is_phrase": false
+                },
+                "咖啡": {
+                    "pinyin": "kā fēi",
+                    "translations": [
+                        "coffee",
+                        "CL:杯[bēi]"
+                    ],
+                    "hsk_level": 2,
+                    "is_phrase": true
+                },
+                "的": {
+                    "pinyin": "de",
+                    "translations": [
+                        "of",
+                        "~'s (possessive particle)",
+                        "(used after an attribute)",
+                        "(used to form a nominal expression)",
+                        "(used at the end of a declarative sentence for emphasis)"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                }
+            }
+        },
+        {
+            "text": "搅拌棒啊",
+            "start": 6.24,
+            "end": 7.04,
+            "words": [],
+            "translated_text": "It's a stick.",
+            "pinyin": "jiǎo bàn bàng a",
+            "characters": {
+                "搅拌": {
+                    "pinyin": "jiǎo bàn",
+                    "translations": [
+                        "to stir",
+                        "to agitate"
+                    ],
+                    "hsk_level": 6,
+                    "is_phrase": true
+                },
+                "棒": {
+                    "pinyin": "bàng",
+                    "translations": [
+                        "a stick",
+                        "club or cudgel",
+                        "smart",
+                        "capable",
+                        "strong",
+                        "wonderful",
+                        "classifier for legs of a relay race"
+                    ],
+                    "hsk_level": 5,
+                    "is_phrase": false
+                },
+                "啊": {
+                    "pinyin": "a",
+                    "translations": [
+                        "modal particle ending sentence",
+                        "showing affirmation",
+                        "approval",
+                        "or consent"
+                    ],
+                    "hsk_level": 3,
+                    "is_phrase": false
+                }
+            }
+        },
+        {
+            "text": "搅拌棒",
+            "start": 7.04,
+            "end": 7.72,
+            "words": [],
+            "translated_text": "Cucumbers",
+            "pinyin": "jiǎo bàn bàng",
+            "characters": {
+                "搅拌": {
+                    "pinyin": "jiǎo bàn",
+                    "translations": [
+                        "to stir",
+                        "to agitate"
+                    ],
+                    "hsk_level": 6,
+                    "is_phrase": true
+                },
+                "棒": {
+                    "pinyin": "bàng",
+                    "translations": [
+                        "a stick",
+                        "club or cudgel",
+                        "smart",
+                        "capable",
+                        "strong",
+                        "wonderful",
+                        "classifier for legs of a relay race"
+                    ],
+                    "hsk_level": 5,
+                    "is_phrase": false
+                }
+            }
+        },
+        {
+            "text": "你从哪拿的",
+            "start": 7.72,
+            "end": 8.48,
+            "words": [],
+            "translated_text": "Where did you get it?",
+            "pinyin": "nǐ cóng nǎ ná de",
+            "characters": {
+                "你": {
+                    "pinyin": "nǐ",
+                    "translations": [
+                        "you (informal, as opposed to courteous 您)"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "从": {
+                    "pinyin": "cóng",
+                    "translations": [
+                        "from",
+                        "via",
+                        "passing through",
+                        "through (a gap)",
+                        "past",
+                        "ever (followed by negative, meaning never)",
+                        "(formerly pr.  and related to 縱|纵) to follow",
+                        "to comply with",
+                        "to obey",
+                        "to join",
+                        "to engage in",
+                        "adopting some mode of action or attitude",
+                        "follower",
+                        "retainer",
+                        "accessory",
+                        "accomplice",
+                        "related by common paternal grandfather or earlier ancestor"
+                    ],
+                    "hsk_level": 2,
+                    "is_phrase": false
+                },
+                "哪": {
+                    "pinyin": "nǎ",
+                    "translations": [
+                        "how",
+                        "which"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "拿": {
+                    "pinyin": "ná",
+                    "translations": [
+                        "to hold",
+                        "to seize",
+                        "to catch",
+                        "to apprehend",
+                        "to take"
+                    ],
+                    "hsk_level": 3,
+                    "is_phrase": false
+                },
+                "的": {
+                    "pinyin": "de",
+                    "translations": [
+                        "of",
+                        "~'s (possessive particle)",
+                        "(used after an attribute)",
+                        "(used to form a nominal expression)",
+                        "(used at the end of a declarative sentence for emphasis)"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                }
+            }
+        },
+        {
+            "text": "从你枕头底下啊",
+            "start": 8.48,
+            "end": 9.56,
+            "words": [],
+            "translated_text": "From under your pillow.",
+            "pinyin": "cóng nǐ zhěn tou dǐ xià a",
+            "characters": {
+                "从": {
+                    "pinyin": "cóng",
+                    "translations": [
+                        "from",
+                        "via",
+                        "passing through",
+                        "through (a gap)",
+                        "past",
+                        "ever (followed by negative, meaning never)",
+                        "(formerly pr.  and related to 縱|纵) to follow",
+                        "to comply with",
+                        "to obey",
+                        "to join",
+                        "to engage in",
+                        "adopting some mode of action or attitude",
+                        "follower",
+                        "retainer",
+                        "accessory",
+                        "accomplice",
+                        "related by common paternal grandfather or earlier ancestor"
+                    ],
+                    "hsk_level": 2,
+                    "is_phrase": false
+                },
+                "你": {
+                    "pinyin": "nǐ",
+                    "translations": [
+                        "you (informal, as opposed to courteous 您)"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "枕头": {
+                    "pinyin": "zhěn tou",
+                    "translations": [
+                        "pillow"
+                    ],
+                    "hsk_level": 5,
+                    "is_phrase": true
+                },
+                "底": {
+                    "pinyin": "dǐ",
+                    "translations": [
+                        "background",
+                        "bottom",
+                        "base",
+                        "the end of a period of time",
+                        "towards the end of (last month)"
+                    ],
+                    "hsk_level": 4,
+                    "is_phrase": false
+                },
+                "下": {
+                    "pinyin": "xià",
+                    "translations": [
+                        "down",
+                        "downwards",
+                        "below",
+                        "lower",
+                        "later",
+                        "next (week etc)",
+                        "second (of two parts)",
+                        "to decline",
+                        "to go down"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "啊": {
+                    "pinyin": "a",
+                    "translations": [
+                        "modal particle ending sentence",
+                        "showing affirmation",
+                        "approval",
+                        "or consent"
+                    ],
+                    "hsk_level": 3,
+                    "is_phrase": false
+                }
+            }
+        },
+        {
+            "text": "我枕头底下啊",
+            "start": 9.56,
+            "end": 10.88,
+            "words": [],
+            "translated_text": "Under my pillow.",
+            "pinyin": "wǒ zhěn tou dǐ xià a",
+            "characters": {
+                "我": {
+                    "pinyin": "wǒ",
+                    "translations": [
+                        "I",
+                        "me",
+                        "my"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "枕头": {
+                    "pinyin": "zhěn tou",
+                    "translations": [
+                        "pillow"
+                    ],
+                    "hsk_level": 5,
+                    "is_phrase": true
+                },
+                "底": {
+                    "pinyin": "dǐ",
+                    "translations": [
+                        "background",
+                        "bottom",
+                        "base",
+                        "the end of a period of time",
+                        "towards the end of (last month)"
+                    ],
+                    "hsk_level": 4,
+                    "is_phrase": false
+                },
+                "下": {
+                    "pinyin": "xià",
+                    "translations": [
+                        "down",
+                        "downwards",
+                        "below",
+                        "lower",
+                        "later",
+                        "next (week etc)",
+                        "second (of two parts)",
+                        "to decline",
+                        "to go down"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "啊": {
+                    "pinyin": "a",
+                    "translations": [
+                        "modal particle ending sentence",
+                        "showing affirmation",
+                        "approval",
+                        "or consent"
+                    ],
+                    "hsk_level": 3,
+                    "is_phrase": false
+                }
+            }
+        },
+        {
+            "text": "一个败家娘们",
+            "start": 10.88,
+            "end": 11.84,
+            "words": [],
+            "translated_text": "A family of losers.",
+            "pinyin": "yí gè bài jiā niáng men",
+            "characters": {
+                "一": {
+                    "pinyin": "yī",
+                    "translations": [
+                        "one",
+                        "1",
+                        "single",
+                        "a (article)",
+                        "as soon as",
+                        "entire",
+                        "whole",
+                        "all",
+                        "throughout",
+                        "\"one\" radical in Chinese characters (Kangxi radical 1)"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "个": {
+                    "pinyin": "gè",
+                    "translations": [
+                        "variant of 個|个[gè]"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "败": {
+                    "pinyin": "bài",
+                    "translations": [
+                        "to defeat",
+                        "to damage",
+                        "to lose (to an opponent)",
+                        "to fail",
+                        "to wither"
+                    ],
+                    "hsk_level": null,
+                    "is_phrase": false
+                },
+                "家": {
+                    "pinyin": "jiā",
+                    "translations": [
+                        "home",
+                        "family",
+                        "classifier for families or businesses",
+                        "refers to the philosophical schools of pre-Han China",
+                        "noun suffix for specialists in some activity such as musician or revolutionary",
+                        "corresponds to English -ist",
+                        "-er",
+                        "-ary or -ian",
+                        "CL:個|个[gè]"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "娘": {
+                    "pinyin": "niáng",
+                    "translations": [
+                        "variant of 娘[niang2]"
+                    ],
+                    "hsk_level": null,
+                    "is_phrase": false
+                },
+                "们": {
+                    "pinyin": "men",
+                    "translations": [
+                        "plural marker for pronouns, and nouns referring to individuals"
+                    ],
+                    "hsk_level": null,
+                    "is_phrase": false
+                }
+            }
+        },
+        {
+            "text": "这不是搅拌棒啊",
+            "start": 11.84,
+            "end": 13.08,
+            "words": [],
+            "translated_text": "It's not a stick.",
+            "pinyin": "zhè bú shì jiǎo bàn bàng a",
+            "characters": {
+                "这": {
+                    "pinyin": "zhè",
+                    "translations": [
+                        "this",
+                        "these",
+                        "(commonly pr.  before a classifier, esp. in Beijing)"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "不": {
+                    "pinyin": "bù",
+                    "translations": [
+                        "(negative prefix)",
+                        "not",
+                        "no"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "是": {
+                    "pinyin": "shì",
+                    "translations": [
+                        "is",
+                        "are",
+                        "am",
+                        "yes",
+                        "to be"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "搅拌": {
+                    "pinyin": "jiǎo bàn",
+                    "translations": [
+                        "to stir",
+                        "to agitate"
+                    ],
+                    "hsk_level": 6,
+                    "is_phrase": true
+                },
+                "棒": {
+                    "pinyin": "bàng",
+                    "translations": [
+                        "a stick",
+                        "club or cudgel",
+                        "smart",
+                        "capable",
+                        "strong",
+                        "wonderful",
+                        "classifier for legs of a relay race"
+                    ],
+                    "hsk_level": 5,
+                    "is_phrase": false
+                },
+                "啊": {
+                    "pinyin": "a",
+                    "translations": [
+                        "modal particle ending sentence",
+                        "showing affirmation",
+                        "approval",
+                        "or consent"
+                    ],
+                    "hsk_level": 3,
+                    "is_phrase": false
+                }
+            }
+        },
+        {
+            "text": "这不是搅拌棒",
+            "start": 13.08,
+            "end": 13.8,
+            "words": [],
+            "translated_text": "It's not a stick.",
+            "pinyin": "zhè bú shì jiǎo bàn bàng",
+            "characters": {
+                "这": {
+                    "pinyin": "zhè",
+                    "translations": [
+                        "this",
+                        "these",
+                        "(commonly pr.  before a classifier, esp. in Beijing)"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "不": {
+                    "pinyin": "bù",
+                    "translations": [
+                        "(negative prefix)",
+                        "not",
+                        "no"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "是": {
+                    "pinyin": "shì",
+                    "translations": [
+                        "is",
+                        "are",
+                        "am",
+                        "yes",
+                        "to be"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "搅拌": {
+                    "pinyin": "jiǎo bàn",
+                    "translations": [
+                        "to stir",
+                        "to agitate"
+                    ],
+                    "hsk_level": 6,
+                    "is_phrase": true
+                },
+                "棒": {
+                    "pinyin": "bàng",
+                    "translations": [
+                        "a stick",
+                        "club or cudgel",
+                        "smart",
+                        "capable",
+                        "strong",
+                        "wonderful",
+                        "classifier for legs of a relay race"
+                    ],
+                    "hsk_level": 5,
+                    "is_phrase": false
+                }
+            }
+        },
+        {
+            "text": "这是啥",
+            "start": 13.8,
+            "end": 14.36,
+            "words": [],
+            "translated_text": "This is a chicken.",
+            "pinyin": "zhè shì shá",
+            "characters": {
+                "这": {
+                    "pinyin": "zhè",
+                    "translations": [
+                        "this",
+                        "these",
+                        "(commonly pr.  before a classifier, esp. in Beijing)"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "是": {
+                    "pinyin": "shì",
+                    "translations": [
+                        "is",
+                        "are",
+                        "am",
+                        "yes",
+                        "to be"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "啥": {
+                    "pinyin": "shá",
+                    "translations": [
+                        "dialectal equivalent of 什麼|什么[shén me]"
+                    ],
+                    "hsk_level": 6,
+                    "is_phrase": false
+                }
+            }
+        },
+        {
+            "text": "你自己拿出来看看",
+            "start": 14.36,
+            "end": 15.48,
+            "words": [],
+            "translated_text": "Take it out and see for yourself.",
+            "pinyin": "nǐ zì jǐ ná chū lái kàn kàn",
+            "characters": {
+                "你": {
+                    "pinyin": "nǐ",
+                    "translations": [
+                        "you (informal, as opposed to courteous 您)"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "自己": {
+                    "pinyin": "zì jǐ",
+                    "translations": [
+                        "oneself",
+                        "one's own"
+                    ],
+                    "hsk_level": 3,
+                    "is_phrase": true
+                },
+                "拿": {
+                    "pinyin": "ná",
+                    "translations": [
+                        "to hold",
+                        "to seize",
+                        "to catch",
+                        "to apprehend",
+                        "to take"
+                    ],
+                    "hsk_level": 3,
+                    "is_phrase": false
+                },
+                "出": {
+                    "pinyin": "chū",
+                    "translations": [
+                        "to go out",
+                        "to come out",
+                        "to occur",
+                        "to produce",
+                        "to go beyond",
+                        "to rise",
+                        "to put forth",
+                        "to happen",
+                        "classifier for dramas",
+                        "plays",
+                        "operas etc"
+                    ],
+                    "hsk_level": 2,
+                    "is_phrase": false
+                },
+                "来": {
+                    "pinyin": "lái",
+                    "translations": [
+                        "to come",
+                        "to arrive",
+                        "to come round",
+                        "ever since",
+                        "next"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "看": {
+                    "pinyin": "kàn",
+                    "translations": [
+                        "to see",
+                        "to look at",
+                        "to read",
+                        "to watch",
+                        "to consider",
+                        "to regard as",
+                        "to view as",
+                        "to treat as",
+                        "to judge",
+                        "(after repeated verb) to give it a try",
+                        "depending on (how you're judging)",
+                        "to visit",
+                        "to call on",
+                        "to treat (an illness)",
+                        "to look after",
+                        "Watch out! (for a danger)"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                }
+            }
+        },
+        {
+            "text": "咋画了",
+            "start": 17.52,
+            "end": 18.32,
+            "words": [],
+            "translated_text": "I drew it.",
+            "pinyin": "zǎ huà le",
+            "characters": {
+                "咋": {
+                    "pinyin": "zǎ",
+                    "translations": [
+                        "dialectal equivalent of 怎麼|怎么[zěn me]"
+                    ],
+                    "hsk_level": 6,
+                    "is_phrase": false
+                },
+                "画": {
+                    "pinyin": "huà",
+                    "translations": [
+                        "to draw",
+                        "picture",
+                        "painting",
+                        "CL:幅",
+                        "張|张[zhāng]"
+                    ],
+                    "hsk_level": 3,
+                    "is_phrase": false
+                },
+                "了": {
+                    "pinyin": "le",
+                    "translations": [
+                        "(modal particle intensifying preceding clause)",
+                        "(completed action marker)"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                }
+            }
+        },
+        {
+            "text": "这是啥",
+            "start": 18.32,
+            "end": 18.96,
+            "words": [],
+            "translated_text": "This is a chicken.",
+            "pinyin": "zhè shì shá",
+            "characters": {
+                "这": {
+                    "pinyin": "zhè",
+                    "translations": [
+                        "this",
+                        "these",
+                        "(commonly pr.  before a classifier, esp. in Beijing)"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "是": {
+                    "pinyin": "shì",
+                    "translations": [
+                        "is",
+                        "are",
+                        "am",
+                        "yes",
+                        "to be"
+                    ],
+                    "hsk_level": 1,
+                    "is_phrase": false
+                },
+                "啥": {
+                    "pinyin": "shá",
+                    "translations": [
+                        "dialectal equivalent of 什麼|什么[shén me]"
+                    ],
+                    "hsk_level": 6,
+                    "is_phrase": false
+                }
+            }
+        }
+    ],
+    "language": "cmn"
+}

@@ -1,7 +1,7 @@
 <template>
-    <div class="video-box">
-        <div ref="youtubePlayer" id="youtube-player"></div>
-    </div>
+  <div class="video-box">
+    <div ref="youtubePlayer" id="youtube-player"></div>
+  </div>
 </template>
 
 <script>
@@ -29,7 +29,7 @@ export default {
         tag.src = 'https://www.youtube.com/iframe_api';
         const firstScriptTag = document.getElementsByTagName('script')[0];
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-        
+
         window.onYouTubeIframeAPIReady = () => {
           this.createPlayer();
         };
@@ -66,7 +66,19 @@ export default {
     },
     onPlayerStateChange(event) {
       // Clean up interval when video ends
-      if (event.data === window.YT.PlayerState.ENDED) {
+      if (event.data === window.YT.PlayerState.PLAYING) {
+        clearInterval(this.timeUpdateInterval);
+        this.timeUpdateInterval = setInterval(() => {
+          this.getCurrentTime();
+        }, 100); // Update every 0.1 second
+      }
+      else if (event.data === window.YT.PlayerState.PAUSED || event.data === window.YT.PlayerState.BUFFERING) {
+        clearInterval(this.timeUpdateInterval);
+        this.timeUpdateInterval = setInterval(() => {
+          this.getCurrentTime();
+        }, 1000); // Update every second
+      }
+      else {
         clearInterval(this.timeUpdateInterval);
       }
     },
@@ -104,24 +116,24 @@ export default {
 
 <style scoped>
 .video-box {
-    /* width: 100%; */
-    width: 1024px;
-    margin: 0 auto;
-    aspect-ratio: 16 / 9;
-    background: #000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  /* width: 100%; */
+  width: 1024px;
+  margin: 0 auto;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .video-iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
+  width: 100%;
+  height: 100%;
+  border: none;
 }
 
 .no-video {
-    color: #fff;
-    text-align: center;
+  color: #fff;
+  text-align: center;
 }
 </style>

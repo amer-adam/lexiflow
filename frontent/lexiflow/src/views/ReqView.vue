@@ -23,8 +23,8 @@
     <div style="display: flex; flex-direction: row; align-items: center; gap: 10px;">
       <input v-model="url" placeholder="Enter URL" class="urlInput" />
       <button v-if="state === 'idle'" @click="fetchWithGet">Request</button>
-      <hollow-dots-spinner v-if="state !== 'idle' && state !== 'completed' && !error" :animation-duration="1000" :dot-size="10" :dots-num="3"
-        color="green" />
+      <hollow-dots-spinner v-if="state !== 'idle' && state !== 'completed' && !error" :animation-duration="1000"
+        :dot-size="10" :dots-num="3" color="green" />
 
     </div>
 
@@ -56,7 +56,7 @@
           <!-- Show check icon if progress > 25 -->
           <svg-icon v-if="progress > 75" type="mdi" :path="path" :size="42"></svg-icon>
         </div>
-        <p v-if="state === 'proccessing'">Estimated Time: {{ formatETA }}</p>
+        <p v-if="state === 'processing'">Estimated Time: {{ formatETA }}</p>
       </div>
     </div>
     <div v-else-if="state === 'queued'">
@@ -116,25 +116,11 @@ export default {
           "thumbnail": "https://i.ytimg.com/vi/5fWvyFMrD9g/hqdefault.jpg",
         },
         {
-          "url": "https://www.youtube.com/watch?v=x9vi6UfBgn4",
-          "title": "Fanta - Nazi Favorite? | STUFF YOU SHOULD KNOW",
-          "description": "(en) short history of Fanta",
-          "eta": "14.25 mins ETA: 148.5 seconds",
-          "thumbnail": "https://i.ytimg.com/vi/x9vi6UfBgn4/hqdefault.jpg",
-        },
-        {
-          "url": "https://www.youtube.com/watch?v=Do412OfPPhU",
-          "title": "EP 1 | Ask Dr. Athina",
-          "description": "(my)(en) short video to test multi-language ",
-          "eta": "4.55 mins ETA: 77.4 seconds",
-          "thumbnail": "https://i.ytimg.com/vi/Do412OfPPhU/hqdefault.jpg",
-        },
-        {
-          "url": "https://www.youtube.com/watch?v=kq1E_KANpZw",
-          "title": "KELUANG MAN - FINAL TRAILER",
-          "description": "(my) trailer to test sound effects",
-          "eta": "1.1 mins ETA: 38.4 seconds",
-          "thumbnail": "https://i.ytimg.com/vi/kq1E_KANpZw/hqdefault.jpg",
+          "url": "https://www.youtube.com/shorts/Vz-stDkm0oc?feature=share",
+          "title": "shorts test video ",
+          "description": "(zh) short video to test shorts",
+          "eta": "19 seconds ETA: 40 seconds",
+          "thumbnail": "https://i.ytimg.com/vi/Vz-stDkm0oc/hqdefault.jpg",
         }
       ],
       path: mdiCheckAll,
@@ -264,17 +250,36 @@ export default {
     goToVideo() {
       if (this.jsonData && this.url) {
         // Navigate to the video page with the videoId
+
         let videoId = this.youtube_parser(this.url);
+
         console.log('Parsed Video ID:', videoId);
         this.$router.push({ name: 'watch', params: { videoId: videoId } });
+      } else if (!this.url) {
+        alert('Please enter a valid URL.');
       } else {
-        alert('No video ID found in the response.');
+        alert('No video data available. Please try again later.');
       }
     },
     youtube_parser(url) {
-      var regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+      // Regular YouTube URLs and shorts
+      var regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|shorts\/|watch\?v=|&v=)([^#&?]*).*/;
       var match = url.match(regExp);
-      return (match && match[7].length == 11) ? match[7] : false;
+
+      // Check if we found a video ID and it's the correct length (11 characters)
+      if (match && match[2].length === 11) {
+        return match[2];
+      }
+
+      // Try to match YouTube URL patterns that might have additional parameters
+      var altRegExp = /^.*(youtube\.com\/shorts\/|youtube\.com\/watch\?v=)([^#&?\/]*).*/;
+      var altMatch = url.match(altRegExp);
+
+      if (altMatch && altMatch[2].length === 11) {
+        return altMatch[2];
+      }
+
+      return false;
     },
     openVideo(url) {
       this.url = url; // Set the URL to the clicked video

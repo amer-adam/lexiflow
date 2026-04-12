@@ -1,141 +1,142 @@
 {
-    "text": " À court ! Lain ruang ni.  Eh, macam cerita lain.  Dah lama aku pendam benda ni.  Kena telah tiba masa ni.  Assalamualaikum!  Nak ikut boleh?  Untuk jumpa Sangsir, awak perlu rangu semua game-game ni dulu.  Mari, Sangsir!  Faham?  Tak.  Baiklah. Sampai bila kau nak hidup untuk aku, Borhan?  Saya nak balas balik apa dibuat dekat Ayah Mat.  Dah sampai masa untuk awak putuskan siapa awak sebenarnya.  Semua orang lagi ingat kau dah mati, Borhan!  Kau dah pasukan Ustaz Khalid! Lepas tu ini kau boleh!  Sari kata oleh SDI Media",
+    "text": "这是啥 我在刘大龙枕头底下发现的 上面还画着饮料的标识 芮芮 你用啥搅咖啡的 搅拌棒啊 搅拌棒 你从哪拿的 从你枕头底下啊 我枕头底下啊 一个败家娘们 这不是搅拌棒啊 这不是搅拌棒 这是啥 你自己拿出来看看 咋画了 这是啥",
     "segments": [
         {
-            "text": " À court !",
+            "text": "这是啥",
             "start": 0.0,
-            "end": 2.98,
+            "end": 0.76,
             "words": [],
-            "translated_text": "At court!"
+            "translated_text": "This is a chicken.",
+            "pinyin": "zhè shì shá"
         },
         {
-            "text": " Lain ruang ni.",
-            "start": 3.002,
-            "end": 5.002,
+            "text": "我在刘大龙枕头底下发现的",
+            "start": 0.76,
+            "end": 2.6,
             "words": [],
-            "translated_text": "This is another space."
+            "translated_text": "I found it under my pillow.",
+            "pinyin": "wǒ zài liú dà lóng zhěn tou dǐ xià fā xiàn de"
         },
         {
-            "text": " Eh, macam cerita lain.",
-            "start": 5.002,
-            "end": 7.002,
+            "text": "上面还画着饮料的标识",
+            "start": 2.6,
+            "end": 4.5600000000000005,
             "words": [],
-            "translated_text": "Eh, like other stories."
+            "translated_text": "There's also a drink logo on it.",
+            "pinyin": "shàng miàn hái huà zhe yǐn liào de biāo zhì"
         },
         {
-            "text": " Dah lama aku pendam benda ni.",
-            "start": 11.001999999999999,
-            "end": 13.001999999999999,
+            "text": "芮芮",
+            "start": 4.5600000000000005,
+            "end": 5.16,
             "words": [],
-            "translated_text": "I'm going to hang up the phone."
+            "translated_text": "What is the name of the song?",
+            "pinyin": "ruì ruì"
         },
         {
-            "text": " Kena telah tiba masa ni.",
-            "start": 13.001999999999999,
-            "end": 16.002,
+            "text": "你用啥搅咖啡的",
+            "start": 5.16,
+            "end": 6.24,
             "words": [],
-            "translated_text": "It's been a long time since I've been here."
+            "translated_text": "You're using coffee beans.",
+            "pinyin": "nǐ yòng shá jiǎo kā fēi de"
         },
         {
-            "text": " Assalamualaikum!",
-            "start": 16.002,
-            "end": 19.002,
+            "text": "搅拌棒啊",
+            "start": 6.24,
+            "end": 7.04,
             "words": [],
-            "translated_text": "Assalamualaikum!"
+            "translated_text": "It's a stick.",
+            "pinyin": "jiǎo bàn bàng a"
         },
         {
-            "text": " Nak ikut boleh?",
-            "start": 19.002,
-            "end": 21.002,
+            "text": "搅拌棒",
+            "start": 7.04,
+            "end": 7.72,
             "words": [],
-            "translated_text": "Can I go with you?"
+            "translated_text": "Cucumbers",
+            "pinyin": "jiǎo bàn bàng"
         },
         {
-            "text": " Untuk jumpa Sangsir, awak perlu rangu semua game-game ni dulu.",
-            "start": 23.002,
-            "end": 27.002,
+            "text": "你从哪拿的",
+            "start": 7.72,
+            "end": 8.48,
             "words": [],
-            "translated_text": "See you Sangsir, you need to wake up to rank all the game-games before."
+            "translated_text": "Where did you get it?",
+            "pinyin": "nǐ cóng nǎ ná de"
         },
         {
-            "text": " Mari, Sangsir!",
-            "start": 27.002,
-            "end": 29.002,
+            "text": "从你枕头底下啊",
+            "start": 8.48,
+            "end": 9.56,
             "words": [],
-            "translated_text": "Mari, Sangsir! Mari, what are you doing?"
+            "translated_text": "From under your pillow.",
+            "pinyin": "cóng nǐ zhěn tou dǐ xià a"
         },
         {
-            "text": " Faham?",
-            "start": 30.002,
-            "end": 31.002,
+            "text": "我枕头底下啊",
+            "start": 9.56,
+            "end": 10.88,
             "words": [],
-            "expand_amount": 1.2619999999999933,
-            "translated_text": "Do you understand?"
+            "translated_text": "Under my pillow.",
+            "pinyin": "wǒ zhěn tou dǐ xià a"
         },
         {
-            "text": " Tak.",
-            "start": 31.002,
-            "end": 32.002,
+            "text": "一个败家娘们",
+            "start": 10.88,
+            "end": 11.84,
             "words": [],
-            "expand_amount": 2.261999999999997,
-            "translated_text": "Tak. <unk> What are you doing?"
+            "translated_text": "A family of losers.",
+            "pinyin": "yí gè bài jiā niáng men"
         },
         {
-            "text": " Baiklah.",
-            "start": 33.002,
-            "end": 33.306,
+            "text": "这不是搅拌棒啊",
+            "start": 11.84,
+            "end": 13.08,
             "words": [],
-            "expand_amount": 3.565999999999992,
-            "translated_text": "All right, here we go."
+            "translated_text": "It's not a stick.",
+            "pinyin": "zhè bú shì jiǎo bàn bàng a"
         },
         {
-            "text": " Sampai bila kau nak hidup untuk aku, Borhan?",
-            "start": 33.306,
-            "end": 37.306,
+            "text": "这不是搅拌棒",
+            "start": 13.08,
+            "end": 13.8,
             "words": [],
-            "expand_amount": 8.397999999999996,
-            "translated_text": "Sampai, without you, I want to live for me, Borhan?"
+            "translated_text": "It's not a stick.",
+            "pinyin": "zhè bú shì jiǎo bàn bàng"
         },
         {
-            "text": " Saya nak balas balik apa dibuat dekat Ayah Mat.",
-            "start": 37.306,
-            "end": 41.306,
+            "text": "这是啥",
+            "start": 13.8,
+            "end": 14.36,
             "words": [],
-            "expand_amount": 12.397999999999996,
-            "translated_text": "I want to return the balls what was made near Ayah Mat."
+            "translated_text": "This is a chicken.",
+            "pinyin": "zhè shì shá"
         },
         {
-            "text": " Dah sampai masa untuk awak putuskan siapa awak sebenarnya.",
-            "start": 41.306,
-            "end": 46.306,
+            "text": "你自己拿出来看看",
+            "start": 14.36,
+            "end": 15.48,
             "words": [],
-            "expand_amount": 17.397999999999996,
-            "translated_text": "It's time to wake up. Let's find out who's really awake."
+            "translated_text": "Take it out and see for yourself.",
+            "pinyin": "nǐ zì jǐ ná chū lái kàn kàn"
         },
         {
-            "text": " Semua orang lagi ingat kau dah mati, Borhan!",
-            "start": 51.306,
-            "end": 53.306,
+            "text": "咋画了",
+            "start": 17.52,
+            "end": 18.32,
             "words": [],
-            "expand_amount": 24.397999999999996,
-            "translated_text": "Everyone thinks you're dead, Borhan!"
+            "translated_text": "I drew it.",
+            "pinyin": "zǎ huà le"
         },
         {
-            "text": " Kau dah pasukan Ustaz Khalid! Lepas tu ini kau boleh!",
-            "start": 53.306,
-            "end": 57.306,
+            "text": "这是啥",
+            "start": 18.32,
+            "end": 18.96,
             "words": [],
-            "expand_amount": 28.397999999999996,
-            "translated_text": "You're the one who's going to kill Khalid!"
-        },
-        {
-            "text": " Sari kata oleh SDI Media",
-            "start": 57.306,
-            "end": 60.306,
-            "words": [],
-            "expand_amount": 31.397999999999996,
-            "translated_text": "Sari kata by SDI Media"
+            "translated_text": "This is a chicken.",
+            "pinyin": "zhè shì shá"
         }
     ],
-    "language": "ms"
+    "language": "cmn"
 }
