@@ -1,80 +1,7 @@
-<template>
-
-  <div class="sidebar">
-    <h2 class="sidebar-title">Recommended Videos</h2>
-    <div class="recommendations-list">
-      <div v-for="(item, index) in recommended" :key="index" class="recommendation-card" @click="openVideo(item.url)">
-        <div class="thumbnail-container">
-          <img :src="item.thumbnail" :alt="item.title" class="thumbnail">
-          <div class="play-icon">▶</div>
-        </div>
-        <div class="card-content">
-          <h3 class="title">{{ item.title }}</h3>
-          <p class="description">{{ item.description }}</p>
-          <p class="description">{{ item.eta }}</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="request">
-    <h1>This is request page</h1>
-    <p>Here you can request a video to be added to the LexiFlow.</p>
-    <div style="display: flex; flex-direction: row; align-items: center; gap: 10px;">
-      <input v-model="url" placeholder="Enter URL" class="urlInput" />
-      <button v-if="state === 'idle'" @click="fetchWithGet">Request</button>
-      <hollow-dots-spinner v-if="state !== 'idle' && state !== 'completed' && !error" :animation-duration="1000"
-        :dot-size="10" :dots-num="3" color="green" />
-
-    </div>
-
-    <div v-if="state === 'processing' || state === 'completed'">
-      <!-- Progress bars container -->
-      <div class="progress-container">
-        <!-- Downloading progress -->
-        <div class="progress-stage">
-          <div class="progress-text"> Downloading </div>
-          <fingerprint-spinner v-if="progress <= 25" :animation-duration="1500" :size="42" color="green" />
-          <!-- Show check icon if progress > 25 -->
-          <svg-icon v-if="progress > 25" type="mdi" :path="path" :size="42"></svg-icon>
-        </div>
-
-        <!-- Transcribing progress -->
-        <div class="progress-stage">
-          <div class="progress-text"> Transcribing </div>
-          <fingerprint-spinner v-if="progress > 25 && progress <= 50" :animation-duration="1500" :size="42"
-            color="green" />
-          <!-- Show check icon if progress > 25 -->
-          <svg-icon v-if="progress > 50" type="mdi" :path="path" :size="42"></svg-icon>
-        </div>
-
-        <!-- Translating progress -->
-        <div class="progress-stage">
-          <div class="progress-text"> Translating </div>
-          <fingerprint-spinner v-if="progress > 50 && progress <= 75" :animation-duration="1500" :size="42"
-            color="green" />
-          <!-- Show check icon if progress > 25 -->
-          <svg-icon v-if="progress > 75" type="mdi" :path="path" :size="42"></svg-icon>
-        </div>
-        <p v-if="state === 'processing'">Estimated Time: {{ formatETA }}</p>
-      </div>
-    </div>
-    <div v-else-if="state === 'queued'">
-      <p>Video is queued for processing. Please wait...</p>
-      <p>requests ahead: {{ queue_number }}</p>
-      <p>Estimated Time: {{ formatETA }}</p>
-    </div>
-    <div v-else-if="error" class="error">{{ error }}</div>
-    <button v-if="state === 'completed'" @click="goToVideo">Watch Video</button>
-  </div>
-</template>
-
-
 <script>
 import { FingerprintSpinner, HollowDotsSpinner } from 'epic-spinners'
-
 import SvgIcon from '@jamescoyle/vue-icon'
-import { mdiCheckAll } from '@mdi/js';
+import { mdiCheckAll, mdiYoutube, mdiCloudUpload } from '@mdi/js'
 
 export default {
   components: {
@@ -84,479 +11,428 @@ export default {
   },
   data() {
     return {
-      url: '',  // Default URL
+      activeTab: 'youtube', // 'youtube' or 'local'
+      url: '',
+      localTitle: '',
+      file: null,
       jsonData: null,
       error: null,
-      state: 'idle', // Reset state
-      outputLines: [],
-      eventSource: null,
+      state: 'idle', // idle, requesting, processing, queued, completed
       jobId: null,
       jobStatusInterval: null,
       progress: 0,
-      recommended: [
-        {
-          "url": "https://www.youtube.com/watch?v=9FNRb71akL4",
-          "title": "张谦和丝绸之路",
-          "description": "(zh) true crime documentary",
-          "eta": "51 mins ETA: 596.1 seconds",
-          "thumbnail": "https://i.ytimg.com/vi/9FNRb71akL4/hqdefault.jpg",
-        },
-        {
-          "url": "https://www.youtube.com/watch?v=7v2BMJvUhOk",
-          "title": "TeaTime News 茶歇新闻 | 2024年12月20日: 习近平去澳门，退休年龄，死刑 ",
-          "description": "(zh) quick news update from China",
-          "eta": "9.7 mins  ETA: 96.1 seconds",
-          "thumbnail": "https://i.ytimg.com/vi/7v2BMJvUhOk/hqdefault.jpg",
-        },
-        {
-          "url": "https://www.youtube.com/watch?v=5fWvyFMrD9g",
-          "title": "第93集: 张骞和丝绸之路 Zhang Qian and the Silk Road ",
-          "description": "(zh) short history of Zhang Qian and the Silk Road",
-          "eta": "24 mins  ETA: 179.13 seconds",
-          "thumbnail": "https://i.ytimg.com/vi/5fWvyFMrD9g/hqdefault.jpg",
-        },
-        {
-          "url": "https://www.youtube.com/shorts/Vz-stDkm0oc?feature=share",
-          "title": "shorts test video ",
-          "description": "(zh) short video to test shorts",
-          "eta": "19 seconds ETA: 40 seconds",
-          "thumbnail": "https://i.ytimg.com/vi/Vz-stDkm0oc/hqdefault.jpg",
-        }
-      ],
-      path: mdiCheckAll,
-      queue_number: 0, // Number of jobs in the queue
-      eta: 0, // Estimated time for the job
-      time_counter: 0, // Counter for the time elapsed
-      time_counter_interval: null, // Interval for the time counter
+      pathCheck: mdiCheckAll,
+      pathYoutube: mdiYoutube,
+      pathUpload: mdiCloudUpload,
+      queue_number: 0,
+      eta: 0,
+      time_counter: 0,
+      time_counter_interval: null,
     }
   },
   methods: {
-    async fetchWithGet() {
-      // Reset states before starting a new request
+    onFileSelected(event) {
+      if(event.target.files.length > 0) {
+        this.file = event.target.files[0]
+      }
+    },
+    async submitRequest() {
+      // Reset statuses
       this.error = null;
-      this.state = 'idle'; // Reset state
-      this.progress = 0; // Reset progress
-      this.queue_number = 0; // Reset queue number
-      this.eta = 0; // Reset ETA
-      this.time_counter = 0; // Reset time counter
-      if (this.jobStatusInterval) {
-        clearInterval(this.jobStatusInterval);
+      this.state = 'idle';
+      this.progress = 0;
+      this.queue_number = 0;
+      this.eta = 0;
+      this.time_counter = 0;
+      if (this.jobStatusInterval) clearInterval(this.jobStatusInterval);
+      if (this.time_counter_interval) clearInterval(this.time_counter_interval);
+
+      if (this.activeTab === 'youtube' && !this.url) {
+        this.error = 'Please enter a valid YouTube URL.'; return;
       }
-      if (this.time_counter_interval) {
-        clearInterval(this.time_counter_interval);
+      if (this.activeTab === 'local' && !this.file) {
+        this.error = 'Please select a file to upload.'; return;
       }
 
-      // Start the request
-      this.state = 'requesting'; // Set state to requesting
-
-      if (!this.url) {
-        this.error = 'Please enter a valid URL.';
-        return;
-      }
+      this.state = 'requesting';
 
       try {
-        const response = await fetch(
-          `https://api.amerai.top/lexiflow/jobs`,
-          {
-            method: 'POST',
-            mode: 'cors',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
+        if (this.activeTab === 'youtube') {
+          // Existing Process YouTube URL (UC04)
+          const response = await fetch(`https://api.amerai.top/lexiflow/jobs`, {
+            method: 'POST', mode: 'cors',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify({ url: this.url })
+          });
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          this.handleJobResponse(response);
+        } else {
+          // Local File Upload calling new Node.js endpoint
+          if (!this.localTitle.trim()) {
+            this.error = 'Title is required for local uploads.';
+            return;
           }
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          const formData = new FormData();
+          formData.append('file', this.file);
+          formData.append('title', this.localTitle);
+          
+          const response = await fetch(`https://api.amerai.top/lexiflow/upload`, {
+            method: 'POST', mode: 'cors',
+            body: formData
+          });
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          this.handleJobResponse(response);
         }
-        if (response.status === 200) {
-          const data = await response.json();
-          this.jsonData = data.result;
-          localStorage.setItem('subtitleJSON', JSON.stringify(this.jsonData));
-          this.state = 'completed'; // Set state to completed
-          this.progress = 100; // Set progress to 100% when completed
-          clearInterval(this.jobStatusInterval);
-          clearInterval(this.time_counter_interval);
-        }
-        else if (response.status === 201) {
-          const data = await response.json();
-          this.jobId = data.job_id;
-          if (data.queue_number > 0) {
-            this.state = 'queued'; // Set state to queued
-            this.queue_number = data.queue_number || 0; // Set queue number if available
-          } else {
-            this.state = 'processing'; // Set state to processing
-          }
-          this.eta = parseInt(data.eta) || 0;
-          this.startJobStatusPolling();
-          this.startTimeUpdatePolling();
-          console.log('data:', data);
-        }
-
       } catch (err) {
         this.error = err.message;
-        this.loading = false;
+      }
+    },
+    async handleJobResponse(response) {
+      const data = await response.json();
+      if (response.status === 200) {
+        this.jsonData = data.result;
+        localStorage.setItem('subtitleJSON', JSON.stringify(this.jsonData));
+        this.state = 'completed';
+        this.progress = 100;
+      } else if (response.status === 201) {
+        this.jobId = data.job_id;
+        if (data.queue_number > 0) {
+          this.state = 'queued';
+          this.queue_number = data.queue_number;
+        } else {
+          this.state = 'processing';
+        }
+        this.eta = parseInt(data.eta) || 0;
+        this.startJobStatusPolling();
+        this.startTimeUpdatePolling();
       }
     },
     startJobStatusPolling() {
       this.jobStatusInterval = setInterval(async () => {
         try {
-          const response = await fetch(
-            `https://api.amerai.top/lexiflow/jobs/${this.jobId}`,
-            {
-              mode: 'cors',
-              headers: {
-                'Accept': 'application/json',
-              }
-            }
-          );
-
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-
+          const response = await fetch(`https://api.amerai.top/lexiflow/jobs/${this.jobId}`, {
+            mode: 'cors', headers: { 'Accept': 'application/json' }
+          });
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
           const responseData = await response.json();
           this.progress = responseData.progress || 0;
 
           if (responseData.status === 'completed') {
             this.jsonData = responseData.result;
             localStorage.setItem('subtitleJSON', JSON.stringify(this.jsonData));
-            this.state = 'completed'; // Set state to completed
-            this.progress = 100; // Set progress to 100% when completed
-            clearInterval(this.jobStatusInterval);
-            clearInterval(this.time_counter_interval);
+            this.state = 'completed'; this.progress = 100;
+            this.cleanupIntervals();
           } else if (responseData.status === 'queued') {
-            this.state = 'queued'; // Set state to queued
-            this.queue_number = responseData.queue_number || 0; // Update queue number
-            this.eta = parseInt(responseData.eta) || 0; // Update ETA if available
+            this.state = 'queued'; this.queue_number = responseData.queue_number || 0;
+            this.eta = parseInt(responseData.eta) || 0;
           } else if (responseData.status === 'processing') {
-            this.state = 'processing'; // Set state to processing
-            this.eta = parseInt(responseData.eta) || 0; // Update ETA if available
-          }
-          else if (responseData.status === 'failed') {
+            this.state = 'processing'; this.eta = parseInt(responseData.eta) || 0;
+          } else if (responseData.status === 'failed') {
             this.error = responseData.error || 'Job failed';
-            this.state = 'idle'; // reSet state 
-            clearInterval(this.jobStatusInterval);
-            clearInterval(this.time_counter_interval);
+            this.state = 'idle'; this.cleanupIntervals();
           }
-        } catch (err) {
-          console.error('Error checking job status:', err);
-        }
-      }, this.fetchTimeInterval); // Check every 10 seconds
+        } catch (err) { console.error('Polling error', err); }
+      }, 10000);
     },
-
-    goToVideo() {
-      if (this.jsonData && this.url) {
-        // Navigate to the video page with the videoId
-
-        let videoId = this.youtube_parser(this.url);
-
-        console.log('Parsed Video ID:', videoId);
-        this.$router.push({ name: 'watch', params: { videoId: videoId } });
-      } else if (!this.url) {
-        alert('Please enter a valid URL.');
-      } else {
-        alert('No video data available. Please try again later.');
-      }
+    startMockJobStatusPolling() {
+      // Mock progress logic for UC05
+      this.jobStatusInterval = setInterval(() => {
+        if(this.state !== 'processing') return;
+        this.progress += Math.floor(Math.random() * 20);
+        if(this.progress >= 100) {
+          this.progress = 100;
+          this.state = 'completed';
+          this.jsonData = { dummy: true };
+          localStorage.setItem('subtitleJSON', JSON.stringify(this.jsonData));
+          this.cleanupIntervals(); 
+        }
+      }, 2000);
+    },
+    startTimeUpdatePolling() {
+      this.time_counter_interval = setInterval(() => { this.time_counter += 1; }, 1000);
+    },
+    cleanupIntervals() {
+      if (this.jobStatusInterval) clearInterval(this.jobStatusInterval);
+      if (this.time_counter_interval) clearInterval(this.time_counter_interval);
     },
     youtube_parser(url) {
-      // Regular YouTube URLs and shorts
-      var regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|shorts\/|watch\?v=|&v=)([^#&?]*).*/;
-      var match = url.match(regExp);
-
-      // Check if we found a video ID and it's the correct length (11 characters)
-      if (match && match[2].length === 11) {
-        return match[2];
-      }
-
-      // Try to match YouTube URL patterns that might have additional parameters
-      var altRegExp = /^.*(youtube\.com\/shorts\/|youtube\.com\/watch\?v=)([^#&?\/]*).*/;
-      var altMatch = url.match(altRegExp);
-
-      if (altMatch && altMatch[2].length === 11) {
-        return altMatch[2];
-      }
-
-      return false;
+      if(!url) return 'mock-video-id';
+      let regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|shorts\/|watch\?v=|&v=)([^#&?]*).*/;
+      let match = url.match(regExp);
+      if (match && match[2].length === 11) return match[2];
+      let altRegExp = /^.*(youtube\.com\/shorts\/|youtube\.com\/watch\?v=)([^#&?\/]*).*/;
+      let altMatch = url.match(altRegExp);
+      if (altMatch && altMatch[2].length === 11) return altMatch[2];
+      return 'mock-video-id';
     },
-    openVideo(url) {
-      this.url = url; // Set the URL to the clicked video
-      // clear any previous error or loading state
-      this.error = null;
-      this.state = 'idle'; // Reset state
-      this.progress = 0; // Reset progress
-      this.queue_number = 0; // Reset queue number
-      this.eta = 0; // Reset ETA
-      this.time_counter = 0; // Reset time counter
-      if (this.jobStatusInterval) {
-        clearInterval(this.jobStatusInterval);
-      }
-      if (this.time_counter_interval) {
-        clearInterval(this.time_counter_interval);
-      }
-    },
-
-    startTimeUpdatePolling() {
-      this.time_counter_interval = setInterval(async () => {
-        this.time_counter += 1; // Increment the time counter every second
-      }, 1000); // Check every 1 seconds
-    },
-
+    goToVideo() {
+      let videoId = 'mock-video-id';
+      if(this.activeTab === 'youtube') videoId = this.youtube_parser(this.url);
+      this.$router.push({ name: 'watch', params: { videoId: videoId } });
+    }
   },
   beforeUnmount() {
-    this.state = 'idle'; // Reset state
-    if (this.jobStatusInterval) {
-      clearInterval(this.jobStatusInterval);
-    }
-    if (this.time_counter_interval) {
-      clearInterval(this.time_counter_interval);
-    }
+    this.cleanupIntervals();
   },
   computed: {
-    progressMessage() {
-      if (this.progress <= 33) return `Downloading video... (${this.progress}%)`;
-      if (this.progress <= 66) return `Transcribing audio... (${this.progress}%)`;
-      return `Translating text... (${this.progress}%)`;
-    },
-    fetchTimeInterval() {
-      // if (this.progress <= 33) return 3000; // 2.5 seconds for downloading
-      return 10000; // 10 second for translating
-    },
     formatETA() {
       if (this.eta <= 0) return 'Calculating...';
       let remainingTime = this.eta - this.time_counter;
       if (remainingTime <= 0) remainingTime = 0;
       const minutes = Math.floor(remainingTime / 60);
       const seconds = remainingTime % 60;
-      return `${minutes} mins ${seconds.toFixed(2)} seconds`;
+      return `${minutes} mins ${seconds} seconds`;
     }
-  },
+  }
 }
 </script>
 
+<template>
+  <div class="request-page">
+    <div class="request-card glass-panel">
+      <h1 class="page-title">Request Content</h1>
+      <p class="subtitle">Process a YouTube video or upload a local file to generate subtitles.</p>
+
+      <div class="tabs">
+        <button class="tab-btn" :class="{ active: activeTab === 'youtube' }" @click="activeTab = 'youtube'">
+          <svg-icon type="mdi" :path="pathYoutube" class="tab-icon"></svg-icon> YouTube URL
+        </button>
+        <button class="tab-btn" :class="{ active: activeTab === 'local' }" @click="activeTab = 'local'">
+          <svg-icon type="mdi" :path="pathUpload" class="tab-icon"></svg-icon> Local File
+        </button>
+      </div>
+
+      <div class="input-section" v-if="state === 'idle' || state === 'requesting' || error">
+        <div v-if="activeTab === 'youtube'" class="youtube-mode">
+          <input v-model="url" placeholder="https://www.youtube.com/watch?v=..." class="input-base large-input" />
+        </div>
+        <div v-if="activeTab === 'local'" class="local-mode">
+          <input v-model="localTitle" placeholder="Title for local video" class="input-base large-input" style="margin-bottom: 1rem; width: 100%; box-sizing: border-box;" />
+          <label class="file-drop-zone">
+            <input type="file" @change="onFileSelected" accept="video/*,audio/*" class="file-input" />
+            <div class="drop-content">
+              <svg-icon type="mdi" :path="pathUpload" size="48" class="drop-icon"></svg-icon>
+              <div class="drop-text">{{ file ? file.name : 'Click to select a video or audio file' }}</div>
+            </div>
+          </label>
+        </div>
+
+        <div class="action-row">
+          <button @click="submitRequest" class="btn btn-primary btn-submit" :disabled="state === 'requesting'">
+            <span v-if="state === 'idle'">Process Content</span>
+            <span v-else class="spinner-inline"><hollow-dots-spinner :animation-duration="1000" :dot-size="8" :dots-num="3" color="#fff" /></span>
+          </button>
+        </div>
+        
+        <div v-if="error" class="error-msg">{{ error }}</div>
+      </div>
+
+      <!-- Progressive State UI -->
+      <div v-if="state === 'queued'" class="status-panel">
+        <div class="status-icon queued">🕒</div>
+        <h2>Queued</h2>
+        <p>Requests ahead: <strong>{{ queue_number }}</strong></p>
+        <p>Estimated Time: {{ formatETA }}</p>
+      </div>
+
+      <div v-if="state === 'processing' || state === 'completed'" class="status-panel">
+        <div class="progress-bar-container">
+          <div class="progress-fill" :style="{ width: progress + '%' }"></div>
+        </div>
+        <div class="progress-stages">
+          <div class="stage" :class="{ active: progress > 0, done: progress > 25 }">
+            <fingerprint-spinner v-if="progress <= 25 && state !== 'completed'" :size="32" color="var(--accent-primary)" />
+            <svg-icon v-else type="mdi" :path="pathCheck" size="32" class="check-icon"></svg-icon>
+            <span>Downloading</span>
+          </div>
+          <div class="stage" :class="{ active: progress > 25, done: progress > 50 }">
+            <fingerprint-spinner v-if="progress > 25 && progress <= 50" :size="32" color="var(--accent-primary)" />
+            <svg-icon v-else-if="progress > 50" type="mdi" :path="pathCheck" size="32" class="check-icon"></svg-icon>
+            <div v-else class="stage-placeholder"></div>
+            <span>Transcribing</span>
+          </div>
+          <div class="stage" :class="{ active: progress > 50, done: progress >= 100 }">
+            <fingerprint-spinner v-if="progress > 50 && progress < 100" :size="32" color="var(--accent-primary)" />
+            <svg-icon v-else-if="progress >= 100" type="mdi" :path="pathCheck" size="32" class="check-icon"></svg-icon>
+            <div v-else class="stage-placeholder"></div>
+            <span>Translating</span>
+          </div>
+        </div>
+
+        <p v-if="state === 'processing'" class="eta-text">ETA: {{ formatETA }}</p>
+
+        <div v-if="state === 'completed'" class="complete-action">
+          <button @click="goToVideo" class="btn btn-primary btn-large">Watch Video</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
 
 <style scoped>
-.request {
-  /* display: flex; */
-  /* flex-direction: column; */
-  /* align-items: center; */
-  /* justify-content: center; */
-  /* height: 100vh; */
-  /* background-color: #f0f0f0; */
-  margin: 50px;
-  width: 1280px;
-  /* padding-right: 300px; */
-}
-
-.urlInput {
-  width: 75%;
-  padding: 10px;
-  margin: 5px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.error {
-  color: red;
-}
-
-/* pre { */
-/* background: #f4f4f4; */
-/* padding: 10px; */
-/* border-radius: 5px; */
-/* } */
-
-.terminal-output {
-  height: 700px;
-  overflow-y: auto;
-  background: #000;
-  color: #0f0;
-  padding: 10px;
-  max-width: 75%;
-  font-family: monospace;
-  white-space: pre-wrap;
-}
-
-
-.progress-container {
-  width: 100%;
-  margin: 20px 0;
-}
-
-.progress-stage {
-  margin-bottom: 10px;
-  /* position: relative; */
+.request-page {
   display: flex;
-  flex-direction: row;
-  align-self: start;
-  /* justify-content: center; */
-  align-items: center;
-  min-height: 50px;
+  justify-content: center;
+  padding: 2rem 0;
 }
 
-.progress-text {
-  /* margin-top: 30px; */
-  min-width: 100px;
-  font-weight: bold;
-  /* text-align: center; */
-  margin-right: 20px;
+.request-card {
+  width: 100%;
+  max-width: 800px;
+  padding: 3rem;
+  text-align: center;
 }
 
-
-.sidebar {
-  position: fixed;
-  right: 0;
-  top: 0;
-  width: 300px;
-  /* height: 100vh; */
-  height: calc(100vh - 100px);
-  background: #1e1e1e;
-  /* Dark background */
-  /* border-left: 1px solid #333; */
-  /* Darker border */
-  border-radius: 16px;
-  padding: 20px;
-  overflow-y: auto;
-  /* box-shadow: -2px 0 10px rgba(0, 0, 0, 0.3); */
-  /* z-index: 100; */
-  margin-top: 50px;
-  margin-bottom: 50px;
-  margin-right: 40px;
-
+.subtitle {
+  color: var(--text-secondary);
+  margin-bottom: 2.5rem;
 }
 
-.sidebar-title {
-  margin: 0 0 20px 0;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #333;
-  color: #f0f0f0;
-  /* Light text */
-  font-size: 1.1rem;
-}
-
-.recommendations-list {
+.tabs {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  background: rgba(0,0,0,0.2);
+  padding: 0.5rem;
+  border-radius: var(--radius-lg);
 }
 
-.recommendation-card {
-  background: #2d2d2d;
-  /* Dark card background */
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-
-.recommendation-card:hover {
-  transform: translateX(-5px);
-  background: #3a3a3a;
-  /* Slightly lighter on hover */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-}
-
-.thumbnail-container {
-  position: relative;
-  width: 100%;
-  height: 160px;
-  overflow: hidden;
-}
-
-.thumbnail {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  filter: brightness(0.9);
-  /* Slightly darker thumbnails */
-}
-
-.play-icon {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(255, 255, 255, 0.2);
-  /* Lighter overlay */
-  backdrop-filter: blur(2px);
-  color: white;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+.tab-btn {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  gap: 0.5rem;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition);
 }
 
-.card-content {
-  padding: 12px;
+.tab-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.05);
 }
 
-.title {
-  margin: 0;
-  font-size: 0.95rem;
-  color: #f0f0f0;
-  /* Light text */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.tab-btn.active {
+  background: var(--bg-surface-light);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-md);
 }
 
-.description {
-  margin: 5px 0 0;
-  font-size: 0.8rem;
-  color: #aaa;
-  /* Lighter gray for description */
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+.large-input {
+  font-size: 1.25rem;
+  padding: 1.25rem;
+  text-align: center;
 }
 
-/* Scrollbar styling for dark mode */
-.sidebar::-webkit-scrollbar {
-  width: 8px;
+.file-drop-zone {
+  display: block;
+  width: 100%;
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 4rem 2rem;
+  cursor: pointer;
+  transition: var(--transition);
+  background: rgba(0,0,0,0.1);
 }
 
-.sidebar::-webkit-scrollbar-track {
-  background: #2d2d2d;
+.file-drop-zone:hover {
+  border-color: var(--accent-primary);
+  background: rgba(59, 130, 246, 0.05);
 }
 
-.sidebar::-webkit-scrollbar-thumb {
-  background: #555;
+.file-input {
+  display: none;
+}
+
+.drop-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  color: var(--text-secondary);
+}
+
+.drop-text {
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.action-row {
+  margin-top: 2rem;
+}
+
+.btn-submit {
+  width: 100%;
+  font-size: 1.25rem;
+  padding: 1rem;
+}
+
+.error-msg {
+  color: var(--danger);
+  margin-top: 1rem;
+  font-weight: 500;
+}
+
+/* Status Panels */
+.status-panel {
+  margin-top: 2rem;
+  padding: 2rem;
+  background: rgba(0,0,0,0.3);
+  border-radius: var(--radius-lg);
+}
+
+.progress-bar-container {
+  height: 8px;
+  background: rgba(255,255,255,0.1);
   border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 2rem;
 }
 
-.sidebar::-webkit-scrollbar-thumb:hover {
-  background: #666;
+.progress-fill {
+  height: 100%;
+  background: var(--accent-gradient);
+  transition: width 0.3s ease;
 }
 
+.progress-stages {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
 
-/* Responsive adjustments */
-@media (max-width: 1200px) {
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  color: var(--text-muted);
+}
 
-  .sidebar {
-    position: static;
-    width: 100%;
-    height: auto;
-    border-left: none;
-    border-bottom: 1px solid #e0e0e0;
-  }
+.stage.active { color: var(--accent-primary); }
+.stage.done { color: var(--success); }
+.stage-placeholder { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--border-color); }
+.check-icon { color: var(--success); }
 
-  .recommendations-list {
-    flex-direction: row;
-    overflow-x: auto;
-    padding-bottom: 10px;
-  }
+.eta-text {
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+}
 
-  .recommendation-card {
-    min-width: 200px;
-  }
+.complete-action {
+  margin-top: 2rem;
+}
+
+.btn-large {
+  font-size: 1.5rem;
+  padding: 1rem 3rem;
 }
 </style>

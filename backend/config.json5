@@ -86,7 +86,7 @@
     // The number of seconds before inactivate processes are terminated. Use 0 to close processes immediately, or None for no timeout.
     "vad_process_timeout": 1800,
     // True to use all available GPUs and CPU cores for processing. Use vad_cpu_cores/vad_parallel_devices to specify the number of CPU cores/GPUs to use.
-    "auto_parallel": true,
+    "auto_parallel": false,
     // Directory to save the outputs (CLI will use the current directory if not specified)
     "output_dir": "/home/amer/lexiflow/backend/temp",
     // The path to save model files; uses ~/.cache/whisper by default
@@ -126,9 +126,9 @@
     // If True, provide the previous output of the model as a prompt for the next window; disabling may make the text inconsistent across windows, but the model becomes less prone to getting stuck in a failure loop
     "condition_on_previous_text": true,
     // Whether to perform inference in fp16; True by default
-    "fp16": true,
+    "fp16": false,
     // The compute type used by faster-whisper. Can be "int8". "int16" or "float16".
-    "compute_type": "auto",
+    "compute_type": "float16",
     // Temperature to increase when falling back when the decoding fails to meet either of the thresholds below
     "temperature_increment_on_fallback": 0.2,
     // If the gzip compression ratio is higher than this value, treat the decoding as failed

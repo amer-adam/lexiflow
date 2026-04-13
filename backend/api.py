@@ -33,6 +33,7 @@ active_jobs = {}  # Format: {job_id: {"status": ..., "result": ...}}
 class JobRequest(BaseModel):
     url: str
     job_id: Optional[str] = None
+    is_local: bool = False
 
 
 class JobStatus(BaseModel):
@@ -158,7 +159,7 @@ async def start_processing(request: JobRequest) -> JobStatus:
     }
 
     # Run pipeline in background
-    asyncio.create_task(run_pipeline(job_id, request.url))
+    asyncio.create_task(run_pipeline(job_id, request.url, request.is_local))
     # asyncio.create_task(run_dummy_pipeline(job_id, request.url))
 
     return JobStatus(
@@ -167,14 +168,18 @@ async def start_processing(request: JobRequest) -> JobStatus:
     )
 
 
-async def run_pipeline(job_id: str, url: str):
+async def run_pipeline(job_id: str, url: str, is_local: bool = False):
     try:
         # 1. Download (33%)
         active_jobs[job_id].update({
             "progress": 25,
             "current_step": "download"
         })
-        file_path = await asyncio.to_thread(download_video, url, job_id)
+        
+        if is_local:
+            file_path = url
+        else:
+            file_path = await asyncio.to_thread(download_video, url, job_id)
 
         # 2. Transcribe (66%)
         active_jobs[job_id].update({
@@ -255,6 +260,22 @@ async def get_status(job_id: str) -> JobStatus:
     if job_id not in active_jobs:
         raise HTTPException(status_code=404, detail="Job not found")
     return JobStatus(job_id=job_id, **active_jobs[job_id])
+
+
+@app.get("/dictionary/{word}")
+async def fetch_dictionary_definition(word: str):
+    try:
+        from pycccedict.cccedict import CcCedict
+        cccedict = getattr(getattr(__import__("threading"), "local")(), "cccedict", None)
+        if not cccedict:
+            cccedict = CcCedict()
+        
+        entry = cccedict.get_entry(word)
+        if entry:
+            return {"word": word, "definitions": entry.get('definitions', [])}
+        return {"word": word, "definitions": []}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # Add CORS middleware if needed

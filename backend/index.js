@@ -4,10 +4,30 @@ const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 const cors = require('cors');
 const Agenda = require('agenda');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+const uploadDir = path.join(__dirname, 'temp');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, uploadDir)
+    },
+    filename: function (req, file, cb) {
+        cb(null, uuidv4() + path.extname(file.originalname))
+    }
+})
+
+const upload = multer({ storage: storage })
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use('/media', express.static(uploadDir));
 
 const PORT = 4556;
 
@@ -20,9 +40,38 @@ const JOBS_COLLECTION = 'jobs';
 const RESULTS_COLLECTION = 'results';
 const AGENDA_COLLECTION = 'agendaJobs';
 const PYTHON_API = 'http://localhost:4557';
-
-
 let db, jobsCollection, resultsCollection;
+
+const resolveYouTubeMetadata = async (url) => {
+    try {
+        const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+        const videoId = ytMatch ? ytMatch[1] : null;
+        let thumbnail = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : '';
+        let title = '';
+
+        try {
+            const { data } = await axios.get(url, { timeout: 5000 });
+            const titleMatch = data.match(/<title>(.*?)<\/title>/);
+            if (titleMatch && titleMatch[1]) {
+                title = titleMatch[1].replace(' - YouTube', '').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+            }
+        } catch (e) {
+            console.error(`[DEBUG] Error scraping title for ${url}:`, e.message);
+        }
+
+        return { title, thumbnail };
+    } catch (e) {
+        return { title: 'YouTube Video', thumbnail: '' };
+    }
+};
+
+const formatDuration = (seconds) => {
+    if (!seconds) return 'Unknown';
+    if (seconds < 60) return Math.round(seconds) + 's';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.round(seconds % 60);
+    return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+};
 
 // Job Queue System
 
@@ -34,11 +83,11 @@ const agenda = new Agenda({
 });
 
 agenda.define('process video', { concurrency: 1, lockLifetime: 200000 }, async (job) => {
-    const { jobId, url } = job.attrs.data;
+    const { jobId, url, duration, is_local, title } = job.attrs.data;
 
     try {
         // Start processing with Python API
-        const response = await axios.post(`${PYTHON_API}/process`, { url, job_id: jobId });
+        const response = await axios.post(`${PYTHON_API}/process`, { url, job_id: jobId, is_local: is_local || false });
 
         // Update job status in MongoDB
         await jobsCollection.updateOne(
@@ -93,6 +142,9 @@ async function monitorJobProgress(jobId, url) {
                             {
                                 $set: {
                                     job_id: jobId,
+                                    title: job.title || '',
+                                    thumbnail: job.thumbnail || '',
+                                    duration: job.duration || null,
                                     result: pythonStatus.data.result,
                                     created_at: new Date(),
                                     updated_at: new Date(),
@@ -240,9 +292,9 @@ async function connectToMongoDB() {
         await resultsCollection.createIndex({ url: 1 }, { unique: true });
         await jobsCollection.createIndex({ job_id: 1 }, { unique: true });
 
-        // Clear jobs table on start
-        await jobsCollection.deleteMany({});
-        await resultsCollection.deleteMany({});
+        // Clear jobs table on start (DISABLED)
+        // await jobsCollection.deleteMany({});
+        // await resultsCollection.deleteMany({});
 
 
         console.log('Connected to MongoDB');
@@ -300,12 +352,16 @@ app.post('/lexiflow/jobs', async (req, res) => {
         const duration = response.data.duration_seconds; // Duration in seconds
         if (duration <= 0) return res.status(400).json({ error: 'Invalid video duration' });
 
+        const { title, thumbnail } = await resolveYouTubeMetadata(url);
+
         const jobId = uuidv4();
         const job = {
             job_id: jobId,
             url: url,
             status: 'created',
             duration: duration,
+            title: title,
+            thumbnail: thumbnail,
             progress: 0,
             current_step: null,
             created_at: new Date(),
@@ -315,7 +371,7 @@ app.post('/lexiflow/jobs', async (req, res) => {
 
         await jobsCollection.insertOne(job);
 
-        await agenda.now('process video', { jobId, url, duration });
+        await agenda.now('process video', { jobId, url, duration, title, thumbnail });
 
         const [eta, queueNumber] = await estimateWaitTime(jobId);
         console.log(`queue ${queueNumber}: eta ${eta} seconds`);
@@ -326,6 +382,8 @@ app.post('/lexiflow/jobs', async (req, res) => {
             queue_number: queueNumber,
             eta: eta,
             progress: 0,
+            title: title,
+            thumbnail: thumbnail,
             current_step: null
         });
 
@@ -348,7 +406,8 @@ app.get('/lexiflow/jobs/:jobId', async (req, res) => {
             status: job.status,
             progress: job.progress || 0,
             current_step: job.current_step || null,
-            result: job.result || null
+            result: job.result || null,
+            url: job.url || null
         };
 
 
@@ -390,6 +449,126 @@ app.get('/lexiflow/jobs/:jobId', async (req, res) => {
         // }
 
         res.status(500).json({ error: 'Failed to get job status' });
+    }
+});
+
+// New Endpoint: Upload local content
+app.post('/lexiflow/upload', upload.single('file'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        const filePath = req.file.path;
+        // User must insert their title directly from frontend
+        const title = req.body.title || req.file.originalname;
+        const durationStr = req.body.duration || '60';
+        let duration = parseInt(durationStr, 10);
+        if (isNaN(duration) || duration <= 0) duration = 60;
+
+        const jobId = uuidv4();
+        const job = {
+            job_id: jobId,
+            url: filePath,
+            is_local: true,
+            title: title,
+            status: 'created',
+            duration: duration,
+            progress: 0,
+            current_step: null,
+            created_at: new Date(),
+            updated_at: new Date(),
+            result: null
+        };
+
+        await jobsCollection.insertOne(job);
+        await agenda.now('process video', { jobId, url: filePath, duration, is_local: true, title });
+
+        const [eta, queueNumber] = await estimateWaitTime(jobId);
+
+        res.status(201).json({
+            job_id: jobId,
+            status: 'queued',
+            queue_number: queueNumber,
+            eta: eta,
+            progress: 0,
+            title: title,
+            current_step: null
+        });
+    } catch (error) {
+        console.error('Error uploading job:', error);
+        res.status(500).json({ error: 'Failed to upload job' });
+    }
+});
+
+// New Endpoint: Fetch library videos
+app.get('/lexiflow/library', async (req, res) => {
+    try {
+        const results = await resultsCollection.find({}).sort({ updated_at: -1 }).toArray();
+        const response = results.map(r => ({
+            id: r.job_id,
+            url: r.url,
+            title: r.title || 'Local Document or Unknown Title',
+            description: r.result?.description || '',
+            thumbnail: r.thumbnail || r.result?.thumbnail || '',
+            dateAdded: r.created_at ? new Date(r.created_at).toISOString().split('T')[0] : 'Unknown',
+            duration: formatDuration(r.duration || r.result?.duration),
+            progress: 100
+        }));
+        res.json(response);
+    } catch (error) {
+        console.error('Error fetching library:', error);
+        res.status(500).json({ error: 'Failed to fetch library' });
+    }
+});
+
+// New Endpoint: Fetch dictionary definition
+app.get('/lexiflow/dictionary', async (req, res) => {
+    const { word } = req.query;
+    if (!word) return res.status(400).json({ error: "Word parameter is required" });
+    try {
+        const response = await axios.get(`${PYTHON_API}/dictionary/${encodeURIComponent(word)}`);
+        res.json(response.data);
+    } catch (error) {
+        console.error('Error hitting python dictionary:', error.message);
+        res.status(500).json({ error: 'Failed to find in dictionary' });
+    }
+});
+
+// New Endpoint: Search word in translated subtitles
+app.get('/lexiflow/search', async (req, res) => {
+    const { word } = req.query;
+    if (!word) return res.status(400).json({ error: "Word parameter is required" });
+    try {
+        const query = {
+            $or: [
+                { "result.segments.text": { $regex: word, $options: "i" } },
+                { "result.segments.translated_text": { $regex: word, $options: "i" } },
+                { "result.segments.pinyin": { $regex: word, $options: "i" } }
+            ]
+        };
+        const results = await resultsCollection.find(query).toArray();
+        let matchedSegments = [];
+        results.forEach(r => {
+            if (r.result && r.result.segments) {
+                const matches = r.result.segments.filter(s =>
+                    (s.text && s.text.includes(word)) ||
+                    (s.translated_text && s.translated_text.toLowerCase().includes(word.toLowerCase())) ||
+                    (s.pinyin && s.pinyin.toLowerCase().includes(word.toLowerCase()))
+                );
+                matches.forEach(m => {
+                    matchedSegments.push({
+                        job_id: r.job_id,
+                        title: r.title || r.result?.title || 'Unknown Title',
+                        segment: m
+                    });
+                });
+            }
+        });
+        res.json({ results: matchedSegments });
+    } catch (error) {
+        console.error('Error querying subtitles:', error);
+        res.status(500).json({ error: 'Failed to query subtitles' });
     }
 });
 

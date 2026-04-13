@@ -1,6 +1,7 @@
 <template>
   <div class="video-box">
-    <div ref="youtubePlayer" id="youtube-player"></div>
+    <div v-show="isYoutube" ref="youtubePlayer" id="youtube-player"></div>
+    <video v-if="!isYoutube" class="video-native" ref="htmlPlayer" :src="parsedMediaUrl" controls @timeupdate="onHtmlTimeUpdate"></video>
   </div>
 </template>
 
@@ -8,7 +9,7 @@
 export default {
   name: 'VideoBox',
   props: {
-    videoId: {
+    videoUrl: {
       type: String,
       required: true
     }
@@ -19,8 +20,25 @@ export default {
       timeUpdateInterval: null
     };
   },
+  computed: {
+    isYoutube() {
+      return this.videoUrl && !!this.videoUrl.match(/(?:youtube\.com|youtu\.be)/);
+    },
+    youtubeId() {
+      if (!this.isYoutube) return null;
+      const ytMatch = this.videoUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+      return ytMatch ? ytMatch[1] : null;
+    },
+    parsedMediaUrl() {
+      if (this.isYoutube) return null;
+      const fileName = this.videoUrl.split('/').pop().split('\\').pop();
+      return `https://api.amerai.top/media/${fileName}`;
+    }
+  },
   mounted() {
-    this.loadYouTubeAPI();
+    if (this.isYoutube && this.youtubeId) {
+      this.loadYouTubeAPI();
+    }
   },
   methods: {
     loadYouTubeAPI() {
@@ -45,7 +63,7 @@ export default {
       this.player = new window.YT.Player(this.$refs.youtubePlayer, {
         height: '100%',
         width: '100%',
-        videoId: this.videoId,
+        videoId: this.youtubeId,
         playerVars: {
           autoplay: 0,
           modestbranding: 1,
@@ -87,6 +105,11 @@ export default {
         const currentTime = this.player.getCurrentTime();
         this.$emit('time-update', currentTime);
       }
+    },
+    onHtmlTimeUpdate() {
+      if (this.$refs.htmlPlayer) {
+        this.$emit('time-update', this.$refs.htmlPlayer.currentTime);
+      }
     }
   },
   beforeDestroy() {
@@ -96,10 +119,10 @@ export default {
     }
   },
   watch: {
-    videoId(newId) {
-      if (newId && this.player) {
+    videoUrl(newUrl) {
+      if (this.isYoutube && this.youtubeId && this.player) {
         this.player.loadVideoById({
-          videoId: newId,
+          videoId: this.youtubeId,
           startSeconds: this.startTime
         });
       }
@@ -130,6 +153,12 @@ export default {
   width: 100%;
   height: 100%;
   border: none;
+}
+
+.video-native {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
 }
 
 .no-video {

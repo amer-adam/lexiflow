@@ -1,82 +1,123 @@
-<script>
-import SubBox from '@/components/SubBox.vue';
-import VideoBox from '@/components/VideoBox.vue';
-import CharacterDisplay from '@/components/CharacterDisplay.vue';
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import VideoBox from '@/components/VideoBox.vue'
+import CharacterDisplay from '@/components/CharacterDisplay.vue'
+import DictionarySearch from '@/components/DictionarySearch.vue'
 
-export default {
-  components: {
-    VideoBox,
-    SubBox, 
-    CharacterDisplay,
+const props = defineProps({
+  videoId: {
+    type: String,
+    default: '9FNRb71akL4',
   },
-  props: {
-    videoId: {
-      type: String,
-      default: '9FNRb71akL4', // Default video ID if not provided
-    },
-  },
-  data() {
-    return {
-      // currentVideoId: this.$route.params.videoId? this.$route.params.videoId : '9FNRb71akL4', // Default video ID if not provided
-      currentTime: 0.0,
-      subtitlesJson: { segments: [] }, // Initialize with empty segments
-    };
-  },
-  methods: {
-    handleTimeUpdate(time) {
-      this.currentTime = time;
-    },
-  },
-  async mounted() {
-    const storedSubtitles = localStorage.getItem(`subtitleJSON`);
-    if (storedSubtitles) {
-      this.subtitlesJson = JSON.parse(storedSubtitles);
-      console.log('Subtitles loaded from localStorage:', this.subtitlesJson);
+})
+
+const currentTime = ref(0.0)
+const subtitlesJson = ref({ segments: [] })
+const videoUrl = ref(null)
+
+const handleTimeUpdate = (time) => {
+  currentTime.value = time
+}
+
+onMounted(async () => {
+  try {
+    const res = await fetch(`https://api.amerai.top/lexiflow/jobs/${props.videoId}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.result) {
+        subtitlesJson.value = data.result;
+        videoUrl.value = data.url;
+        return;
+      }
     }
-  },
-  computed: {
-    currentText() {
-      if (!this.subtitlesJson?.segments || this.subtitlesJson.segments.length === 0) return '';
-
-      const currentSegment = this.subtitlesJson.segments.find(segment =>
-        this.currentTime >= segment.start && this.currentTime < segment.end
-      );
-
-      return currentSegment?.characters || {};
-    },
-    currentTranslation() {
-      if (!this.subtitlesJson?.segments || this.subtitlesJson.segments.length === 0) return '';
-
-      const currentSegment = this.subtitlesJson.segments.find(segment =>
-        this.currentTime >= segment.start && this.currentTime < segment.end
-      );
-
-      return currentSegment?.translated_text || '';
-    },
+  } catch (err) {
+    console.error("Failed to fetch job from backend", err);
   }
 
-};
+  // Fallback to local storage
+  const storedSubtitles = localStorage.getItem(`subtitleJSON`)
+  if (storedSubtitles) {
+    try {
+      subtitlesJson.value = JSON.parse(storedSubtitles)
+    } catch(e) {
+      console.error(e)
+    }
+  }
+})
+
+const currentSegment = computed(() => {
+  if (!subtitlesJson.value?.segments || subtitlesJson.value.segments.length === 0) return null
+  return subtitlesJson.value.segments.find(segment =>
+    currentTime.value >= segment.start && currentTime.value < segment.end
+  )
+})
+
+const currentText = computed(() => {
+  return currentSegment.value?.characters || {}
+})
+
+const currentTranslation = computed(() => {
+  return currentSegment.value?.translated_text || ''
+})
 </script>
 
 <template>
-  <div class="watch">
-    <VideoBox :videoId=videoId @time-update="handleTimeUpdate" />
-    <!-- <SubBox :subtitle=currentText /> -->
-    <CharacterDisplay :characters="currentText" :translated_text="currentTranslation"/>
-    <!-- <SubBox v-if="showPinyin" :subtitle=currentPinyin /> -->
-    <!-- <SubBox :subtitle=currentTranslation /> -->
+  <div class="watch-page">
+    <div class="watch-layout">
+      <!-- Player column -->
+      <div class="main-column">
+        <div class="video-container glass-panel">
+          <VideoBox v-if="videoUrl" :videoUrl="videoUrl" @time-update="handleTimeUpdate" />
+        </div>
+        
+        <div class="subtitles-container" v-show="subtitlesJson.segments && subtitlesJson.segments.length > 0">
+          <CharacterDisplay :characters="currentText" :translated_text="currentTranslation" />
+        </div>
+      </div>
+      
+      <!-- Interactive Sidebar -->
+      <div class="sidebar-column">
+        <DictionarySearch />
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.watch {
-  /* display: flex; */
-  /* flex-direction: column; */
-  /* align-items: center; */
-  /* justify-content: center; */
-  /* height: 100vh; */
-  /* background-color: #f0f0f0; */
-  margin: 50px;
-  width: 1280px;
+.watch-page {
+  padding: 1rem 0;
+  width: 100%;
+}
+
+.watch-layout {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .watch-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.main-column {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.video-container {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  padding: 0;
+}
+
+.subtitles-container {
+  width: 100%;
 }
 </style>
