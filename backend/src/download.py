@@ -29,12 +29,21 @@ def _perform_download(url: str, maxDuration: int = None, outputTemplate: str = N
     if destinationDirectory is None:
         destinationDirectory = mkdtemp()
 
+    import shutil
+    node_path = shutil.which("node")
+
     ydl_opts = {
         "format": "bestaudio/best",
         'paths': {
             'home': destinationDirectory
-        }
+        },
+        'remote_components': ['ejs:github']
     }
+
+    if node_path:
+        ydl_opts['js_runtimes'] = {'node': {'path': node_path}}
+    else:
+        ydl_opts['js_runtimes'] = {'node': {}}
     if (playlistItems):
         ydl_opts['playlist_items'] = playlistItems
 
@@ -101,11 +110,20 @@ def get_duration(url: str) -> float:
         ValueError: If the input is not a valid URL/ID
     """
     
+    import shutil
+    node_path = shutil.which("node")
+    
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
         'extract_flat': True,
+        'remote_components': ['ejs:github']
     }
+    
+    if node_path:
+        ydl_opts['js_runtimes'] = {'node': {'path': node_path}}
+    else:
+        ydl_opts['js_runtimes'] = {'node': {}}
     
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)

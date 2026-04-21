@@ -69,6 +69,7 @@ async def get_video_duration(request: DurationRequest) -> DurationResponse:
             success=True
         )
     except Exception as e:
+        print(f"Error getting duration: {e}")
         return DurationResponse(
             url=url,
             duration_seconds=0,

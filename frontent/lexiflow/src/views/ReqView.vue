@@ -106,6 +106,9 @@ export default {
         localStorage.setItem('subtitleJSON', JSON.stringify(this.jsonData));
         this.state = 'completed';
         this.progress = 100;
+        if (data.from_cache) {
+          alert("This video was found in the library and loaded immediately.");
+        }
       } else if (response.status === 201) {
         this.jobId = data.job_id;
         if (data.queue_number > 0) {

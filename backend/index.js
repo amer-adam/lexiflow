@@ -43,11 +43,17 @@ const USER_VIDEOS_COLLECTION = 'user_videos';
 const PYTHON_API = 'http://localhost:4557';
 let db, jobsCollection, resultsCollection, userVideosCollection;
 
+const extractVideoId = (url) => {
+    if (!url) return null;
+    const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+    return ytMatch ? ytMatch[1] : url;
+};
+
 const resolveYouTubeMetadata = async (url) => {
     try {
-        const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
-        const videoId = ytMatch ? ytMatch[1] : null;
-        let thumbnail = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : '';
+        const videoId = extractVideoId(url);
+        // Ensure we only use it nicely if it's exactly 11 chars
+        let thumbnail = (videoId && videoId.length === 11) ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : '';
         let title = '';
 
         try {
@@ -83,7 +89,7 @@ const agenda = new Agenda({
     defaultConcurrency: 1,    // Max concurrency per job type
 });
 
-agenda.define('process video', { concurrency: 1, lockLifetime: 200000 }, async (job) => {
+agenda.define('process video', { concurrency: 1, lockLifetime: 3600000 }, async (job) => {
     const { jobId, url, duration, is_local, title } = job.attrs.data;
 
     try {
@@ -139,10 +145,12 @@ async function monitorJobProgress(jobId, url) {
                     const job = await jobsCollection.findOne({ job_id: jobId });
                     if (job && job.url) {
                         await resultsCollection.updateOne(
-                            { url: job.url },
+                            { video_id: job.video_id || extractVideoId(job.url) },
                             {
                                 $set: {
                                     job_id: jobId,
+                                    video_id: job.video_id || extractVideoId(job.url),
+                                    url: job.url,
                                     title: job.title || '',
                                     thumbnail: job.thumbnail || '',
                                     duration: job.duration || null,
@@ -175,12 +183,14 @@ async function checkJobInQueue(url) {
     let totalETA = 0;
     for (let i = 0; i < queuedJobs.length; i++) {
         const job = queuedJobs[i];
-        const jobUrl = job.attrs.data?.url;
+        const jobVideoId = job.attrs.data?.video_id || extractVideoId(job.attrs.data?.url);
+        const urlVideoId = extractVideoId(url);
+
         const jobDuration = job.attrs.data?.duration || 60;
         const jobMinutes = jobDuration / 60;
         const jobETA = Math.ceil(jobMinutes * 15);
 
-        if (jobUrl === url) {
+        if (jobVideoId === urlVideoId && urlVideoId !== null) {
             return {
                 found: true,
                 eta: totalETA,
@@ -198,12 +208,14 @@ async function checkJobInQueue(url) {
         nextRunAt: null
     });
     for await (const job of jobsActive) {
-        const jobUrl = job.data?.url;
+        const jobVideoId = job.data?.video_id || extractVideoId(job.data?.url);
+        const urlVideoId = extractVideoId(url);
+
         const jobDuration = job.data?.duration || 60; // fallback to 1 min if missing
         const jobMinutes = jobDuration / 60;
         const jobETA = Math.ceil(jobMinutes * PROCESSING_RATE);
 
-        if (jobUrl === url) {
+        if (jobVideoId === urlVideoId && urlVideoId !== null) {
             return {
                 found: true,
                 eta: totalETA,
@@ -306,13 +318,13 @@ async function connectToMongoDB() {
         userVideosCollection = db.collection(USER_VIDEOS_COLLECTION);
 
         // Create indexes
-        await resultsCollection.createIndex({ url: 1 }, { unique: true });
+        await resultsCollection.createIndex({ video_id: 1 }, { unique: true });
         await jobsCollection.createIndex({ job_id: 1 }, { unique: true });
         await userVideosCollection.createIndex({ user_id: 1, job_id: 1 }, { unique: true });
 
         // Clear jobs table on start (DISABLED)
-        // await jobsCollection.deleteMany({});
-        // await resultsCollection.deleteMany({});
+        await jobsCollection.deleteMany({});
+        await resultsCollection.deleteMany({});
 
 
         console.log('Connected to MongoDB');
@@ -335,8 +347,10 @@ app.post('/lexiflow/jobs', async (req, res) => {
         const { url, user_id, is_private } = req.body;
         if (!url) return res.status(400).json({ error: 'URL is required' });
 
-        // Check if we already have a result for this URL
-        const existingResult = await resultsCollection.findOne({ url });
+        const videoId = extractVideoId(url);
+
+        // Check if we already have a result for this URL matches 
+        const existingResult = await resultsCollection.findOne({ video_id: videoId });
         if (existingResult) {
             await linkUserToVideo(existingResult.job_id, user_id, is_private);
             return res.status(200).json({
@@ -349,7 +363,7 @@ app.post('/lexiflow/jobs', async (req, res) => {
         }
 
 
-        const jobQueue = await jobsCollection.findOne({ url });
+        const jobQueue = await jobsCollection.findOne({ video_id: videoId });
         if (jobQueue) {
             // Check if job is already in queue
             const existingJob = await checkJobInQueue(url);
@@ -375,6 +389,7 @@ app.post('/lexiflow/jobs', async (req, res) => {
         const jobId = uuidv4();
         const job = {
             job_id: jobId,
+            video_id: videoId,
             url: url,
             status: 'created',
             duration: duration,
@@ -390,7 +405,7 @@ app.post('/lexiflow/jobs', async (req, res) => {
         await jobsCollection.insertOne(job);
         await linkUserToVideo(jobId, user_id, is_private);
 
-        await agenda.now('process video', { jobId, url, duration, title, thumbnail });
+        await agenda.now('process video', { jobId, url, video_id: videoId, duration, title, thumbnail });
 
         const [eta, queueNumber] = await estimateWaitTime(jobId);
         console.log(`queue ${queueNumber}: eta ${eta} seconds`);
@@ -490,6 +505,7 @@ app.post('/lexiflow/upload', upload.single('file'), async (req, res) => {
         const jobId = uuidv4();
         const job = {
             job_id: jobId,
+            video_id: videoId,
             url: filePath,
             is_local: true,
             title: title,
@@ -504,7 +520,7 @@ app.post('/lexiflow/upload', upload.single('file'), async (req, res) => {
 
         await jobsCollection.insertOne(job);
         await linkUserToVideo(jobId, user_id, is_private);
-        await agenda.now('process video', { jobId, url: filePath, duration, is_local: true, title });
+        await agenda.now('process video', { jobId, url: filePath, video_id: videoId, duration, is_local: true, title });
 
         const [eta, queueNumber] = await estimateWaitTime(jobId);
 
