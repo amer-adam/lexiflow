@@ -1,8 +1,12 @@
 <script setup>
+import { ref } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
 
 const { isAuthenticated, loginWithRedirect, logout, user, isLoading } = useAuth0()
+
+// Floating Chinese characters for background ambiance
+const floatingChars = ['学', '语', '流', '词', '音', '字', '识', '言', '读', '译', '听', '书']
 
 const handleLogin = () => {
   loginWithRedirect()
@@ -15,6 +19,22 @@ const handleLogout = () => {
 
 <template>
   <div class="app-container">
+    <!-- Floating background characters (global) -->
+    <div class="float-bg" aria-hidden="true">
+      <span
+        v-for="(ch, i) in floatingChars"
+        :key="i"
+        class="float-char"
+        :style="{
+          left: (7 + i * 8) + '%',
+          animationDelay: (i * 0.6) + 's',
+          animationDuration: (10 + i % 4 * 2.5) + 's',
+          fontSize: (1.5 + i % 3 * 0.8) + 'rem',
+          opacity: 0.04 + (i % 5) * 0.012
+        }"
+      >{{ ch }}</span>
+    </div>
+
     <header class="topbar glass-panel">
       <div class="logo">
         <RouterLink to="/">LexiFlow</RouterLink>
@@ -54,6 +74,30 @@ const handleLogout = () => {
 </template>
 
 <style scoped>
+/* ── Floating BG characters ── */
+.float-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.float-char {
+  position: absolute;
+  color: var(--text-primary);
+  font-family: 'Outfit', serif;
+  animation: floatUp linear infinite;
+  user-select: none;
+}
+
+@keyframes floatUp {
+  0%   { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+  5%   { opacity: 1; }
+  95%  { opacity: 1; }
+  100% { transform: translateY(-20vh) rotate(20deg); opacity: 0; }
+}
+
 .topbar {
   display: flex;
   align-items: center;

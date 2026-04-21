@@ -12,6 +12,10 @@ export default {
     videoUrl: {
       type: String,
       required: true
+    },
+    startTime: {
+      type: Number,
+      default: 0
     }
   },
   data() {
@@ -119,17 +123,30 @@ export default {
     }
   },
   watch: {
-    videoUrl(newUrl) {
-      if (this.isYoutube && this.youtubeId && this.player) {
-        this.player.loadVideoById({
-          videoId: this.youtubeId,
-          startSeconds: this.startTime
-        });
+    videoUrl(newUrl, oldUrl) {
+      if (!newUrl) return;
+      if (this.isYoutube && this.youtubeId) {
+        if (this.player && this.player.loadVideoById) {
+          this.player.loadVideoById({
+            videoId: this.youtubeId,
+            startSeconds: this.startTime
+          });
+        } else {
+          this.loadYouTubeAPI();
+        }
+      } else if (this.$refs.htmlPlayer) {
+        // For local files, seek to startTime once the new source loads
+        this.$refs.htmlPlayer.addEventListener('loadeddata', () => {
+          this.$refs.htmlPlayer.currentTime = this.startTime || 0;
+        }, { once: true });
       }
     },
     startTime(newTime) {
       if (this.player && this.player.seekTo) {
         this.player.seekTo(newTime, true);
+      }
+      if (this.$refs.htmlPlayer) {
+        this.$refs.htmlPlayer.currentTime = newTime;
       }
     }
   }

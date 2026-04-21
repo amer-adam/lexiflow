@@ -39,8 +39,9 @@ const DB_NAME = 'lexiflow';
 const JOBS_COLLECTION = 'jobs';
 const RESULTS_COLLECTION = 'results';
 const AGENDA_COLLECTION = 'agendaJobs';
+const USER_VIDEOS_COLLECTION = 'user_videos';
 const PYTHON_API = 'http://localhost:4557';
-let db, jobsCollection, resultsCollection;
+let db, jobsCollection, resultsCollection, userVideosCollection;
 
 const resolveYouTubeMetadata = async (url) => {
     try {
@@ -279,6 +280,21 @@ async function estimateWaitTime(jobId) {
     return [totalETA, jobsAheadCount]; // in seconds
 }
 
+// Normalize is_private regardless of how it was stored (bool, string, etc.)
+function isActuallyPrivate(val) {
+    return val === true || val === 'true' || val === 1;
+}
+
+async function linkUserToVideo(jobId, userId, isPrivate) {
+    if (!userId) return;
+    const isPrivateBool = isPrivate === 'true' || isPrivate === true;
+    await userVideosCollection.updateOne(
+        { user_id: userId, job_id: jobId },
+        { $set: { is_private: isPrivateBool, updated_at: new Date() } },
+        { upsert: true }
+    );
+}
+
 
 async function connectToMongoDB() {
     const client = new MongoClient(MONGO_URI);
@@ -287,10 +303,12 @@ async function connectToMongoDB() {
         db = client.db(DB_NAME);
         jobsCollection = db.collection(JOBS_COLLECTION);
         resultsCollection = db.collection(RESULTS_COLLECTION);
+        userVideosCollection = db.collection(USER_VIDEOS_COLLECTION);
 
         // Create indexes
         await resultsCollection.createIndex({ url: 1 }, { unique: true });
         await jobsCollection.createIndex({ job_id: 1 }, { unique: true });
+        await userVideosCollection.createIndex({ user_id: 1, job_id: 1 }, { unique: true });
 
         // Clear jobs table on start (DISABLED)
         // await jobsCollection.deleteMany({});
@@ -314,13 +332,13 @@ async function connectToMongoDB() {
 // Create a new processing job or return existing result
 app.post('/lexiflow/jobs', async (req, res) => {
     try {
-        const { url } = req.body; // Now expecting duration in minutes
+        const { url, user_id, is_private } = req.body;
         if (!url) return res.status(400).json({ error: 'URL is required' });
-
 
         // Check if we already have a result for this URL
         const existingResult = await resultsCollection.findOne({ url });
         if (existingResult) {
+            await linkUserToVideo(existingResult.job_id, user_id, is_private);
             return res.status(200).json({
                 job_id: existingResult.job_id,
                 status: 'completed',
@@ -336,11 +354,11 @@ app.post('/lexiflow/jobs', async (req, res) => {
             // Check if job is already in queue
             const existingJob = await checkJobInQueue(url);
             if (existingJob.found) {
-                console.log(job.job_id);
+                await linkUserToVideo(jobQueue.job_id, user_id, is_private);
                 return res.status(201).json({
                     status: 'queued',
                     eta: existingJob.eta,
-                    job_id: job.job_id,
+                    job_id: jobQueue.job_id,
                     queue_position: existingJob.position,
                     message: 'This URL is already in the queue'
                 });
@@ -370,6 +388,7 @@ app.post('/lexiflow/jobs', async (req, res) => {
         };
 
         await jobsCollection.insertOne(job);
+        await linkUserToVideo(jobId, user_id, is_private);
 
         await agenda.now('process video', { jobId, url, duration, title, thumbnail });
 
@@ -463,6 +482,8 @@ app.post('/lexiflow/upload', upload.single('file'), async (req, res) => {
         // User must insert their title directly from frontend
         const title = req.body.title || req.file.originalname;
         const durationStr = req.body.duration || '60';
+        const user_id = req.body.user_id;
+        const is_private = req.body.is_private;
         let duration = parseInt(durationStr, 10);
         if (isNaN(duration) || duration <= 0) duration = 60;
 
@@ -482,6 +503,7 @@ app.post('/lexiflow/upload', upload.single('file'), async (req, res) => {
         };
 
         await jobsCollection.insertOne(job);
+        await linkUserToVideo(jobId, user_id, is_private);
         await agenda.now('process video', { jobId, url: filePath, duration, is_local: true, title });
 
         const [eta, queueNumber] = await estimateWaitTime(jobId);
@@ -504,17 +526,52 @@ app.post('/lexiflow/upload', upload.single('file'), async (req, res) => {
 // New Endpoint: Fetch library videos
 app.get('/lexiflow/library', async (req, res) => {
     try {
-        const results = await resultsCollection.find({}).sort({ updated_at: -1 }).toArray();
-        const response = results.map(r => ({
-            id: r.job_id,
-            url: r.url,
-            title: r.title || 'Local Document or Unknown Title',
-            description: r.result?.description || '',
-            thumbnail: r.thumbnail || r.result?.thumbnail || '',
-            dateAdded: r.created_at ? new Date(r.created_at).toISOString().split('T')[0] : 'Unknown',
-            duration: formatDuration(r.duration || r.result?.duration),
-            progress: 100
-        }));
+        const { user_id } = req.query;
+        let results = await resultsCollection.find({}).sort({ updated_at: -1 }).toArray();
+
+        const allLinks = await userVideosCollection.find({}).toArray();
+        const linkedJobIds = new Set(allLinks.map(l => l.job_id));
+        const publicJobIds = new Set();
+        const userJobIds = new Set();
+        const userJobPrivacy = {};
+
+        allLinks.forEach(link => {
+            // Only treat as private when is_private is unambiguously true
+            if (!isActuallyPrivate(link.is_private)) {
+                publicJobIds.add(link.job_id);
+            }
+            if (user_id && link.user_id === user_id) {
+                userJobIds.add(link.job_id);
+                userJobPrivacy[link.job_id] = isActuallyPrivate(link.is_private);
+            }
+        });
+
+        results = results.filter(r => {
+            if (!linkedJobIds.has(r.job_id)) return true; // Legacy / no ownership record = public
+            // A video is accessible if it is public OR the requesting user explicitly requested it
+            return publicJobIds.has(r.job_id) || userJobIds.has(r.job_id);
+        });
+
+        const response = results.map(r => {
+            let is_private = false;
+            // Check if this job is private specifically for this user
+            if (userJobPrivacy[r.job_id] !== undefined) {
+                is_private = userJobPrivacy[r.job_id];
+            }
+
+            return {
+                id: r.job_id,
+                url: r.url,
+                title: r.title || 'Local Document or Unknown Title',
+                description: r.result?.description || '',
+                thumbnail: r.thumbnail || r.result?.thumbnail || '',
+                dateAdded: r.created_at ? new Date(r.created_at).toISOString().split('T')[0] : 'Unknown',
+                duration: formatDuration(r.duration || r.result?.duration),
+                progress: 100,
+                is_private: is_private,
+                requested_by_user: userJobIds.has(r.job_id)
+            }
+        });
         res.json(response);
     } catch (error) {
         console.error('Error fetching library:', error);
@@ -537,7 +594,7 @@ app.get('/lexiflow/dictionary', async (req, res) => {
 
 // New Endpoint: Search word in translated subtitles
 app.get('/lexiflow/search', async (req, res) => {
-    const { word } = req.query;
+    const { word, user_id } = req.query;
     if (!word) return res.status(400).json({ error: "Word parameter is required" });
     try {
         const query = {
@@ -547,7 +604,30 @@ app.get('/lexiflow/search', async (req, res) => {
                 { "result.segments.pinyin": { $regex: word, $options: "i" } }
             ]
         };
-        const results = await resultsCollection.find(query).toArray();
+        let results = await resultsCollection.find(query).toArray();
+
+        // Apply access control logic
+        const allLinks = await userVideosCollection.find({}).toArray();
+        const linkedJobIds = new Set(allLinks.map(l => l.job_id));
+        const publicJobIds = new Set();
+        const userJobIds = new Set();
+
+        allLinks.forEach(link => {
+            // Only treat as private when is_private is unambiguously true
+            if (!isActuallyPrivate(link.is_private)) {
+                publicJobIds.add(link.job_id);
+            }
+            if (user_id && link.user_id === user_id) {
+                userJobIds.add(link.job_id);
+            }
+        });
+
+        results = results.filter(r => {
+            if (!linkedJobIds.has(r.job_id)) return true; // Legacy / no ownership record = public
+            // A video is accessible if it is public OR the requesting user explicitly requested it
+            return publicJobIds.has(r.job_id) || userJobIds.has(r.job_id);
+        });
+
         let matchedSegments = [];
         results.forEach(r => {
             if (r.result && r.result.segments) {

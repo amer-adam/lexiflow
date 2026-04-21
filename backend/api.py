@@ -272,8 +272,8 @@ async def fetch_dictionary_definition(word: str):
         
         entry = cccedict.get_entry(word)
         if entry:
-            return {"word": word, "definitions": entry.get('definitions', [])}
-        return {"word": word, "definitions": []}
+            return {"word": word, "definitions": entry.get('definitions', []), "pinyin": entry.get('pinyin', '')}
+        return {"word": word, "definitions": [], "pinyin": ''}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

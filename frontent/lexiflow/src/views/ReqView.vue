@@ -1,9 +1,14 @@
 <script>
 import { FingerprintSpinner, HollowDotsSpinner } from 'epic-spinners'
 import SvgIcon from '@jamescoyle/vue-icon'
-import { mdiCheckAll, mdiYoutube, mdiCloudUpload } from '@mdi/js'
+import { mdiCheckAll, mdiYoutube, mdiCloudUpload, mdiLock, mdiEarth } from '@mdi/js'
+import { useAuth0 } from '@auth0/auth0-vue'
 
 export default {
+  setup() {
+    const { user, isAuthenticated } = useAuth0();
+    return { user, isAuthenticated };
+  },
   components: {
     FingerprintSpinner,
     HollowDotsSpinner,
@@ -24,6 +29,9 @@ export default {
       pathCheck: mdiCheckAll,
       pathYoutube: mdiYoutube,
       pathUpload: mdiCloudUpload,
+      pathLock: mdiLock,
+      pathEarth: mdiEarth,
+      isPrivate: false,
       queue_number: 0,
       eta: 0,
       time_counter: 0,
@@ -57,12 +65,14 @@ export default {
       this.state = 'requesting';
 
       try {
+        const userId = this.isAuthenticated && this.user ? this.user.sub : 'guest';
+
         if (this.activeTab === 'youtube') {
           // Existing Process YouTube URL (UC04)
           const response = await fetch(`https://api.amerai.top/lexiflow/jobs`, {
             method: 'POST', mode: 'cors',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ url: this.url })
+            body: JSON.stringify({ url: this.url, user_id: userId, is_private: this.isPrivate })
           });
           if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
           this.handleJobResponse(response);
@@ -75,6 +85,8 @@ export default {
           const formData = new FormData();
           formData.append('file', this.file);
           formData.append('title', this.localTitle);
+          formData.append('user_id', userId);
+          formData.append('is_private', this.isPrivate);
           
           const response = await fetch(`https://api.amerai.top/lexiflow/upload`, {
             method: 'POST', mode: 'cors',
@@ -215,6 +227,20 @@ export default {
               <div class="drop-text">{{ file ? file.name : 'Click to select a video or audio file' }}</div>
             </div>
           </label>
+        </div>
+
+        <div class="privacy-toggle" v-if="isAuthenticated">
+          <label class="toggle-label" :class="{ active: isPrivate }">
+            <input type="checkbox" v-model="isPrivate" class="hidden-checkbox" />
+            <div class="toggle-slider"></div>
+            <span class="toggle-text">
+              <svg-icon type="mdi" :path="pathLock" size="20" v-if="isPrivate"></svg-icon>
+              <svg-icon type="mdi" :path="pathEarth" size="20" v-else></svg-icon>
+              {{ isPrivate ? 'Private Video' : 'Public Video' }}
+            </span>
+          </label>
+          <p class="privacy-hint" v-if="isPrivate">Only you can see this video in the library.</p>
+          <p class="privacy-hint" v-else>Anyone can see this video in the public library.</p>
         </div>
 
         <div class="action-row">
@@ -434,5 +460,78 @@ export default {
 .btn-large {
   font-size: 1.5rem;
   padding: 1rem 3rem;
+}
+
+/* Privacy Toggle */
+.privacy-toggle {
+  margin-top: 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  background: rgba(0,0,0,0.2);
+  padding: 0.5rem 1.5rem;
+  border-radius: 50px;
+  border: 1px solid rgba(255,255,255,0.1);
+  transition: all 0.3s ease;
+}
+
+.toggle-label.active {
+  background: rgba(239, 68, 68, 0.15); /* Subtle red/private indication */
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.hidden-checkbox {
+  display: none;
+}
+
+.toggle-slider {
+  width: 40px;
+  height: 20px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 10px;
+  position: relative;
+  transition: background 0.3s;
+}
+
+.toggle-slider::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+
+.hidden-checkbox:checked + .toggle-slider {
+  background: var(--danger);
+}
+
+.hidden-checkbox:checked + .toggle-slider::after {
+  transform: translateX(20px);
+}
+
+.toggle-text {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.privacy-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
 }
 </style>

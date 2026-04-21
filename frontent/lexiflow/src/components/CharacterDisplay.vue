@@ -1,317 +1,271 @@
 <template>
-    <div class="character-container">
-        <div v-for="(char, key) in characters" :key="key" class="character"
-            :style="{ color: getHskColor(char.hsk_level) }" @mouseover="showTooltip(key, $event)"
-            @mouseout="hideTooltip">
-            {{ stripCharacters(key) }}
+  <div class="subtitle-card">
+
+    <!-- Tooltip -->
+    <Transition>
+      <div
+        v-if="activeCharacter"
+        class="character-tooltip"
+        :style="{ left: modalPosition.x + 'px', top: modalPosition.y + 'px' }"
+      >
+        <div class="tooltip-header">
+          <span class="tt-char" :style="{ color: getHskColor(activeCharacter.hsk_level) }">
+            {{ stripCharacters(activeCharKey) }}
+          </span>
+          <span class="tt-pinyin">{{ activeCharacter.pinyin }}</span>
+          <span class="tt-hsk">HSK {{ activeCharacter.hsk_level }}</span>
         </div>
-        <Transition>
-            <div v-if="activeCharacter && showCharacterTooltip" class="character-tooltip"
-                :style="{ top: modalPosition.y + 'px', left: modalPosition.x + 'px' }">
-                <div class="tooltip-header">
-                    <span class="character" :style="{ color: getHskColor(activeCharacter.hsk_level) }">
-                        {{ activeCharKey }}
-                    </span>
-                    <span class="pinyin">{{ activeCharacter.pinyin }}</span>
-                    <span class="hsk-level">HSK {{ activeCharacter.hsk_level }}</span>
-                </div>
-                <div class="translations">
-                    <h4>Definitions:</h4>
-                    <ul>
-                        <li v-for="(translation, index) in activeCharacter.translations" :key="index">
-                            {{ translation }}
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </Transition>
-    </div>
-        <div class="pinyin-container">
-        <div v-for="(char, key) in characters" :key="key" class="word"
-            :style="{ color: getHskColor(char.hsk_level) }" @mouseover="showTooltip(key, $event, true)"
-            @mouseout="hideTooltip">
-            {{ stripCharacters(char.pinyin) }}
+        <div class="translations">
+          <ul>
+            <li v-for="(t, i) in activeCharacter.translations" :key="i">{{ t }}</li>
+          </ul>
         </div>
-        <Transition>
-            <div v-if="activeCharacter && showPinyinTooltip" class="character-tooltip"
-                :style="{ top: modalPosition.y + 'px', left: modalPosition.x + 'px' }">
-                <div class="tooltip-header">
-                    <span class="character" :style="{ color: getHskColor(activeCharacter.hsk_level) }">
-                        {{ activeCharKey }}
-                    </span>
-                    <span class="pinyin">{{ activeCharacter.pinyin }}</span>
-                    <span class="hsk-level">HSK {{ activeCharacter.hsk_level }}</span>
-                </div>
-                <div class="translations">
-                    <h4>Definitions:</h4>
-                    <ul>
-                        <li v-for="(translation, index) in activeCharacter.translations" :key="index">
-                            {{ translation }}
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </Transition>
+      </div>
+    </Transition>
+
+    <!-- Paired pinyin + character columns -->
+    <div class="chars-row">
+      <div
+        v-for="(char, key) in characters"
+        :key="key"
+        class="char-cell"
+        :class="{ active: activeCharKey === key }"
+        @mouseenter="showTooltip(key, $event)"
+        @mouseleave="hideTooltip"
+        @click="$emit('search-word', stripCharacters(key))"
+      >
+        <span class="cell-pinyin" :style="{ color: getHskColor(char.hsk_level) }">
+          {{ stripCharacters(char.pinyin) }}
+        </span>
+        <span class="cell-char" :style="{ color: getHskColor(char.hsk_level) }">
+          {{ stripCharacters(key) }}
+        </span>
+      </div>
     </div>
-            <div class="translation-container">
-        <p class="subtitle-text">{{ translated_text }}</p>
-       
+
+    <!-- Translation -->
+    <div class="row-trans">
+      <span class="trans-text">{{ translated_text }}</span>
     </div>
+
+  </div>
 </template>
 
 <script>
 export default {
-    props: {
-        characters: {
-            type: Object,
-            required: true
-        },
-        translated_text: {
-            type: String,
-            default: ''
-        }
+  props: {
+    characters: {
+      type: Object,
+      required: true
     },
-    data() {
-        return {
-            activeCharKey: null,
-            activeCharacter: null,
-            showCharacterTooltip: false,
-            showPinyinTooltip: false,
-            modalPosition: { x: 0, y: 0 },
-
-        }
+    translated_text: {
+      type: String,
+      default: ''
+    }
+  },
+  emits: ['search-word'],
+  data() {
+    return {
+      activeCharKey: null,
+      activeCharacter: null,
+      modalPosition: { x: 0, y: 0 },
+    }
+  },
+  methods: {
+    getHskColor(level) {
+      const colors = {
+        1: '#4CAF50',
+        2: '#8BC34A',
+        3: '#FFC107',
+        4: '#FF9800',
+        5: '#FF5722',
+        6: '#F44336'
+      };
+      return colors[level] || '#9E9E9E';
     },
-    methods: {
-        getHskColor(level) {
-            // Color coding based on HSK level
-            const colors = {
-                1: '#4CAF50', // Green
-                2: '#8BC34A',
-                3: '#FFC107', // Yellow
-                4: '#FF9800', // Orange
-                5: '#FF5722', // Deep Orange
-                6: '#F44336'  // Red
-            };
-            return colors[level] || '#9E9E9E'; // Gray for unknown levels
-        },
-        stripCharacters(text) {
-            return text.replace('@', '');
-        },
-        showTooltip(charKey, event, pinyin = false) {
-            if (pinyin) {
-                this.showPinyinTooltip = true;
-            } else {
-                this.showCharacterTooltip = true;
-            }
-            this.activeCharKey = charKey;
-            this.activeCharacter = this.characters[charKey];
-            // this.showCharacterTooltip = true;
-
-            let num_translations = this.activeCharacter.translations ? this.activeCharacter.translations.length : 0;
-            let num_newlines = 0;
-
-            for (let i = 0; i < this.activeCharacter.translations.length; i++) {
-                num_newlines += Math.floor(this.activeCharacter.translations[i].length / 27);
-                // console.log(num_translations);
-            }
-
-            let y_offset = 90 + (num_translations * 24) + (num_newlines * 19);
-
-            // Position the tooltip near the character
-            this.modalPosition = {
-                x: event.target.offsetLeft + event.target.offsetWidth / 2,
-                y: event.target.offsetTop - y_offset
-            };
-        },
-        hideTooltip() {
-            this.showCharacterTooltip = false;
-            this.showPinyinTooltip = false;
-        }
+    stripCharacters(text) {
+      return text ? text.replace('@', '') : '';
     },
+    showTooltip(charKey, event) {
+      this.activeCharKey = charKey;
+      this.activeCharacter = this.characters[charKey];
 
+      const cell = event.currentTarget;
+      const card = cell.closest('.subtitle-card');
+      const cellRect = cell.getBoundingClientRect();
+      const cardRect = card.getBoundingClientRect();
+
+      this.modalPosition = {
+        x: cellRect.left - cardRect.left + cellRect.width / 2,
+        // position above the cell
+        y: cellRect.top - cardRect.top - 8
+      };
+    },
+    hideTooltip() {
+      this.activeCharKey = null;
+      this.activeCharacter = null;
+    }
+  }
 }
 </script>
 
 <style scoped>
-/* we will explain what these classes do next! */
-.v-enter-active,
-.v-leave-active {
-    transition: opacity 0.5s ease;
+/* ── Transition ── */
+.v-enter-active, .v-leave-active { transition: opacity 0.2s ease; }
+.v-enter-from, .v-leave-to { opacity: 0; }
+
+/* ── Card ── */
+.subtitle-card {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 10px;
+  padding: 8px 16px 12px;
+  max-width: 1024px;
+  width: fit-content;
+  margin: 0 auto;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
 }
 
-.v-enter-from,
-.v-leave-to {
-    opacity: 0;
+/* ── Character cells row ── */
+.chars-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0 4px;
 }
 
-.character-container {
-    background: rgba(0, 0, 0, 0.7);
-    padding: 16px 24px;
-    border-radius: 8px;
-    max-width: 1024px;
-    min-height: 70px;
-    height: auto;
-    margin: 0 auto;
-    text-align: center;
-    font-size: 1.5rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    position: relative;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-
-
+/* ── Each stacked pair ── */
+.char-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 2px 4px;
+  transition: background 0.15s ease;
+  min-width: 1.5em;
 }
 
-.pinyin-container {
-    background: rgba(0, 0, 0, 0.7);
-    padding: 16px 24px;
-    border-radius: 8px;
-    max-width: 1024px;
-    min-height: 70px;
-    height: auto;
-    margin: 0 auto;
-    text-align: center;
-    font-size: 1.5rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    position: relative;
+.char-cell:hover,
+.char-cell.active {
+  background: rgba(255, 255, 255, 0.08);
 }
 
-.translation-container {
-    background: rgba(0, 0, 0, 0.7);
-    padding: 16px 24px;
-    border-radius: 8px;
-    max-width: 1024px;
-    min-height: 70px;
-    height: auto;
-    margin: 0 auto;
-    text-align: center;
-    font-size: 1.5rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    position: relative;
+/* Scale both children when the cell is hovered */
+.char-cell:hover .cell-pinyin,
+.char-cell.active .cell-pinyin {
+  transform: scale(1.1);
+}
+.char-cell:hover .cell-char,
+.char-cell.active .cell-char {
+  transform: scale(1.15);
 }
 
-.subtitle-text {
-    margin: 0;
-    word-break: break-word;
-    font-size: 1.5rem;
-    color: #9E9E9E;
-    padding: 10px;
-    line-height: 1.5;
-    max-width: 100%;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    white-space: normal !important;
-    text-align: center;
+.cell-pinyin {
+  font-size: 0.75rem;
+  font-family: 'Inter', sans-serif;
+  line-height: 1.4;
+  opacity: 0.85;
+  text-align: center;
+  transition: transform 0.15s ease;
+  white-space: nowrap;
 }
 
-.word {
-    display: inline-block;
-    position: relative;
-    cursor: default;
-    transition: transform 0.2s;
-    margin-right: 10px;
-
-}
-.word:hover {
-    transform: scale(1.2);
+.cell-char {
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: center;
+  transition: transform 0.15s ease;
 }
 
-
-.character {
-    cursor: pointer;
-    transition: transform 0.2s;
-    /* font-size: 2em; */
-    margin-right: 10px;
+/* ── Translation ── */
+.row-trans {
+  margin-top: 2px;
 }
 
-.character:hover {
-    transform: scale(1.2);
+.trans-text {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.55);
+  font-style: italic;
+  letter-spacing: 0.01em;
 }
 
+/* ── Tooltip ── */
 .character-tooltip {
-    position: absolute;
-    background: white;
-    color: black;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    z-index: 100;
-    transform: translateX(-50%);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    white-space: nowrap;
-    max-width: 300px;
-    /* animation: fadeIn 0.2s ease-in-out; */
+  position: absolute;
+  background: #1e293b;
+  color: #f8fafc;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  z-index: 200;
+  /* anchor at bottom-center, grow upward */
+  transform: translate(-50%, -100%);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  white-space: nowrap;
+  max-width: 240px;
+  pointer-events: none;
 }
 
 .character-tooltip::after {
-    content: '';
-    position: absolute;
-    bottom: -5px;
-    left: 50%;
-    transform: translateX(-50%);
-    border-width: 5px 5px 0;
-    border-style: solid;
-    border-color: white transparent transparent;
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px 6px 0;
+  border-style: solid;
+  border-color: #1e293b transparent transparent;
 }
-
 
 .tooltip-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
-.tooltip-header .character {
-    font-size: 1.5em;
-    font-weight: bold;
+.tt-char {
+  font-size: 1.4em;
+  font-weight: 700;
 }
 
-.tooltip-header .pinyin {
-    color: #666;
-    font-style: italic;
+.tt-pinyin {
+  color: #94a3b8;
+  font-style: italic;
+  font-size: 0.9em;
 }
 
-.tooltip-header .hsk-level {
-    background: #eee;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 0.8em;
-}
-
-.translations h4 {
-    margin: 5px 0;
-    font-size: 1em;
-    color: #333;
+.tt-hsk {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #94a3b8;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.75em;
 }
 
 .translations ul {
-    margin: 0;
-    padding-left: 20px;
+  margin: 0;
+  padding-left: 14px;
 }
 
 .translations li {
-    margin-bottom: 5px;
-    font-size: 0.9em;
-    color: #555;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    white-space: normal !important;
-    max-width: 150px;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(5px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  font-size: 0.82em;
+  color: #cbd5e1;
+  margin-bottom: 2px;
+  overflow-wrap: break-word;
+  white-space: normal;
+  max-width: 200px;
 }
 </style>
