@@ -1,0 +1,39 @@
+# Web Framework
+fastapi
+uvicorn
+pydantic
+requests
+
+# Core AI/ML
+torch==2.7.0
+torchaudio==2.7.0
+numpy>=1.23.0,<2.2.0
+transformers
+sentencepiece==0.2.0
+tokenizers
+
+# Speech-to-Text
+openai-whisper==20240930
+faster-whisper==1.1.1
+ctranslate2>=4.0.0
+
+# VAD and Audio
+onnxruntime==1.20.1
+onnxruntime-gpu==1.20.1
+ffmpeg-python==0.2.0
+soundfile==0.13.1
+
+# Media Handling
+yt-dlp==2025.5.22
+pycccedict
+
+# Utilities
+lingua-language-detector==2.0.2
+pypinyin==0.54.0
+pymongo==4.11.2
+python-dotenv==1.0.1
+PyYAML==6.0.2
+json5
+tqdm==4.67.1
+accelerate==1.7.0
+huggingface-hub==0.32.1

@@ -1,12 +1,55 @@
-
 services:
-
   frontend:
     build:
-      context: .
-      dockerfile: frontent/lexiflow/Dockerfile
+      context: ./frontend
+      args:
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL}
+        - VITE_AUTH0_DOMAIN=${VITE_AUTH0_DOMAIN}
+        - VITE_AUTH0_CLIENT_ID=${VITE_AUTH0_CLIENT_ID}
     ports:
-      - "4555:4555"
+      - "4555:80"
+    restart: unless-stopped
+    depends_on:
+      - backend-node
+
+  backend-node:
+    build:
+      context: ./backend-node
+    ports:
+      - "4556:4556"
+    environment:
+      - MONGO_URI=${MONGO_URI}
+      - DB_NAME=${DB_NAME}
+      - PYTHON_API=${PYTHON_API}
+    restart: unless-stopped
+    depends_on:
+      - backend-fastapi
+
+  backend-fastapi:
+    build:
+      context: ./backend-fastapi
+    ports:
+      - "4557:4557"
+    environment:
+      - TRANSLATION_API_URL=${TRANSLATION_API_URL}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - OMP_NUM_THREADS=12
+      - MKL_NUM_THREADS=12
     volumes:
-      - ./frontent/lexiflow:/app
+      - ./backend-fastapi/cookies.txt:/app/cookies.txt:ro
+    restart: unless-stopped
+    depends_on:
+      - libretranslate
+
+  libretranslate:
+    image: libretranslate/libretranslate
+    ports:
+      - "5000:5000"
+    environment:
+      - LT_LOAD_ONLY=en,zh
+      - LT_DISABLE_WEB_UI=true
+      - LT_DISABLE_FILES_TRANSLATION=true
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     restart: unless-stopped

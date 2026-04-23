@@ -1,0 +1,186 @@
+<template>
+  <div class="video-box">
+    <div v-show="isYoutube" ref="youtubePlayer" id="youtube-player"></div>
+    <video v-if="!isYoutube" class="video-native" ref="htmlPlayer" :src="parsedMediaUrl" controls @timeupdate="onHtmlTimeUpdate"></video>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'VideoBox',
+  props: {
+    videoUrl: {
+      type: String,
+      required: true
+    },
+    startTime: {
+      type: Number,
+      default: 0
+    }
+  },
+  data() {
+    return {
+      player: null,
+      timeUpdateInterval: null
+    };
+  },
+  computed: {
+    isYoutube() {
+      return this.videoUrl && !!this.videoUrl.match(/(?:youtube\.com|youtu\.be)/);
+    },
+    youtubeId() {
+      if (!this.isYoutube) return null;
+      const ytMatch = this.videoUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+      return ytMatch ? ytMatch[1] : null;
+    },
+    parsedMediaUrl() {
+      if (this.isYoutube) return null;
+      const fileName = this.videoUrl.split('/').pop().split('\\').pop();
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4556';
+      return `${baseUrl}/media/${fileName}`;
+    }
+  },
+  mounted() {
+    if (this.isYoutube && this.youtubeId) {
+      this.loadYouTubeAPI();
+    }
+  },
+  methods: {
+    loadYouTubeAPI() {
+      if (!window.YT) {
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        window.onYouTubeIframeAPIReady = () => {
+          this.createPlayer();
+        };
+      } else {
+        this.createPlayer();
+      }
+    },
+    createPlayer() {
+      if (this.player) {
+        this.player.destroy();
+      }
+
+      this.player = new window.YT.Player(this.$refs.youtubePlayer, {
+        height: '100%',
+        width: '100%',
+        videoId: this.youtubeId,
+        playerVars: {
+          autoplay: 0,
+          modestbranding: 1,
+          rel: 0,
+          start: this.startTime
+        },
+        events: {
+          'onReady': this.onPlayerReady,
+          'onStateChange': this.onPlayerStateChange
+        }
+      });
+    },
+    onPlayerReady(event) {
+      // Start tracking time updates
+      this.timeUpdateInterval = setInterval(() => {
+        this.getCurrentTime();
+      }, 100); // Update every second
+    },
+    onPlayerStateChange(event) {
+      // Clean up interval when video ends
+      if (event.data === window.YT.PlayerState.PLAYING) {
+        clearInterval(this.timeUpdateInterval);
+        this.timeUpdateInterval = setInterval(() => {
+          this.getCurrentTime();
+        }, 100); // Update every 0.1 second
+      }
+      else if (event.data === window.YT.PlayerState.PAUSED || event.data === window.YT.PlayerState.BUFFERING) {
+        clearInterval(this.timeUpdateInterval);
+        this.timeUpdateInterval = setInterval(() => {
+          this.getCurrentTime();
+        }, 1000); // Update every second
+      }
+      else {
+        clearInterval(this.timeUpdateInterval);
+      }
+    },
+    getCurrentTime() {
+      if (this.player && this.player.getCurrentTime) {
+        const currentTime = this.player.getCurrentTime();
+        this.$emit('time-update', currentTime);
+      }
+    },
+    onHtmlTimeUpdate() {
+      if (this.$refs.htmlPlayer) {
+        this.$emit('time-update', this.$refs.htmlPlayer.currentTime);
+      }
+    }
+  },
+  beforeDestroy() {
+    clearInterval(this.timeUpdateInterval);
+    if (this.player) {
+      this.player.destroy();
+    }
+  },
+  watch: {
+    videoUrl(newUrl, oldUrl) {
+      if (!newUrl) return;
+      if (this.isYoutube && this.youtubeId) {
+        if (this.player && this.player.loadVideoById) {
+          this.player.loadVideoById({
+            videoId: this.youtubeId,
+            startSeconds: this.startTime
+          });
+        } else {
+          this.loadYouTubeAPI();
+        }
+      } else if (this.$refs.htmlPlayer) {
+        // For local files, seek to startTime once the new source loads
+        this.$refs.htmlPlayer.addEventListener('loadeddata', () => {
+          this.$refs.htmlPlayer.currentTime = this.startTime || 0;
+        }, { once: true });
+      }
+    },
+    startTime(newTime) {
+      if (this.player && this.player.seekTo) {
+        this.player.seekTo(newTime, true);
+      }
+      if (this.$refs.htmlPlayer) {
+        this.$refs.htmlPlayer.currentTime = newTime;
+      }
+    }
+  }
+};
+</script>
+
+
+<style scoped>
+.video-box {
+  /* width: 100%; */
+  width: 1024px;
+  margin: 0 auto;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.video-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.video-native {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.no-video {
+  color: #fff;
+  text-align: center;
+}
+</style>
