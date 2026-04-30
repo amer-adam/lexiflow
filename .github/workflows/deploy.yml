@@ -11,6 +11,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: amer-adam/backend-node
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build-and-deploy:
@@ -21,7 +22,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4 # v4 is fine, but we'll use the flag above
 
       # 1. Log into GitHub Container Registry to push the image
       - name: Log in to the Container registry
@@ -33,7 +34,7 @@ jobs:
 
       # 2. Build the Docker image and push it to GHCR
       - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./backend-node
           push: true
@@ -42,7 +43,7 @@ jobs:
 
       # 3. Connect to Tencent Server and Deploy
       - name: Deploy to Tencent Server
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.HOST_IP }}
           username: ${{ secrets.SSH_USER }}
