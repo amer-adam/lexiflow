@@ -13,7 +13,7 @@ services:
       - backend-node
 
   backend-node:
-    image: ghcr.io/amer-adam/lexiflow:latest
+    image: ghcr.io/amer-adam/backend-node:latest
     build:
       context: ./backend-node
     ports:
