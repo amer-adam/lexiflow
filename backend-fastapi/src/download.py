@@ -47,7 +47,13 @@ def _perform_download(url: str, maxDuration: int = None, outputTemplate: str = N
         'default_search': 'auto',
         'source_address': '0.0.0.0',
         'force_ipv4': True,
-        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        'user_agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+        'extractor_args': {'youtube': {'player_client': ['android', 'ios']}},
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'wav',
+            'preferredquality': '192',
+        }],
     }
 
     if node_path:
@@ -57,17 +63,7 @@ def _perform_download(url: str, maxDuration: int = None, outputTemplate: str = N
     if (playlistItems):
         ydl_opts['playlist_items'] = playlistItems
 
-    # Use cookies.txt if it exists to bypass 429 errors
-    cookies_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "cookies.txt")
-    if os.path.exists(cookies_path):
-        ydl_opts['cookiefile'] = cookies_path
-        print(f"Using cookies from {cookies_path}")
-    else:
-        # Also check in the current app directory (for Docker)
-        docker_cookies_path = "/app/cookies.txt"
-        if os.path.exists(docker_cookies_path):
-            ydl_opts['cookiefile'] = docker_cookies_path
-            print(f"Using cookies from {docker_cookies_path}")
+    # Add output template if specified
 
     # Add output template if specified
     if outputTemplate:
@@ -120,38 +116,29 @@ def uri_validator(x):
 def get_duration(url: str) -> float:
     """
     Get the total duration (in seconds) of a YouTube video.
-    
-    Args:
-        url_or_id: Either a YouTube URL or just the video ID
-        
-    Returns:
-        Duration in seconds as a float
-        
-    Raises:
-        yt_dlp.utils.DownloadError: If the video cannot be accessed
-        ValueError: If the input is not a valid URL/ID
     """
-    
     import shutil
     node_path = shutil.which("node")
     
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
-        'extract_flat': True,
-        'remote_components': ['ejs:github']
+        'remote_components': ['ejs:github'],
+        'force_ipv4': True,
+        'user_agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+        'extractor_args': {'youtube': {'player_client': ['android', 'ios']}}
     }
     
     if node_path:
         ydl_opts['js_runtimes'] = {'node': {'path': node_path}}
     else:
         ydl_opts['js_runtimes'] = {'node': {}}
-    
+        
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
         
         # Handle playlists (return total duration of all videos)
         if 'entries' in info:
-            return sum(float(entry['duration']) for entry in info['entries'] if entry)
+            return sum(float(entry['duration']) for entry in info['entries'] if entry.get('duration'))
         
-        return float(info['duration'])
+        return float(info.get('duration', 0))

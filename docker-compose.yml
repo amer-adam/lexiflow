@@ -13,14 +13,13 @@ services:
       - backend-node
 
   backend-node:
+    image: ghcr.io/amer-adam/lexiflow:latest
     build:
       context: ./backend-node
     ports:
       - "4556:4556"
-    environment:
-      - MONGO_URI=${MONGO_URI}
-      - DB_NAME=${DB_NAME}
-      - PYTHON_API=${PYTHON_API}
+    env_file:
+      - .env
     restart: unless-stopped
     depends_on:
       - backend-fastapi
@@ -31,15 +30,15 @@ services:
     ports:
       - "4557:4557"
     environment:
-      - TRANSLATION_API_URL=${TRANSLATION_API_URL}
+      - TRANSLATION_API_URL=http://libretranslate:5000/translate
       - FRONTEND_URL=${FRONTEND_URL}
       - OMP_NUM_THREADS=12
       - MKL_NUM_THREADS=12
-    volumes:
-      - ./backend-fastapi/cookies.txt:/app/cookies.txt:ro
     restart: unless-stopped
     depends_on:
       - libretranslate
+
+
 
   libretranslate:
     image: libretranslate/libretranslate

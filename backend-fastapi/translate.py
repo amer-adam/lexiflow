@@ -1,3 +1,4 @@
+import time
 from transcribe import api_transcribe
 from transformers import SeamlessM4Tv2ForTextToText, AutoProcessor
 import json
@@ -13,6 +14,7 @@ class Translator:
 
         print(f"Loading facebook/seamless-m4t-v2-large...")
         # Processor stays on CPU
+        init_start = time.time()
         self.processor = AutoProcessor.from_pretrained(
             "facebook/seamless-m4t-v2-large")
 
@@ -25,7 +27,7 @@ class Translator:
         if torch.cuda.is_available():
             self.model = self.model.to('cuda')
 
-        print("Model loaded successfully.")
+        print(f"Model loaded successfully in {time.time() - init_start:.2f}s.")
         print_vram_info()
 
     def close(self):
@@ -35,7 +37,7 @@ class Translator:
             self.model.to('cpu')  # Move model back to CPU before deletion
             del self.model
         if 'processor' in locals():
-            del self.processor
+            del processor
         gc.collect()
         torch.cuda.empty_cache()
         print_vram_info()
@@ -172,10 +174,15 @@ def api_translate(transcription_result):
     # return response
 
     try:
-
+        print("Initializing Translator...")
+        translator_start = time.time()
         translator = Translator()
-
+        
+        print("Starting translation...")
+        translate_start = time.time()
         result = translator.translate(transcription_result)
+        print(f"Translation call took {time.time() - translate_start:.2f}s")
+        print(f"Total api_translate took {time.time() - translator_start:.2f}s")
 
         return result
     finally:

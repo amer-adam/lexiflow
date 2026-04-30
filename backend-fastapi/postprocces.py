@@ -1,4 +1,5 @@
 import json
+import time
 import concurrent
 from pypinyin import pinyin
 from pycccedict.cccedict import CcCedict
@@ -120,10 +121,14 @@ def process_single_segment(text, max_phrase_length=3):
         }
     else:
         try:
+            entry = cccedict.get_entry(single_char)
+            pinyin_list = pinyin(single_char, style='normal')
+            pinyin_val = pinyin_list[0][0] if pinyin_list and pinyin_list[0] else single_char
+            
             result = {
                 single_char: {
-                    'pinyin': pinyin(single_char, style='normal')[0][0],
-                    'translations': cccedict.get_entry(single_char).get('definitions', []),
+                    'pinyin': pinyin_val,
+                    'translations': entry.get('definitions', []) if entry else [],
                     'hsk_level': None,
                     'is_phrase': False
                 }
@@ -145,9 +150,14 @@ def api_postprocess(result, max_workers=16):
 
     # Initialize HSK data if not already loaded
     if hsk_data is None:
+        print("Initializing HSK data...")
+        hsk_init_start = time.time()
         initialize_hsk_data()
+        print(f"HSK initialization took {time.time() - hsk_init_start:.2f}s")
 
     # Process segments in parallel
+    print(f"Processing {len(result['segments'])} segments in parallel...")
+    process_start = time.time()
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {
             executor.submit(process_single_segment, segment['text']): segment
@@ -158,9 +168,14 @@ def api_postprocess(result, max_workers=16):
             segment = futures[future]
             try:
                 segment['characters'] = future.result()
-                print(f"Processed segment: {segment['text']}")
+                # print(f"Processed segment: {segment['text']}")
             except Exception as e:
                 print(f"Error processing segment {segment['text']}: {str(e)}")
                 segment['characters'] = {}
+    
+    print(f"Parallel processing of segments took {time.time() - process_start:.2f}s")
+    
+    save_start = time.time()
     json.dump(result, open('./result.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=4)
+    print(f"Saving results to JSON took {time.time() - save_start:.2f}s")
     return result

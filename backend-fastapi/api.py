@@ -17,7 +17,8 @@ from lingua import Language, LanguageDetectorBuilder
 from pypinyin import pinyin
 
 
-from time import sleep
+from time import sleep, time
+import time
 
 from transcribe import api_transcribe
 from postprocces import api_postprocess
@@ -90,7 +91,17 @@ def download_video(url: str, job_id: str) -> str:
         raise HTTPException(status_code=400, detail="Invalid URL format")
     file_path = download_url(
         url, maxDuration=-1, destinationDirectory=output_dir, playlistItems=None)
-    return file_path[0]
+    
+    # Convert to 16kHz WAV for Whisper
+    wav_path = file_path[0].rsplit('.', 1)[0] + "_16k.wav"
+    subprocess.run([
+        'ffmpeg', '-y', '-i', file_path[0],
+        '-ar', '16000', '-ac', '1', '-c:a', 'pcm_s16le',
+        wav_path
+    ], check=True)
+    
+    return wav_path
+
 
 def api_translate(transcription_result):
     url = os.getenv("TRANSLATION_API_URL", "http://127.0.0.1:5000/translate")
@@ -175,7 +186,11 @@ async def start_processing(request: JobRequest) -> JobStatus:
 
 async def run_pipeline(job_id: str, url: str, is_local: bool = False):
     try:
-        # 1. Download (33%)
+        overall_start = time.time()
+        
+        # 1. Download (25%)
+        print("\n--- Step 1: Downloading Video ---")
+        step_start = time.time()
         active_jobs[job_id].update({
             "progress": 25,
             "current_step": "download"
@@ -183,25 +198,53 @@ async def run_pipeline(job_id: str, url: str, is_local: bool = False):
         
         if is_local:
             file_path = url
+            download_time = 0
         else:
             file_path = await asyncio.to_thread(download_video, url, job_id)
+            download_time = time.time() - step_start
+        print(f"Download completed in {download_time:.2f}s")
 
-        # 2. Transcribe (66%)
+        # 2. Transcribe (50%)
+        print("\n--- Step 2: Transcribing Audio ---")
+        step_start = time.time()
         active_jobs[job_id].update({
             "progress": 50,
             "current_step": "transcribe"
         })
         transcription = await asyncio.to_thread(api_transcribe, file_path)
+        transcribe_time = time.time() - step_start
+        num_segments = len(transcription.get('segments', []))
+        print(f"Transcription completed in {transcribe_time:.2f}s (Found {num_segments} segments)")
 
-        # 3. Translate (99%)
+        # 3. Translate (75%)
+        print("\n--- Step 3: Translating Segments ---")
+        step_start = time.time()
         active_jobs[job_id].update({
             "progress": 75,
             "current_step": "translate"
         })
         translation = await asyncio.to_thread(api_translate, transcription)
+        translate_time = time.time() - step_start
+        print(f"Translation completed in {translate_time:.2f}s")
 
         # 4. Post-process (100%)
+        print("\n--- Step 4: Post-processing ---")
+        step_start = time.time()
         end_result = await asyncio.to_thread(api_postprocess, translation)
+        postprocess_time = time.time() - step_start
+        print(f"Post-processing completed in {postprocess_time:.2f}s")
+
+        total_duration = time.time() - overall_start
+        
+        print("\n" + "="*50)
+        print(f"DETAILED TIME LOGGING FOR JOB: {job_id}")
+        print(f"1. Download:      {download_time:>8.2f}s")
+        print(f"2. Transcribe:    {transcribe_time:>8.2f}s")
+        print(f"3. Translate:     {translate_time:>8.2f}s")
+        print(f"4. Post-process:  {postprocess_time:>8.2f}s")
+        print("-" * 50)
+        print(f"TOTAL DURATION:   {total_duration:>8.2f}s")
+        print("="*50 + "\n")
 
         # Success
         active_jobs[job_id].update({

@@ -1,5 +1,6 @@
 import whisper
 import os
+import time
 from datetime import datetime
 import json
 import math
@@ -440,10 +441,14 @@ def api_transcribe(audio_path: str):
         delete_uploaded_files=False, vad_cpu_cores=vad_cpu_cores, app_config=app_config)
     transcriber.set_parallel_devices(args.pop("vad_parallel_devices"))
     transcriber.set_auto_parallel(auto_parallel)
+    print(f"Using {whisper_implementation} for Whisper")
 
+    model_start = time.time()
     model = create_whisper_container(whisper_implementation=whisper_implementation, model_name=model_name,
                                      device=device, compute_type=compute_type, download_root=model_dir, models=app_config.models,
-                                     cpu_threads=threads, num_workers=2)
+                                     cpu_threads=threads, num_workers=1)
+    model_time = time.time() - model_start
+    print(f"Model creation took {model_time:.2f}s")
 
     if (transcriber._has_parallel_devices()):
         print("Using parallel devices:", transcriber.parallel_device_list)
@@ -464,9 +469,17 @@ def api_transcribe(audio_path: str):
         vadOptions = VadOptions(vad, vad_merge_window, vad_max_merge_size, vad_padding, vad_prompt_window,
                                 VadInitialPromptMode.from_string(vad_initial_prompt_mode))
 
+        print(f"Transcribing {source_name}...")
+        transcribe_start = time.time()
         result = transcriber.transcribe_file(model, source_path, temperature=temperature, vadOptions=vadOptions, **args)
+        transcribe_time = time.time() - transcribe_start
+        num_segments = len(result.get('segments', []))
+        print(f"Transcription step took {transcribe_time:.2f}s (Generated {num_segments} segments)")
 
+        write_start = time.time()
         transcriber.write_result(result, source_name, output_dir, highlight_words)
+        write_time = time.time() - write_start
+        print(f"Writing results took {write_time:.2f}s")
 
 
     print("Transcription completed. closing transcriber.")
