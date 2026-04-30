@@ -11,7 +11,6 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: amer-adam/backend-node
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build-and-deploy:
@@ -22,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4 # v4 is fine, but we'll use the flag above
+        uses: actions/checkout@v6
 
       # 1. Log into GitHub Container Registry to push the image
       - name: Log in to the Container registry
@@ -34,7 +33,7 @@ jobs:
 
       # 2. Build the Docker image and push it to GHCR
       - name: Build and push Docker image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./backend-node
           push: true
