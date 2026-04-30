@@ -329,7 +329,7 @@ async def fetch_dictionary_definition(word: str):
 # Add CORS middleware if needed
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[os.getenv("FRONTEND_URL", "http://localhost:4555")],
+    allow_origins=[os.getenv("FRONTEND_URL", "http://localhost:4555"), os.getenv("NODE_URL", "http://localhost:4556")],
     allow_methods=["*"],
     allow_headers=["*"],
 )
