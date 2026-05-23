@@ -54,12 +54,12 @@ async function getOverdueCards(deckId) {
     return await prisma.flashcard.findMany({
         where: {
             deckId,
-            nextReviewDate: { lte: new Date() }
+            // nextReviewDate: { lte: new Date() }
         },
         include: {
             vocabulary: true
         },
-        take: 30 // Batch size optimization limit
+        take: 1000 // Batch size optimization limit
     });
 }
 

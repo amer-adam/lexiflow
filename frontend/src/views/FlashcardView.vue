@@ -18,7 +18,6 @@
                         :class="{ active: activeDeck?.id === deck.id }" @click="selectDeck(deck)">
                         <div class="list-card-header">
                             <h3>{{ deck.name }}</h3>
-                            <span class="badge user_created">SRS Active</span>
                         </div>
                         <div class="list-meta">
                             <span class="count">
@@ -44,17 +43,19 @@
                     <div class="title-section">
                         <div class="title-row">
                             <h2 class="page-title">{{ activeDeck.name }}</h2>
-                            <span class="badge user_created">FSRS Core</span>
                         </div>
-                        <p class="list-description">
-                            Tap Start to review memory vectors scheduled for optimization today.
-                        </p>
+
                     </div>
 
                     <div class="stats-badge-row">
                         <div class="stats-badge">
-                            <span class="stats-num">{{ activeSessionCards.length }}</span>
+                            <span class="stats-num">{{ dueTodayCount }}</span>
                             <span class="stats-label">Due Today</span>
+                        </div>
+                        <div class="stats-badge" v-if="studyActive">
+                            <span class="stats-num text-session">{{ activeSessionCards.length - currentCardIndex
+                                }}</span>
+                            <span class="stats-label">Left In Session</span>
                         </div>
                     </div>
                 </div>
@@ -67,7 +68,7 @@
                             <div class="progress-bar-fill"
                                 :style="{ width: `${((currentCardIndex) / activeSessionCards.length) * 100}%` }"></div>
                             <span class="progress-text">Card {{ currentCardIndex + 1 }} of {{ activeSessionCards.length
-                                }}</span>
+                            }}</span>
                         </div>
 
                         <div class="flashcard-container" @click="isFlipped = !isFlipped">
@@ -144,47 +145,96 @@
                     </div>
 
                     <div v-else class="empty-state review-complete-pane glass-panel-inner">
-                        <div class="completion-icon">🎉</div>
                         <h2>Review Session Finished!</h2>
-                        <p>Your dynamic structural FSRS memory stability curves have been successfully optimized and
-                            written to the cloud registry.</p>
+                        <p>You have successfully reviewed all scheduled items for this session.</p>
                         <button class="btn btn-primary" @click="exitStudyMode">Return to Workspace</button>
                     </div>
                 </div>
 
-                <div v-else class="dashboard-prep-arena glass-panel-inner">
-                    <div class="prep-graphics">⚡</div>
-                    <h3>Spaced Repetition Scheduler Ready</h3>
-                    <div v-if="activeSessionCards.length === 0" class="clean-deck-notice">
-                        <p>✅ <strong>Inbox Zero!</strong> Excellent work. All matching structural items inside this deck
-                            remain fully balanced today.</p>
-                        <button class="btn btn-secondary btn-sm" @click="startStudySession(true)">Force Practice
-                            Re-run</button>
-                    </div>
-                    <div v-else class="ready-cta-group">
-                        <p>There are currently <strong>{{ activeSessionCards.length }} items</strong> overdue and
-                            waiting for immediate structural calibration reviews.</p>
-                        <button class="btn btn-primary btn-lg" @click="startStudySession(false)">Initialize Active
-                            Review Now</button>
-                    </div>
-                </div>
+                <template v-else>
+                    <div class="dashboard-prep-arena glass-panel-inner">
 
-            </div>
 
-            <div v-else class="no-selection glass-panel">
-                <div class="no-selection-content">
-                    <div class="no-selection-icon">🃏</div>
-                    <h2>Flashcard Deck Selector</h2>
-                    <p>Choose an initialized flashcard deck item from your left panel Framework menu to verify variables
-                        or trigger your interactive daily study engine cycles.</p>
-                </div>
+                        <div v-if="dueTodayCount === 0" class="clean-deck-notice">
+                            <p>✅ <strong>Inbox Zero!</strong> Excellent work. All matching structural items inside this
+                                deck remain balanced today.</p>
+                            <button class="btn btn-secondary btn-sm" @click="promptSessionSetup(true)">Force Practice
+                                Re-run</button>
+                        </div>
+
+                        <div v-else class="ready-cta-group">
+                            <p>There are currently <strong>{{ dueTodayCount }} items</strong> overdue and waiting for
+                                your excellence.</p>
+
+                            <div v-if="showSessionSelector" class="session-selector-card glass-panel-inner">
+                                <h4>How many cards for this session?</h4>
+                                <div class="session-btn-options">
+                                    <button class="btn btn-secondary btn-sm" @click="startStudySession(5)">5</button>
+                                    <button class="btn btn-secondary btn-sm" @click="startStudySession(10)">10</button>
+                                    <button class="btn btn-secondary btn-sm" @click="startStudySession(20)">20</button>
+                                    <button class="btn btn-primary btn-sm" @click="startStudySession(dueTodayCount)">All
+                                        ({{ dueTodayCount }})</button>
+                                </div>
+                                <button class="btn btn-link btn-xs" style="margin-top: 0.5rem;"
+                                    @click="showSessionSelector = false">Cancel</button>
+                            </div>
+
+                            <button v-else class="btn btn-primary btn-lg" @click="promptSessionSetup(false)">Start
+                                Active Review Now</button>
+                        </div>
+                    </div>
+
+                    <div class="deck-inventory-section">
+                        <h3 class="section-title-inventory">Card Deck Progress Registry (All Cards)</h3>
+                        <div class="table-scroll-container">
+                            <table class="inventory-table">
+                                <thead>
+                                    <tr>
+                                        <th>Vocabulary Item</th>
+                                        <th>Pinyin</th>
+                                        <th>FSRS State</th>
+                                        <th>Stability (Days)</th>
+                                        <th>Interval</th>
+                                        <th>Scheduled Due Date</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="card in allDeckCards" :key="card.id"
+                                        :class="{ 'row-due': isCardOverdue(card.nextReviewDate) }">
+                                        <td class="font-bold text-white">{{ card.vocabulary?.simplified }}</td>
+                                        <td class="text-secondary">{{ card.vocabulary?.pinyin }}</td>
+                                        <td>
+                                            <span class="state-chip" :class="'state-' + card.state">
+                                                {{ getStateLabel(card.state) }}
+                                            </span>
+                                        </td>
+                                        <td>{{ card.stability?.toFixed(2) || '0.00' }}d</td>
+                                        <td>{{ card.scheduledDays }}d</td>
+                                        <td class="text-sm">{{ formatReviewDate(card.nextReviewDate) }}</td>
+                                        <td>
+                                            <span v-if="isCardOverdue(card.nextReviewDate)"
+                                                class="badge-status badge-due">Due</span>
+                                            <span v-else class="badge-status badge-waiting">Waiting</span>
+                                        </td>
+                                    </tr>
+                                    <tr v-if="allDeckCards.length === 0">
+                                        <td colspan="7" class="text-center text-muted">No cards present inside this deck
+                                            profile.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </template>
+
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch, onBeforeUnmount } from 'vue';
+import { ref, onMounted, watch, onBeforeUnmount, computed } from 'vue';
 import { useAuth0 } from '@auth0/auth0-vue';
 import { useRouter } from 'vue-router';
 
@@ -195,12 +245,21 @@ const { isAuthenticated, getAccessTokenSilently } = useAuth0();
 // State Variables
 const userDecks = ref([]);
 const activeDeck = ref(null);
-const activeSessionCards = ref([]);
+const allDeckCards = ref([]); // Holds all structural cards inside the active deck (due + waiting)
+const activeSessionCards = ref([]); // Sliced target count allocation for the current study run
 const currentCardIndex = ref(0);
 
-// Study Session Toggles
+// Study Session UI States
 const studyActive = ref(false);
 const isFlipped = ref(false);
+const showSessionSelector = ref(false);
+const isForcedPractice = ref(false);
+
+// Computed Count of items genuinely due today
+const dueTodayCount = computed(() => {
+    const now = new Date();
+    return allDeckCards.value.filter(card => new Date(card.nextReviewDate) <= now).length;
+});
 
 const hasFrontElementsVisible = (card) => {
     return card?.frontConfig?.character || card?.frontConfig?.pinyin || card?.frontConfig?.meaning;
@@ -210,7 +269,23 @@ const hasBackElementsVisible = (card) => {
     return card?.backConfig?.character || card?.backConfig?.pinyin || card?.backConfig?.meaning;
 };
 
-// Keyboard Hotkey Interceptor Review Navigation Callback Core Engine Hook
+const getStateLabel = (stateNum) => {
+    const states = { 0: 'New', 1: 'Learning', 2: 'Review', 3: 'Relearning' };
+    return states[stateNum] !== undefined ? states[stateNum] : 'New';
+};
+
+const formatReviewDate = (dateString) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+};
+
+const isCardOverdue = (dateString) => {
+    if (!dateString) return false;
+    return new Date(dateString) <= new Date();
+};
+
+// Keyboard Hotkey Navigation Interceptor Hook
 const handleKeyboardReviewNavigation = (event) => {
     if (!studyActive.value || activeSessionCards.value.length === 0 || currentCardIndex.value >= activeSessionCards.value.length) return;
 
@@ -233,7 +308,6 @@ const fetchUserFlashcardDecks = async () => {
         if (response.ok) {
             userDecks.value = await response.json();
 
-            // Auto-select first available deck initialization boundary if items are present
             if (userDecks.value.length > 0 && !activeDeck.value) {
                 selectDeck(userDecks.value[0]);
             }
@@ -246,34 +320,58 @@ const fetchUserFlashcardDecks = async () => {
 const selectDeck = async (deck) => {
     activeDeck.value = deck;
     studyActive.value = false;
+    showSessionSelector.value = false;
+    allDeckCards.value = [];
     activeSessionCards.value = [];
     currentCardIndex.value = 0;
     isFlipped.value = false;
 
-    await loadReviewSessionQueue();
+    await loadFullDeckInventory();
 };
 
-const loadReviewSessionQueue = async () => {
+const loadFullDeckInventory = async () => {
     if (!activeDeck.value) return;
-
     try {
         const token = await getAccessTokenSilently();
+        // Endpoint returns ALL cards belonging to this deck
         const response = await fetch(`${apiBase}/lexiflow/flashcards/decks/${activeDeck.value.id}/review`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.ok) {
-            activeSessionCards.value = await response.json();
+            allDeckCards.value = await response.json();
         }
     } catch (error) {
-        console.error('Failed resolving backlog review sessions lists:', error);
+        console.error('Failed resolving deck inventory list:', error);
     }
 };
 
-const startStudySession = (forcePracticeAll = false) => {
-    if (activeSessionCards.value.length === 0 && !forcePracticeAll) return;
+const promptSessionSetup = (forcePracticeAll = false) => {
+    isForcedPractice.value = forcePracticeAll;
+    if (forcePracticeAll) {
+        startStudySession(allDeckCards.value.length || 5);
+    } else {
+        showSessionSelector.value = true;
+    }
+};
+
+const startStudySession = (limitCount) => {
+    showSessionSelector.value = false;
     currentCardIndex.value = 0;
     isFlipped.value = false;
-    studyActive.value = true;
+
+    // Filter down strictly to overdue cards for standard, or use all for forced practice
+    let referencePool = [...allDeckCards.value];
+    if (!isForcedPractice.value) {
+        const now = new Date();
+        referencePool = referencePool.filter(card => new Date(card.nextReviewDate) <= now);
+    }
+
+    activeSessionCards.value = referencePool.slice(0, limitCount);
+
+    // FIX: Ensure study mode activates even if forced practice pool lengths fluctuate
+    if (activeSessionCards.value.length > 0 || isForcedPractice.value) {
+        studyActive.value = true;
+    }
 };
 
 const gradeCardReview = async (rating) => {
@@ -284,7 +382,7 @@ const gradeCardReview = async (rating) => {
         const token = await getAccessTokenSilently();
         isFlipped.value = false;
 
-        await fetch(`${apiBase}/lexiflow/flashcards/cards/${currentCard.id}/review`, {
+        const response = await fetch(`${apiBase}/lexiflow/flashcards/cards/${currentCard.id}/review`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -293,16 +391,41 @@ const gradeCardReview = async (rating) => {
             body: JSON.stringify({ rating })
         });
 
+        if (response.ok) {
+            const updatedCardData = await response.json();
+
+            // OPTIMISTIC LOCAL TABLE COMPONENT STATE MUTATION FOR REAL-TIME UPDATE
+            const inventoryIndex = allDeckCards.value.findIndex(c => c.id === currentCard.id);
+            if (inventoryIndex !== -1) {
+                if (updatedCardData && updatedCardData.nextReviewDate) {
+                    allDeckCards.value[inventoryIndex] = {
+                        ...allDeckCards.value[inventoryIndex],
+                        state: updatedCardData.state,
+                        stability: updatedCardData.stability,
+                        difficulty: updatedCardData.difficulty,
+                        scheduledDays: updatedCardData.scheduledDays,
+                        nextReviewDate: updatedCardData.nextReviewDate
+                    };
+                } else {
+                    // Fallback to push item date to future to update table counters safely
+                    allDeckCards.value[inventoryIndex].nextReviewDate = new Date(Date.now() + 86400000 * 2).toISOString();
+                }
+            }
+        }
+
         currentCardIndex.value++;
     } catch (error) {
         console.error('Failed submitting card calibration metrics parameters score:', error);
+        // Step forward anyway to keep user from getting stuck
+        currentCardIndex.value++;
     }
 };
 
 const exitStudyMode = async () => {
     studyActive.value = false;
+    isForcedPractice.value = false;
     await fetchUserFlashcardDecks();
-    await loadReviewSessionQueue();
+    await loadFullDeckInventory(); // Re-fetches all cards to refresh the table tracking view
 };
 
 watch(() => isAuthenticated.value, (newVal) => {
@@ -320,7 +443,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-/* Inherited structural styles plus specific elements for the empty-state link action box */
+/* Main Framework Flex Container */
 .list-view-container {
     display: flex;
     height: calc(100vh - 140px);
@@ -465,27 +588,29 @@ onBeforeUnmount(() => {
     font-size: 0.9rem;
 }
 
-/* Main Content Workspace Layout Styles */
+/* Main Workspace View Panel */
 .main-content-area {
     flex: 1;
-    overflow: hidden;
+    overflow-y: auto;
     height: 100%;
+    padding-right: 4px;
 }
 
 .active-list-view {
-    height: 100%;
+    min-height: 100%;
     padding: 2rem;
     display: flex;
     flex-direction: column;
+    gap: 1.5rem;
 }
 
 .list-details-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 1.5rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     padding-bottom: 1rem;
+    margin-bottom: 0.5rem;
 }
 
 .title-section {
@@ -518,7 +643,7 @@ onBeforeUnmount(() => {
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-width: 90px;
+    min-width: 95px;
 }
 
 .stats-num {
@@ -527,30 +652,72 @@ onBeforeUnmount(() => {
     color: var(--accent-primary);
 }
 
+.text-session {
+    color: #a855f7 !important;
+    /* Session indicator color purple */
+}
+
 .stats-label {
     font-size: 0.65rem;
     text-transform: uppercase;
     color: var(--text-muted);
 }
 
+/* Session Selection Dialog Prompt */
+.session-selector-card {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    padding: 1.5rem;
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    box-shadow: 0 4px 20px rgba(168, 85, 247, 0.15);
+}
+
+.session-selector-card h4 {
+    margin: 0;
+    font-size: 1.05rem;
+    color: #e2e8f0;
+}
+
+.session-btn-options {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.btn-xs {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
+    background: transparent;
+    color: var(--text-muted);
+    border: none;
+    cursor: pointer;
+}
+
+.btn-xs:hover {
+    color: #ffffff;
+}
+
 .dashboard-prep-arena {
-    flex: 1;
+    padding: 2.5rem;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding: 3rem;
     gap: 1rem;
 }
 
 .prep-graphics {
-    font-size: 4rem;
+    font-size: 3.5rem;
     text-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
 }
 
 .dashboard-prep-arena h3 {
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     color: var(--text-primary);
 }
 
@@ -559,13 +726,15 @@ onBeforeUnmount(() => {
     color: var(--text-secondary);
     line-height: 1.6;
     font-size: 0.95rem;
+    margin-bottom: 0.25rem;
 }
 
 .ready-cta-group {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1.5rem;
+    gap: 1rem;
+    width: 100%;
 }
 
 .btn-lg {
@@ -576,19 +745,20 @@ onBeforeUnmount(() => {
     box-shadow: var(--shadow-glow);
 }
 
+/* Active Study Arena Layout */
 .study-arena {
-    flex: 1;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    width: 100%;
+    align-items: center;
 }
 
 .player-wrapper {
-    flex: 1;
+    width: 100%;
+    max-width: 600px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: space-between;
     padding: 1rem 0;
 }
 
@@ -618,8 +788,7 @@ onBeforeUnmount(() => {
 
 .flashcard-container {
     width: 100%;
-    max-width: 600px;
-    height: 340px;
+    height: 320px;
     perspective: 1000px;
     cursor: pointer;
 }
@@ -629,7 +798,7 @@ onBeforeUnmount(() => {
     height: 100%;
     position: relative;
     transform-style: preserve-3d;
-    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .flashcard-card.flipped {
@@ -680,25 +849,24 @@ onBeforeUnmount(() => {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1rem;
+    gap: 0.75rem;
 }
 
 .srs-char {
-    font-size: 4rem;
+    font-size: 3.8rem;
     font-weight: 700;
-    font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
     color: #ffffff;
     text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
 .srs-pinyin {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
     color: var(--accent-secondary);
     font-weight: 500;
 }
 
 .srs-meaning {
-    font-size: 1.2rem;
+    font-size: 1.15rem;
     color: var(--text-secondary);
     max-width: 480px;
     line-height: 1.4;
@@ -712,18 +880,11 @@ onBeforeUnmount(() => {
     font-style: italic;
 }
 
-.empty-config-warn {
-    color: var(--text-muted);
-    font-style: italic;
-    font-size: 0.9rem;
-}
-
 .scoring-actions-bar {
     display: flex;
     gap: 1rem;
     width: 100%;
-    max-width: 600px;
-    margin-top: 2rem;
+    margin-top: 1.5rem;
 }
 
 .justify-center {
@@ -761,7 +922,6 @@ onBeforeUnmount(() => {
     background: rgba(255, 255, 255, 0.1);
     padding: 0.1rem 0.4rem;
     border-radius: 3px;
-    margin-bottom: 0.15rem;
 }
 
 .rating-again {
@@ -811,12 +971,134 @@ onBeforeUnmount(() => {
     justify-content: center;
     padding: 3rem;
     gap: 1.2rem;
+    width: 100%;
+    max-width: 600px;
 }
 
 .completion-icon {
     font-size: 3.5rem;
 }
 
+/* Progress & Due Dates Registry Table */
+.deck-inventory-section {
+    margin-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 1.5rem;
+}
+
+.section-title-inventory {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin-bottom: 1rem;
+}
+
+.table-scroll-container {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(10, 15, 30, 0.2);
+}
+
+.inventory-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.88rem;
+}
+
+.inventory-table th {
+    background: rgba(255, 255, 255, 0.04);
+    padding: 0.75rem 1rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    white-space: nowrap;
+}
+
+.inventory-table td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    color: var(--text-secondary);
+    vertical-align: middle;
+}
+
+.inventory-table tr:hover {
+    background: rgba(255, 255, 255, 0.01);
+}
+
+.row-due {
+    background: rgba(239, 68, 68, 0.02);
+}
+
+.row-due:hover {
+    background: rgba(239, 68, 68, 0.04) !important;
+}
+
+.font-bold {
+    font-weight: 600;
+}
+
+.text-white {
+    color: #ffffff !important;
+}
+
+.text-center {
+    text-align: center;
+}
+
+/* Table Inner Chip Assets */
+.state-chip {
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.state-0 {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.state-1 {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.state-2 {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.state-3 {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.badge-status {
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.badge-due {
+    background: #ef4444;
+    color: #ffffff;
+}
+
+.badge-waiting {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-muted);
+}
+
+/* No Selection State View */
 .no-selection {
     display: flex;
     justify-content: center;
@@ -867,10 +1149,6 @@ onBeforeUnmount(() => {
 
     .flashcard-container {
         height: 280px;
-    }
-
-    .srs-char {
-        font-size: 3rem;
     }
 }
 </style>
