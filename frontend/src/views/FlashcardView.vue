@@ -54,7 +54,7 @@
                         </div>
                         <div class="stats-badge" v-if="studyActive">
                             <span class="stats-num text-session">{{ activeSessionCards.length - currentCardIndex
-                                }}</span>
+                            }}</span>
                             <span class="stats-label">Left In Session</span>
                         </div>
                     </div>
@@ -68,7 +68,7 @@
                             <div class="progress-bar-fill"
                                 :style="{ width: `${((currentCardIndex) / activeSessionCards.length) * 100}%` }"></div>
                             <span class="progress-text">Card {{ currentCardIndex + 1 }} of {{ activeSessionCards.length
-                            }}</span>
+                                }}</span>
                         </div>
 
                         <div class="flashcard-container" @click="isFlipped = !isFlipped">
@@ -591,17 +591,17 @@ onBeforeUnmount(() => {
 /* Main Workspace View Panel */
 .main-content-area {
     flex: 1;
-    overflow-y: auto;
+    overflow: hidden;
+    /* Changed from overflow-y: auto to structural viewport management */
     height: 100%;
-    padding-right: 4px;
 }
 
 .active-list-view {
-    min-height: 100%;
+    height: 100%;
+    /* Changed from min-height: 100% to strict constraint */
     padding: 2rem;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
 }
 
 .list-details-header {
@@ -709,6 +709,8 @@ onBeforeUnmount(() => {
     justify-content: center;
     text-align: center;
     gap: 1rem;
+    flex-shrink: 0;
+    /* Prevents prep dashboard from resizing uncomfortably */
 }
 
 .prep-graphics {
@@ -984,6 +986,12 @@ onBeforeUnmount(() => {
     margin-top: 1.5rem;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     padding-top: 1.5rem;
+    flex: 1;
+    /* Instructs inventory section to fill available remainder area */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    /* Contains inner content from spilling out */
 }
 
 .section-title-inventory {
@@ -991,41 +999,62 @@ onBeforeUnmount(() => {
     font-weight: 600;
     color: #e2e8f0;
     margin-bottom: 1rem;
+    flex-shrink: 0;
 }
 
 .table-scroll-container {
     width: 100%;
-    overflow-x: auto;
+    overflow-y: auto;
+    /* Changed to capture scroll internally identical to ListView */
     border-radius: var(--radius-md);
     border: 1px solid rgba(255, 255, 255, 0.06);
-    background: rgba(10, 15, 30, 0.2);
+    background: rgba(0, 0, 0, 0.15);
+    /* Updated background match */
+    flex: 1;
+}
+
+/* Scrollbar layout matching ListView definitions */
+.table-scroll-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
 }
 
 .inventory-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    /* Changed to match ListView metrics styling */
+    border-spacing: 0;
     text-align: left;
     font-size: 0.88rem;
 }
 
 .inventory-table th {
-    background: rgba(255, 255, 255, 0.04);
-    padding: 0.75rem 1rem;
+    position: sticky;
+    /* Sticky head anchor protection inside overflow frame */
+    top: 0;
+    background: #131d31;
+    /* Opaque matching color variable */
+    z-index: 10;
+    padding: 1rem;
     color: var(--text-secondary);
     font-weight: 600;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
     white-space: nowrap;
 }
 
 .inventory-table td {
-    padding: 0.85rem 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     color: var(--text-secondary);
     vertical-align: middle;
 }
 
 .inventory-table tr:hover {
-    background: rgba(255, 255, 255, 0.01);
+    background: rgba(255, 255, 255, 0.03);
 }
 
 .row-due {
