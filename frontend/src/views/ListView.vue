@@ -11,20 +11,8 @@
       <div class="create-list-box glass-panel-inner">
         <h3 class="form-title">Create New List</h3>
         <div class="create-list-form">
-          <input 
-            v-model="newListName" 
-            type="text" 
-            placeholder="List name..." 
-            class="input-base"
-            @keyup.enter="createList"
-          />
-          <div class="select-wrapper">
-            <select v-model="newListType" class="input-base select-custom">
-              <option value="USER_CREATED">User Created</option>
-              <option value="SAVED">Saved</option>
-              <option value="SEEN">Seen</option>
-            </select>
-          </div>
+          <input v-model="newListName" type="text" placeholder="List name..." class="input-base"
+            @keyup.enter="createList" />
           <button class="btn btn-primary btn-block" @click="createList" :disabled="!newListName.trim()">
             Create List
           </button>
@@ -35,13 +23,8 @@
       <div class="lists-list-wrapper">
         <h3 class="section-title">Your Lists</h3>
         <div class="lists-grid">
-          <div 
-            v-for="list in lists" 
-            :key="list.id" 
-            class="list-card" 
-            :class="{ active: activeList?.id === list.id }"
-            @click="selectList(list)"
-          >
+          <div v-for="list in sortedLists" :key="list.id" class="list-card"
+            :class="{ active: activeList?.id === list.id }" @click="selectList(list)">
             <div class="list-card-header">
               <h3>{{ list.name }}</h3>
               <span class="badge" :class="list.type.toLowerCase()">{{ list.type }}</span>
@@ -73,10 +56,16 @@
               {{ activeList.sourceMetadata?.description || 'Custom vocabulary list' }}
             </p>
           </div>
-          
-          <div class="stats-badge">
-            <span class="stats-num">{{ words.length }}</span>
-            <span class="stats-label">Total Words</span>
+
+          <div class="header-actions-group" style="display: flex; gap: 1rem; align-items: center;">
+            <button class="btn btn-primary btn-sm" @click="showFlashcardModal = true">
+              ⚡ Create Flashcard Deck
+            </button>
+
+            <div class="stats-badge">
+              <span class="stats-num">{{ words.length }}</span>
+              <span class="stats-label">Total Words</span>
+            </div>
           </div>
         </div>
 
@@ -84,16 +73,11 @@
         <div class="controls-container">
           <!-- Search Box -->
           <div class="search-box">
-            <input 
-              v-model="wordSearchQuery" 
-              type="text" 
-              placeholder="Search words, pinyin, or meaning in this list..." 
-              class="input-base search-input" 
-            />
+            <input v-model="wordSearchQuery" type="text" placeholder="Search words, pinyin, or meaning in this list..."
+              class="input-base search-input" />
           </div>
 
-          <!-- Add Word Form -->
-          <div class="add-word-form glass-panel-inner">
+          <div v-if="activeList.type !== 'OFFICIAL'" class="add-word-form glass-panel-inner">
             <h3 class="form-title">Quick Add Word</h3>
             <div class="form-inputs">
               <input v-model="newWord.simplified" placeholder="Simplified (e.g. 你好)" class="input-base input-sm" />
@@ -103,6 +87,11 @@
                 Add
               </button>
             </div>
+          </div>
+
+          <div v-else class="add-word-disabled-notice glass-panel-inner">
+            <p>🔒 <strong>Official List Locked:</strong> You cannot manually append dictionary terms to structured
+              system or HSK lists.</p>
           </div>
         </div>
 
@@ -142,7 +131,7 @@
           </div>
         </div>
       </div>
-      
+
       <!-- No selection fallback -->
       <div v-else class="no-selection glass-panel">
         <div class="no-selection-content">
@@ -153,11 +142,91 @@
       </div>
     </div>
   </div>
+
+  <div v-if="showFlashcardModal" class="modal-backdrop">
+    <div class="modal-content glass-panel">
+      <h3 class="form-title">Deck Card Configuration</h3>
+      <p class="modal-desc">Configure layout attributes for <strong>{{ activeList?.name }}</strong></p>
+
+      <div class="modal-section">
+        <span class="config-label">Front Elements Display:</span>
+        <div class="checkbox-group">
+          <label><input type="checkbox" v-model="deckFrontConfig.character" /> Character</label>
+          <label><input type="checkbox" v-model="deckFrontConfig.pinyin" /> Pinyin</label>
+          <label><input type="checkbox" v-model="deckFrontConfig.meaning" /> Meaning</label>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <span class="config-label">Back Elements Display:</span>
+        <div class="checkbox-group">
+          <label><input type="checkbox" v-model="deckBackConfig.character" /> Character</label>
+          <label><input type="checkbox" v-model="deckBackConfig.pinyin" /> Pinyin</label>
+          <label><input type="checkbox" v-model="deckBackConfig.meaning" /> Meaning</label>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary btn-sm" @click="showFlashcardModal = false"
+          :disabled="isSyncingDeck">Cancel</button>
+        <button class="btn btn-primary btn-sm" @click="handleSyncAndNavigate" :disabled="isSyncingDeck">
+          {{ isSyncingDeck ? 'Syncing...' : 'Confirm & Go Revise' }}
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue';
 import { useAuth0 } from '@auth0/auth0-vue';
+
+
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+
+// Modal UI State tracking variables
+const showFlashcardModal = ref(false);
+const isSyncingDeck = ref(false);
+
+// Configuration options mapping to match your flashcard engine requirements
+const deckFrontConfig = ref({ character: true, pinyin: false, meaning: false });
+const deckBackConfig = ref({ character: false, pinyin: true, meaning: true });
+
+// Sync action handler that routes users to the flashcards page upon success
+const handleSyncAndNavigate = async () => {
+  if (!activeList.value) return;
+  isSyncingDeck.value = true;
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    if (isAuthenticated.value) {
+      const token = await getAccessTokenSilently();
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${apiBase}/lexiflow/flashcards/sync`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        listId: activeList.value.id,
+        name: `${activeList.value.name} Dynamic Deck`,
+        frontConfig: deckFrontConfig.value,
+        backConfig: deckBackConfig.value
+      })
+    });
+
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+    // Close modal and push user seamlessly to the flashcards module route
+    showFlashcardModal.value = false;
+    router.push('/flashcards');
+  } catch (error) {
+    console.error('Failed to quick-initialize flashcard deck:', error);
+  } finally {
+    isSyncingDeck.value = false;
+  }
+};
 
 // API Configuration
 const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4556';
@@ -172,11 +241,25 @@ const wordSearchQuery = ref('');
 
 // Form State
 const newListName = ref('');
-const newListType = ref('USER_CREATED');
 const newWord = ref({
   simplified: '',
   pinyin: '',
   meaning: ''
+});
+
+// Computed property to enforce sidebar ordering rule:
+// 1. SEEN lists on top
+// 2. USER_CREATED / SAVED lists in the middle
+// 3. OFFICIAL lists on the bottom
+const sortedLists = computed(() => {
+  return [...lists.value].sort((a, b) => {
+    const getOrderWeight = (type) => {
+      if (type === 'SEEN') return 1;
+      if (type === 'OFFICIAL') return 3;
+      return 2; // Default catch-all weight for USER_CREATED / SAVED 
+    };
+    return getOrderWeight(a.type) - getOrderWeight(b.type);
+  });
 });
 
 // Computed list filtered by user search query
@@ -188,9 +271,9 @@ const filteredWords = computed(() => {
     const simplified = vocab.simplified || '';
     const pinyin = vocab.pinyin || '';
     const meaning = vocab.meaning || '';
-    return simplified.includes(q) || 
-           pinyin.toLowerCase().includes(q) || 
-           meaning.toLowerCase().includes(q);
+    return simplified.includes(q) ||
+      pinyin.toLowerCase().includes(q) ||
+      meaning.toLowerCase().includes(q);
   });
 });
 
@@ -207,10 +290,10 @@ const fetchLists = async () => {
     const response = await fetch(`${apiBase}/lexiflow/lists`, { headers });
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     lists.value = await response.json();
-    
-    // Auto-select first list if nothing selected
-    if (lists.value.length > 0 && !activeList.value) {
-      selectList(lists.value[0]);
+
+    // Auto-select first list based on computed structural sorting priority rules
+    if (sortedLists.value.length > 0 && !activeList.value) {
+      selectList(sortedLists.value[0]);
     }
   } catch (error) {
     console.error('Failed to fetch lists:', error);
@@ -220,7 +303,7 @@ const fetchLists = async () => {
 // Create a new list
 const createList = async () => {
   if (!newListName.value.trim()) return;
-  
+
   try {
     const headers = {
       'Content-Type': 'application/json'
@@ -234,12 +317,12 @@ const createList = async () => {
       headers,
       body: JSON.stringify({
         name: newListName.value.trim(),
-        type: newListType.value
+        type: 'USER_CREATED' // hardcoded execution payload replacing previous form dropdown state
       })
     });
-    
+
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    
+
     newListName.value = ''; // Reset
     await fetchLists(); // Refresh lists
   } catch (error) {
@@ -252,7 +335,7 @@ const selectList = async (list) => {
   activeList.value = list;
   words.value = []; // Clear current words
   wordSearchQuery.value = ''; // Reset search filter
-  
+
   try {
     const headers = {};
     if (isAuthenticated.value) {
@@ -269,7 +352,8 @@ const selectList = async (list) => {
 
 // Add a word to the active list
 const addWord = async () => {
-  if (!activeList.value || !newWord.value.simplified.trim()) return;
+  // Defensive guard block preventing write queries executing against OFFICIAL modules
+  if (!activeList.value || activeList.value.type === 'OFFICIAL' || !newWord.value.simplified.trim()) return;
 
   try {
     const headers = {
@@ -288,12 +372,12 @@ const addWord = async () => {
         meaning: newWord.value.meaning.trim()
       })
     });
-    
+
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    
+
     // Reset form
     newWord.value = { simplified: '', pinyin: '', meaning: '' };
-    
+
     // Refresh words and lists (to update count)
     await selectList(activeList.value);
     await fetchLists();
@@ -425,6 +509,7 @@ onMounted(() => {
 .lists-grid::-webkit-scrollbar {
   width: 4px;
 }
+
 .lists-grid::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 2px;
@@ -615,7 +700,7 @@ onMounted(() => {
   display: flex;
   gap: 0.5rem;
   align-items: center;
-  
+
 }
 
 .input-sm {
@@ -635,6 +720,7 @@ onMounted(() => {
 .table-container::-webkit-scrollbar {
   width: 6px;
 }
+
 .table-container::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 3px;
@@ -650,7 +736,8 @@ onMounted(() => {
 .vocab-table th {
   position: sticky;
   top: 0;
-  background: #131d31; /* opaque table header */
+  background: #131d31;
+  /* opaque table header */
   z-index: 10;
   font-weight: 600;
   color: var(--text-secondary);
@@ -684,7 +771,7 @@ onMounted(() => {
   font-weight: 600;
   color: var(--text-primary);
   font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .pinyin-cell {
@@ -775,9 +862,83 @@ onMounted(() => {
 }
 
 /* Columns widths defaults */
-.col-char { width: 120px; }
-.col-pinyin { width: 160px; }
-.col-count { width: 100px; }
+.col-char {
+  width: 120px;
+}
+
+.col-pinyin {
+  width: 160px;
+}
+
+.col-count {
+  width: 100px;
+}
+
+/* Pop-up Overlay Configuration styles */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  z-index: 999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  width: 400px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.modal-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: -0.5rem;
+}
+
+.modal-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.config-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.checkbox-group {
+  display: flex;
+  gap: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.6rem;
+  border-radius: var(--radius-sm);
+}
+
+.checkbox-group label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
 
 /* Responsive adjustments */
 @media (max-width: 950px) {
@@ -786,10 +947,12 @@ onMounted(() => {
     height: auto;
     overflow: visible;
   }
+
   .sidebar {
     width: 100%;
     height: auto;
   }
+
   .main-content {
     height: 600px;
   }

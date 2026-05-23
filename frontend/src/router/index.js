@@ -4,6 +4,7 @@ import HomeView from '../views/HomeView.vue'
 import WatchView from '../views/WatchView.vue'
 import ReqView from '../views/ReqView.vue'
 import ListView from '../views/ListView.vue'
+import FlashcardView from '../views/FlashcardView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -43,6 +44,12 @@ const router = createRouter({
       component: ListView,
       beforeEnter: authGuard
     },
+    {
+      path: '/flashcards',
+      name: 'Flashcards',
+      component: FlashcardView,
+      beforeEnter: authGuard
+    }
   ],
 })
 

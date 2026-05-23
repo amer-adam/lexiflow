@@ -52,7 +52,8 @@ def get_character_data(token):
 def process_single_segment(text):
     """
     Process a single text segment by smartly breaking down Chinese phrases,
-    English words, spaces, and numbers.
+    English words, spaces, and numbers. Falls back to character-by-character
+    processing if a multi-character Chinese token has no meaning/definition.
     """
     if not text:
         return {}
@@ -60,25 +61,18 @@ def process_single_segment(text):
     cccedict = get_cccedict()
     result = {}
 
-    # 1. Use Jieba to smartly tokenize into multi-char Chinese words or English chunks
+    # 1. Use Jieba to tokenize into multi-char Chinese words or English chunks
     tokens = jieba.lcut(text)
 
     for token in tokens:
-        # Skip empty strings or stray whitespace processing if desired, 
-        # but let's keep track of them natively if they exist
         if not token.strip():
             continue
 
         # 2. Check if the token is entirely English words, numbers, or standard punctuation
-        # FIXED: Removed \p{P} and used standard ASCII punctuation ranges
         if re.match(r'^[A-Za-z0-9\s!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/`~]+$', token):
-            # Check if it's a number
             is_num = token.isdigit()
-            
-            # Treat entire English phrase/number as a single block
             key = f"@{token}" if is_num else token 
             
-            # Generate continuous pinyin/representation for the English block
             pinyin_list = pinyin(token, style='normal')
             pinyin_val = ' '.join([item[0] for item in pinyin_list]) if pinyin_list else token
             
@@ -91,53 +85,76 @@ def process_single_segment(text):
             }
             continue
 
-        # 3. If it's Chinese, check HSK database first (handles multi-character HSK terms)
-        char_data = get_character_data(token)
-        if char_data:
-            result[token] = {
-                'pinyin': char_data.get('pinyin', ''),
-                'translations': char_data.get('translations', []),
-                'hsk_level': char_data.get('level', None),
-                'is_phrase': len(token) > 1,
-                'is_number': False
-            }
-            continue
-
-        # 4. If not in HSK, fall back to looking up the token in CcCedict
-        try:
-            entry = cccedict.get_entry(token)
-            pinyin_list = pinyin(token, style='normal')
-            pinyin_val = ' '.join([item[0] for item in pinyin_list]) if pinyin_list else token
-            
-            if entry:
-                result[token] = {
-                    'pinyin': pinyin_val,
-                    'translations': entry.get('definitions', []),
-                    'hsk_level': None,
-                    'is_phrase': len(token) > 1,
+        # Helper function to evaluate dictionary entries
+        def lookup_token(t):
+            # Check HSK
+            char_data = get_character_data(t)
+            if char_data and char_data.get('translations'):
+                return {
+                    'pinyin': char_data.get('pinyin', ''),
+                    'translations': char_data.get('translations', []),
+                    'hsk_level': char_data.get('level', None),
+                    'is_phrase': len(t) > 1,
                     'is_number': False
                 }
+            # Check CCCEDICT
+            try:
+                entry = cccedict.get_entry(t)
+                if entry and entry.get('definitions'):
+                    pinyin_list = pinyin(t, style='normal')
+                    pinyin_val = ' '.join([item[0] for item in pinyin_list]) if pinyin_list else t
+                    return {
+                        'pinyin': pinyin_val,
+                        'translations': entry.get('definitions', []),
+                        'hsk_level': None,
+                        'is_phrase': len(t) > 1,
+                        'is_number': False
+                    }
+            except Exception:
+                pass
+            return None
+
+        # 3. Try to look up the token as a whole phrase
+        token_data = lookup_token(token)
+        
+        if token_data:
+            # Found definitions for the whole phrase!
+            result[token] = token_data
+        else:
+            # 4. FALLBACK: No definitions found for the phrase, break it down character-by-character
+            if len(token) > 1:
+                # Print debug log similar to yours to track fallback actions
+                print(f"[Watch Sync Fallback] Phrase '{token}' missing definitions. Splitting word-by-word.")
+                
+                for char in token:
+                    char_data = lookup_token(char)
+                    if char_data:
+                        result[char] = char_data
+                    else:
+                        # Final ultimate fallback if even the single character isn't in your dicts
+                        pinyin_list = pinyin(char, style='normal')
+                        pinyin_val = pinyin_list[0][0] if pinyin_list else char
+                        result[char] = {
+                            'pinyin': pinyin_val,
+                            'translations': [],
+                            'hsk_level': None,
+                            'is_phrase': False,
+                            'is_number': False
+                        }
             else:
-                # If everything fails, it might be an unknown word or punctuation
+                # It was already a single character phrase with no definition
+                pinyin_list = pinyin(token, style='normal')
+                pinyin_val = pinyin_list[0][0] if pinyin_list else token
                 result[token] = {
                     'pinyin': pinyin_val,
                     'translations': [],
                     'hsk_level': None,
-                    'is_phrase': len(token) > 1,
+                    'is_phrase': False,
                     'is_number': False
                 }
-        except Exception as e:
-            print(f"Error processing token '{token}': {str(e)}")
-            result['@' + token] = {
-                'pinyin': token, 
-                'translations': [], 
-                'hsk_level': None, 
-                'is_phrase': False,
-                'is_number': False
-            }
 
     return result
-    
+
 def api_postprocess(result, max_workers=16):
     """Post-process transcription results with multithreading"""
     if not result or "text" not in result or not result["text"]:

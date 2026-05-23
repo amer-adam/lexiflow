@@ -28,10 +28,10 @@ enum QuestionType {
 // ==========================================
 
 model User {
-  id              String            @id @default(uuid())
-  email           String            @unique
-  createdAt       DateTime          @default(now())
-  
+  id        String   @id @default(uuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+
   // Relations
   vocabularyLists VocabularyList[]
   flashcardDecks  FlashcardDeck[]
@@ -48,51 +48,52 @@ model VocabularyItem {
   meaning           String
   hskLevel          Int?
   frequencyRank     Int?
-  embeddingVectorId String?  // Reference to external vector DB or cache
+  embeddingVectorId String? // Reference to external vector DB or cache
   createdAt         DateTime @default(now())
 
   // Relations
-  listItems         VocabularyListItem[]
-  flashcards        Flashcard[]
-  quizQuestions     QuizQuestion[]
-  
+  listItems     VocabularyListItem[]
+  flashcards    Flashcard[]
+  quizQuestions QuizQuestion[]
+
   // Cache Relations
-  distractorCache   DistractorCache?
-  ttsAudioCache     TTSAudioCache?
-  embeddingCache    EmbeddingCache?
+  distractorCache DistractorCache?
+  ttsAudioCache   TTSAudioCache?
+  embeddingCache  EmbeddingCache?
 }
 
 model VocabularyList {
   id             String   @id @default(uuid())
-  userId         String?  // Nullable for SYSTEM/OFFICIAL lists
+  userId         String? // Nullable for SYSTEM/OFFICIAL lists
   name           String
   type           ListType
-  sourceMetadata Json?    // Stores external info (e.g., official source name)
+  sourceMetadata Json? // Stores external info (e.g., official source name)
   createdAt      DateTime @default(now())
 
-  user           User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items          VocabularyListItem[]
+  user          User?                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items         VocabularyListItem[]
+  flashcardDeck FlashcardDeck?
 
   @@unique([userId, name]) // A user cannot have two lists with the same name
 }
 
 model VocabularyListItem {
-  id               String   @id @default(uuid())
+  id               String  @id @default(uuid())
   listId           String
   vocabularyId     String
-  sourceVideoId    String?  // The video where this was seen/saved
-  familiarityScore Float    @default(0.0)
-  
-  // "Seen Words" mastery tracking logic
-  seenCount        Int      @default(1)
-  lastSeenAt       DateTime @default(now())
-  addedAt          DateTime @default(now())
+  sourceVideoId    String? // The video where this was seen/saved
+  familiarityScore Float   @default(0.0)
 
-  list             VocabularyList @relation(fields: [listId], references: [id], onDelete: Cascade)
-  vocabulary       VocabularyItem @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+  // "Seen Words" mastery tracking logic
+  seenCount  Int      @default(1)
+  lastSeenAt DateTime @default(now())
+  addedAt    DateTime @default(now())
+
+  list       VocabularyList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  vocabulary VocabularyItem @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
 
   // Prevent duplicate words in the same list
-  @@unique([listId, vocabularyId]) 
+  @@unique([listId, vocabularyId])
 }
 
 // ==========================================
@@ -100,49 +101,64 @@ model VocabularyListItem {
 // ==========================================
 
 model FlashcardDeck {
-  id          String      @id @default(uuid())
-  userId      String
-  name        String
-  createdAt   DateTime    @default(now())
+  id        String   @id @default(uuid())
+  userId    String
+  name      String
+  listId    String  @unique // Linked 1:1 with a VocabularyList
+  createdAt DateTime @default(now())
 
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  flashcards  Flashcard[]
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vocabularyList VocabularyList? @relation(fields: [listId], references: [id], onDelete: SetNull)
+  flashcards     Flashcard[]
 }
 
 model Flashcard {
-  id             String   @id @default(uuid())
-  deckId         String
-  vocabularyId   String
-  frontConfig    Json     // e.g., ["simplified", "pinyin"]
-  backConfig     Json     // e.g., ["meaning", "contextSentence"]
-  
-  // SRS Algorithm Fields (SuperMemo-2 style)
-  interval       Int      @default(0)   // Days until next review
-  easeFactor     Float    @default(2.5) // Multiplier for interval
+  id           String @id @default(uuid())
+  deckId       String
+  vocabularyId String
+
+  // Customization JSON objects: e.g., {"character": true, "pinyin": false} or ["simplified", "pinyin"]
+  frontConfig Json
+  backConfig  Json
+
+  // Modern FSRS Algorithm Memory State Tracking Parameters
+  stability     Float @default(0.0) // S: Days required for retention to fall to 90%
+  difficulty    Float @default(0.0) // D: Intrinsic cognitive complexity of the card (1.0 - 10.0)
+  elapsedDays   Int   @default(0) // Days since last review
+  scheduledDays Int   @default(0) // Calculated optimal interval until next iteration
+  state         Int   @default(0) // FSRS state integer: 0=New, 1=Learning, 2=Review, 3=Relearning
+
   nextReviewDate DateTime @default(now())
   createdAt      DateTime @default(now())
 
-  deck           FlashcardDeck   @relation(fields: [deckId], references: [id], onDelete: Cascade)
-  vocabulary     VocabularyItem  @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
-  reviews        FlashcardReview[]
+  deck       FlashcardDeck     @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  vocabulary VocabularyItem    @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+  reviews    FlashcardReview[]
 
   @@unique([deckId, vocabularyId])
+  @@index([nextReviewDate])
 }
 
 model FlashcardReview {
-  id           String    @id @default(uuid())
+  id           String @id @default(uuid())
   flashcardId  String
-  qualityScore Int       // e.g., 0-5 mapping to Forget/Neutral/Success
-  reviewedAt   DateTime  @default(now())
+  qualityScore Int // FSRS Rating scales: 1=Again, 2=Hard, 3=Good, 4=Easy
 
-  flashcard    Flashcard @relation(fields: [flashcardId], references: [id], onDelete: Cascade)
+  // Algorithmic snapshots for back-tracking or performance analytical computations
+  lastStability  Float
+  lastDifficulty Float
+  scheduledDays  Int
+
+  reviewedAt DateTime @default(now())
+
+  flashcard Flashcard @relation(fields: [flashcardId], references: [id], onDelete: Cascade)
 }
 
 model Quiz {
-  id        String         @id @default(uuid())
+  id        String   @id @default(uuid())
   userId    String
   title     String
-  createdAt DateTime       @default(now())
+  createdAt DateTime @default(now())
 
   user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   questions QuizQuestion[]
@@ -150,42 +166,42 @@ model Quiz {
 }
 
 model QuizQuestion {
-  id             String       @id @default(uuid())
-  quizId         String
-  vocabularyId   String
-  type           QuestionType
-  questionText   String       // e.g., The context sentence with a blank
-  correctAnswer  String
-  distractors    Json         // Array of plausible wrong answers
-  
-  quiz           Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  vocabulary     VocabularyItem @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
-  answers        QuizAnswer[]
+  id            String       @id @default(uuid())
+  quizId        String
+  vocabularyId  String
+  type          QuestionType
+  questionText  String // e.g., The context sentence with a blank
+  correctAnswer String
+  distractors   Json // Array of plausible wrong answers
+
+  quiz       Quiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  vocabulary VocabularyItem @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+  answers    QuizAnswer[]
 }
 
 model QuizAttempt {
-  id          String       @id @default(uuid())
+  id          String    @id @default(uuid())
   quizId      String
   userId      String
   score       Float?
-  startedAt   DateTime     @default(now())
+  startedAt   DateTime  @default(now())
   completedAt DateTime?
 
-  quiz        Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  answers     QuizAnswer[]
+  quiz    Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers QuizAnswer[]
 }
 
 model QuizAnswer {
-  id           String       @id @default(uuid())
-  attemptId    String
-  questionId   String
-  userAnswer   String
-  isCorrect    Boolean
-  answeredAt   DateTime     @default(now())
+  id         String   @id @default(uuid())
+  attemptId  String
+  questionId String
+  userAnswer String
+  isCorrect  Boolean
+  answeredAt DateTime @default(now())
 
-  attempt      QuizAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
-  question     QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  attempt  QuizAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }
 
 // ==========================================
@@ -193,38 +209,38 @@ model QuizAnswer {
 // ==========================================
 
 model EmbeddingCache {
-  id           String         @id @default(uuid())
-  vocabularyId String         @unique
-  vectorData   Json           // Holds the numerical array if stored locally
-  updatedAt    DateTime       @updatedAt
+  id           String   @id @default(uuid())
+  vocabularyId String   @unique
+  vectorData   Json // Holds the numerical array if stored locally
+  updatedAt    DateTime @updatedAt
 
-  vocabulary   VocabularyItem @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+  vocabulary VocabularyItem @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
 }
 
 model DistractorCache {
-  id           String         @id @default(uuid())
-  vocabularyId String         @unique
-  distractors  Json           // Pre-generated semantic/phonetic distractors
-  generatedAt  DateTime       @default(now())
+  id           String   @id @default(uuid())
+  vocabularyId String   @unique
+  distractors  Json // Pre-generated semantic/phonetic distractors
+  generatedAt  DateTime @default(now())
 
-  vocabulary   VocabularyItem @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+  vocabulary VocabularyItem @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
 }
 
 model TTSAudioCache {
-  id           String         @id @default(uuid())
-  vocabularyId String         @unique
-  audioUrl     String         // Local path or S3 bucket URL
-  generatedAt  DateTime       @default(now())
+  id           String   @id @default(uuid())
+  vocabularyId String   @unique
+  audioUrl     String // Local path or S3 bucket URL
+  generatedAt  DateTime @default(now())
 
-  vocabulary   VocabularyItem @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+  vocabulary VocabularyItem @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
 }
 
 model UserWatchProgress {
   id                   String   @id @default(uuid())
-  userId               String   // Auth0 user ID
-  videoId              String   // MongoDB video job ID
-  currentTime          Float    // Seconds into video
-  duration             Float    // Total video length in seconds
+  userId               String // Auth0 user ID
+  videoId              String // MongoDB video job ID
+  currentTime          Float // Seconds into video
+  duration             Float // Total video length in seconds
   lastSegmentIndexSeen Int      @default(-1) // Tracks which subtitle segment was last processed for vocab sync
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
