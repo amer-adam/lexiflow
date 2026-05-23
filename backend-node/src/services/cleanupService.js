@@ -1,14 +1,11 @@
-const { collections } = require('../config/db');
+const videosRepository = require('../modules/videos/videos.repository');
 
 async function cleanupOldJobs() {
     try {
         const cutoff = new Date();
         cutoff.setDate(cutoff.getDate() - 7); // 7 days ago
 
-        await collections.jobsCollection.deleteMany({
-            status: { $in: ['completed', 'failed'] },
-            updated_at: { $lt: cutoff }
-        });
+        await videosRepository.deleteOldJobs(cutoff);
 
         console.log('Cleaned up old jobs');
     } catch (error) {

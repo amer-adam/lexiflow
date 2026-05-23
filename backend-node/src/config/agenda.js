@@ -1,7 +1,7 @@
 const Agenda = require('agenda');
 const axios = require('axios');
 const env = require('./env');
-const { collections } = require('./db');
+const videosRepository = require('../modules/videos/videos.repository');
 const { extractVideoId } = require('../utils/helpers');
 
 const agenda = new Agenda({
@@ -19,38 +19,30 @@ async function monitorJobProgress(jobId, url, workerUrl) {
             try {
                 const pythonStatus = await axios.get(`${workerUrl}/status/${jobId}`);
 
-                await collections.jobsCollection.updateOne(
-                    { job_id: jobId },
-                    {
-                        $set: {
-                            status: pythonStatus.data.status,
-                            progress: pythonStatus.data.progress,
-                            current_step: pythonStatus.data.current_step,
-                            result: pythonStatus.data.result || null,
-                            updated_at: new Date(),
-                        },
-                    }
-                );
+                await videosRepository.updateJob(jobId, {
+                    status: pythonStatus.data.status,
+                    progress: pythonStatus.data.progress,
+                    current_step: pythonStatus.data.current_step,
+                    result: pythonStatus.data.result || null,
+                });
 
                 if (pythonStatus.data.status === 'completed') {
                     clearInterval(checkInterval);
                     // Cache the result
-                    const job = await collections.jobsCollection.findOne({ job_id: jobId });
+                    const job = await videosRepository.getJobById(jobId);
                     if (job && job.url) {
-                        await collections.resultsCollection.updateOne(
-                            { video_id: job.video_id || extractVideoId(job.url) },
+                        await videosRepository.updateResult(
+                            job.video_id || extractVideoId(job.url),
                             {
-                                $set: {
-                                    job_id: jobId,
-                                    video_id: job.video_id || extractVideoId(job.url),
-                                    url: job.url,
-                                    title: job.title || '',
-                                    thumbnail: job.thumbnail || '',
-                                    duration: job.duration || null,
-                                    result: pythonStatus.data.result,
-                                    created_at: new Date(),
-                                    updated_at: new Date(),
-                                }
+                                job_id: jobId,
+                                video_id: job.video_id || extractVideoId(job.url),
+                                url: job.url,
+                                title: job.title || '',
+                                thumbnail: job.thumbnail || '',
+                                duration: job.duration || null,
+                                result: pythonStatus.data.result,
+                                created_at: new Date(),
+                                updated_at: new Date(),
                             },
                             { upsert: true }
                         );
@@ -86,26 +78,19 @@ agenda.define('process video', { concurrency: 1, lockLifetime: 3600000 }, async 
         const response = await axios.post(`${activeUrl}/process`, { url, job_id: jobId, is_local: is_local || false });
 
         // Update job status in MongoDB
-        await collections.jobsCollection.updateOne(
-            { job_id: jobId },
-            {
-                $set: {
-                    status: response.data.status,
-                    progress: response.data.progress,
-                    current_step: response.data.current_step,
-                    updated_at: new Date(),
-                },
-            }
-        );
+        await videosRepository.updateJob(jobId, {
+            status: response.data.status,
+            progress: response.data.progress,
+            current_step: response.data.current_step,
+        });
 
         // Monitor job progress
         await monitorJobProgress(jobId, url, activeUrl);
     } catch (error) {
         console.error(`Error processing job ${jobId}:`, error);
-        await collections.jobsCollection.updateOne(
-            { job_id: jobId },
-            { $set: { status: 'failed', updated_at: new Date() } }
-        );
+        await videosRepository.updateJob(jobId, {
+            status: 'failed',
+        });
     }
 });
 

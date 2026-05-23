@@ -6,8 +6,8 @@ import { useAuth0 } from '@auth0/auth0-vue'
 
 export default {
   setup() {
-    const { user, isAuthenticated } = useAuth0();
-    return { user, isAuthenticated };
+    const { user, isAuthenticated, getAccessTokenSilently } = useAuth0();
+    return { user, isAuthenticated, getAccessTokenSilently };
   },
   components: {
     FingerprintSpinner,
@@ -65,15 +65,18 @@ export default {
       this.state = 'requesting';
 
       try {
-        const userId = this.isAuthenticated && this.user ? this.user.sub : 'guest';
-
         if (this.activeTab === 'youtube') {
           // Existing Process YouTube URL (UC04)
           const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4556';
+          let headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+          if (this.isAuthenticated) {
+            const token = await this.getAccessTokenSilently();
+            headers['Authorization'] = `Bearer ${token}`;
+          }
           const response = await fetch(`${baseUrl}/lexiflow/jobs`, {
             method: 'POST', mode: 'cors',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ url: this.url, user_id: userId, is_private: this.isPrivate })
+            headers,
+            body: JSON.stringify({ url: this.url, is_private: this.isPrivate })
           });
           if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
           this.handleJobResponse(response);
@@ -86,12 +89,18 @@ export default {
           const formData = new FormData();
           formData.append('file', this.file);
           formData.append('title', this.localTitle);
-          formData.append('user_id', userId);
           formData.append('is_private', this.isPrivate);
           
+          let headers = {};
+          if (this.isAuthenticated) {
+            const token = await this.getAccessTokenSilently();
+            headers['Authorization'] = `Bearer ${token}`;
+          }
+
           const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4556';
           const response = await fetch(`${baseUrl}/lexiflow/upload`, {
             method: 'POST', mode: 'cors',
+            headers,
             body: formData
           });
           if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -128,8 +137,13 @@ export default {
       this.jobStatusInterval = setInterval(async () => {
         try {
           const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4556';
+          let headers = { 'Accept': 'application/json' };
+          if (this.isAuthenticated) {
+            const token = await this.getAccessTokenSilently();
+            headers['Authorization'] = `Bearer ${token}`;
+          }
           const response = await fetch(`${baseUrl}/lexiflow/jobs/${this.jobId}`, {
-            mode: 'cors', headers: { 'Accept': 'application/json' }
+            mode: 'cors', headers
           });
           if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
           const responseData = await response.json();

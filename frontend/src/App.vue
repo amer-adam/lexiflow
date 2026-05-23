@@ -44,6 +44,7 @@ const handleLogout = () => {
         <RouterLink to="/" class="nav-link">Home</RouterLink>
         <RouterLink to="/req" class="nav-link">Request Mode</RouterLink>
         <RouterLink to="/library" class="nav-link" v-if="isAuthenticated">Library</RouterLink>
+        <RouterLink to="/lists" class="nav-link" v-if="isAuthenticated">Vocabulary</RouterLink>
       </nav>
 
       <div class="auth-section">

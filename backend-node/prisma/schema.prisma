@@ -1,0 +1,235 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// SHARED ENUMS
+// ==========================================
+enum ListType {
+  USER_CREATED
+  SAVED
+  SEEN
+  OFFICIAL
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  FILL_IN_THE_BLANK
+  SHORT_ANSWER
+}
+
+// ==========================================
+// VOCABULARY DOMAIN
+// ==========================================
+
+model User {
+  id              String            @id @default(uuid())
+  email           String            @unique
+  createdAt       DateTime          @default(now())
+  
+  // Relations
+  vocabularyLists VocabularyList[]
+  flashcardDecks  FlashcardDeck[]
+  quizzes         Quiz[]
+  quizAttempts    QuizAttempt[]
+}
+
+/// The CENTRAL ENTITY. Never duplicated.
+model VocabularyItem {
+  id                String   @id @default(uuid())
+  simplified        String   @unique
+  traditional       String?
+  pinyin            String
+  meaning           String
+  hskLevel          Int?
+  frequencyRank     Int?
+  embeddingVectorId String?  // Reference to external vector DB or cache
+  createdAt         DateTime @default(now())
+
+  // Relations
+  listItems         VocabularyListItem[]
+  flashcards        Flashcard[]
+  quizQuestions     QuizQuestion[]
+  
+  // Cache Relations
+  distractorCache   DistractorCache?
+  ttsAudioCache     TTSAudioCache?
+  embeddingCache    EmbeddingCache?
+}
+
+model VocabularyList {
+  id             String   @id @default(uuid())
+  userId         String?  // Nullable for SYSTEM/OFFICIAL lists
+  name           String
+  type           ListType
+  sourceMetadata Json?    // Stores external info (e.g., official source name)
+  createdAt      DateTime @default(now())
+
+  user           User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items          VocabularyListItem[]
+
+  @@unique([userId, name]) // A user cannot have two lists with the same name
+}
+
+model VocabularyListItem {
+  id               String   @id @default(uuid())
+  listId           String
+  vocabularyId     String
+  sourceVideoId    String?  // The video where this was seen/saved
+  familiarityScore Float    @default(0.0)
+  
+  // "Seen Words" mastery tracking logic
+  seenCount        Int      @default(1)
+  lastSeenAt       DateTime @default(now())
+  addedAt          DateTime @default(now())
+
+  list             VocabularyList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  vocabulary       VocabularyItem @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+
+  // Prevent duplicate words in the same list
+  @@unique([listId, vocabularyId]) 
+}
+
+// ==========================================
+// LEARNING DOMAIN (SRS & QUIZ)
+// ==========================================
+
+model FlashcardDeck {
+  id          String      @id @default(uuid())
+  userId      String
+  name        String
+  createdAt   DateTime    @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flashcards  Flashcard[]
+}
+
+model Flashcard {
+  id             String   @id @default(uuid())
+  deckId         String
+  vocabularyId   String
+  frontConfig    Json     // e.g., ["simplified", "pinyin"]
+  backConfig     Json     // e.g., ["meaning", "contextSentence"]
+  
+  // SRS Algorithm Fields (SuperMemo-2 style)
+  interval       Int      @default(0)   // Days until next review
+  easeFactor     Float    @default(2.5) // Multiplier for interval
+  nextReviewDate DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  deck           FlashcardDeck   @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  vocabulary     VocabularyItem  @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+  reviews        FlashcardReview[]
+
+  @@unique([deckId, vocabularyId])
+}
+
+model FlashcardReview {
+  id           String    @id @default(uuid())
+  flashcardId  String
+  qualityScore Int       // e.g., 0-5 mapping to Forget/Neutral/Success
+  reviewedAt   DateTime  @default(now())
+
+  flashcard    Flashcard @relation(fields: [flashcardId], references: [id], onDelete: Cascade)
+}
+
+model Quiz {
+  id        String         @id @default(uuid())
+  userId    String
+  title     String
+  createdAt DateTime       @default(now())
+
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questions QuizQuestion[]
+  attempts  QuizAttempt[]
+}
+
+model QuizQuestion {
+  id             String       @id @default(uuid())
+  quizId         String
+  vocabularyId   String
+  type           QuestionType
+  questionText   String       // e.g., The context sentence with a blank
+  correctAnswer  String
+  distractors    Json         // Array of plausible wrong answers
+  
+  quiz           Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  vocabulary     VocabularyItem @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+  answers        QuizAnswer[]
+}
+
+model QuizAttempt {
+  id          String       @id @default(uuid())
+  quizId      String
+  userId      String
+  score       Float?
+  startedAt   DateTime     @default(now())
+  completedAt DateTime?
+
+  quiz        Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers     QuizAnswer[]
+}
+
+model QuizAnswer {
+  id           String       @id @default(uuid())
+  attemptId    String
+  questionId   String
+  userAnswer   String
+  isCorrect    Boolean
+  answeredAt   DateTime     @default(now())
+
+  attempt      QuizAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question     QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+// ==========================================
+// AI METADATA DOMAIN (CACHES)
+// ==========================================
+
+model EmbeddingCache {
+  id           String         @id @default(uuid())
+  vocabularyId String         @unique
+  vectorData   Json           // Holds the numerical array if stored locally
+  updatedAt    DateTime       @updatedAt
+
+  vocabulary   VocabularyItem @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+}
+
+model DistractorCache {
+  id           String         @id @default(uuid())
+  vocabularyId String         @unique
+  distractors  Json           // Pre-generated semantic/phonetic distractors
+  generatedAt  DateTime       @default(now())
+
+  vocabulary   VocabularyItem @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+}
+
+model TTSAudioCache {
+  id           String         @id @default(uuid())
+  vocabularyId String         @unique
+  audioUrl     String         // Local path or S3 bucket URL
+  generatedAt  DateTime       @default(now())
+
+  vocabulary   VocabularyItem @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+}
+
+model UserWatchProgress {
+  id                   String   @id @default(uuid())
+  userId               String   // Auth0 user ID
+  videoId              String   // MongoDB video job ID
+  currentTime          Float    // Seconds into video
+  duration             Float    // Total video length in seconds
+  lastSegmentIndexSeen Int      @default(-1) // Tracks which subtitle segment was last processed for vocab sync
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@unique([userId, videoId]) // Prevent duplicate progress records per user-video pair
+  @@index([userId]) // Fast lookup by user
+  @@index([updatedAt]) // Query recent progress
+}

@@ -9,7 +9,7 @@ const props = defineProps({
   }
 })
 
-const { user, isAuthenticated } = useAuth0()
+const { user, isAuthenticated, getAccessTokenSilently } = useAuth0()
 
 const query = ref('')
 const isLoading = ref(false)
@@ -72,13 +72,18 @@ const searchDictionary = async () => {
   sentenceResults.value = []
   extraHighlightTerms.value = []
 
-  const userId = isAuthenticated.value && user.value ? user.value.sub : '';
-
   try {
     const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4556';
+    
+    let headers = {};
+    if (isAuthenticated.value) {
+      const token = await getAccessTokenSilently();
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const [dictRes, searchRes] = await Promise.all([
-      fetch(`${baseUrl}/lexiflow/dictionary?word=${encodeURIComponent(query.value)}`),
-      fetch(`${baseUrl}/lexiflow/search?word=${encodeURIComponent(query.value)}&user_id=${userId}`)
+      fetch(`${baseUrl}/lexiflow/dictionary?word=${encodeURIComponent(query.value)}`, { headers }),
+      fetch(`${baseUrl}/lexiflow/search?word=${encodeURIComponent(query.value)}`, { headers })
     ]);
 
     if (dictRes.ok) {

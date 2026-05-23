@@ -30,12 +30,12 @@ async function connectToMongoDB() {
         await collections.userVideosCollection.createIndex({ user_id: 1, job_id: 1 }, { unique: true });
 
         // Clear jobs table on start (DISABLED in production, but was in original code)
-        await collections.jobsCollection.deleteMany({});
-        await collections.resultsCollection.deleteMany({});
+        // await collections.jobsCollection.deleteMany({});
+        // await collections.resultsCollection.deleteMany({});
 
         await client.db(env.DB_NAME).command({ ping: 1 });
         console.log('Connected to MongoDB');
-        
+
         return client;
     } catch (err) {
         console.error('Error connecting to MongoDB:', err);

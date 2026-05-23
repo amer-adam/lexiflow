@@ -19,3 +19,4 @@ torch
 torchaudio
 ctranslate2
 onnxruntime
+jieba

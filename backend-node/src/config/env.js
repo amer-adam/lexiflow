@@ -1,5 +1,5 @@
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../../../../.env') }); // Adjusted path from src/config/env.js to root .env
+require('dotenv').config({ path: path.join(__dirname, '../../../.env') }); // Adjusted path from src/config/env.js to root .env
 
 module.exports = {
     PORT: 4556,
@@ -20,4 +20,5 @@ module.exports = {
     SALAD_PROJECT_NAME: process.env.SALAD_PROJECT_NAME || 'default',
     SALAD_CONTAINER_GROUP_NAME: process.env.SALAD_CONTAINER_GROUP_NAME || 'lexiflow-worker',
     MIN_JOBS_FOR_SALAD: parseInt(process.env.MIN_JOBS_FOR_SALAD || '5', 10),
+    DATABASE_URL: process.env.DATABASE_URL
 };

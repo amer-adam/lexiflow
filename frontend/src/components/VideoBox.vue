@@ -109,11 +109,20 @@ export default {
       if (this.player && this.player.getCurrentTime) {
         const currentTime = this.player.getCurrentTime();
         this.$emit('time-update', currentTime);
+        if (this.player.getDuration) {
+          const duration = this.player.getDuration();
+          if (duration > 0) {
+            this.$emit('duration-update', duration);
+          }
+        }
       }
     },
     onHtmlTimeUpdate() {
       if (this.$refs.htmlPlayer) {
         this.$emit('time-update', this.$refs.htmlPlayer.currentTime);
+        if (this.$refs.htmlPlayer.duration) {
+          this.$emit('duration-update', this.$refs.htmlPlayer.duration);
+        }
       }
     }
   },

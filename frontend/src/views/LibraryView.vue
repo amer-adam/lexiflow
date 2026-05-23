@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
 
 const router = useRouter()
-const { user, isAuthenticated } = useAuth0()
+const { user, isAuthenticated, getAccessTokenSilently } = useAuth0()
 
 const isLoading = ref(true)
 const videos = ref([])
@@ -19,11 +19,41 @@ const sortBy = ref('Date Added (Newest)')
 
 const fetchLibrary = async () => {
   try {
-    const userId = isAuthenticated.value && user.value ? user.value.sub : '';
     const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4556';
-    const response = await fetch(`${baseUrl}/lexiflow/library?user_id=${userId}`);
+    let headers = {};
+    let token = null;
+
+    if (isAuthenticated.value) {
+      token = await getAccessTokenSilently();
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${baseUrl}/lexiflow/library`, { headers });
     if (!response.ok) throw new Error('Network response was not ok');
-    videos.value = await response.json();
+    const libraryVideos = await response.json();
+
+    // Fetch watch progress for each video
+    if (token) {
+      const progressPromises = libraryVideos.map(async (v) => {
+        try {
+          const progRes = await fetch(`${baseUrl}/lexiflow/videos/${v.id}/progress`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (progRes.ok) {
+            const progData = await progRes.json();
+            if (progData && progData.currentTime > 0 && progData.duration > 0) {
+              v.progressPercent = Math.min((progData.currentTime / progData.duration) * 100, 100);
+              v.currentTime = progData.currentTime;
+            }
+          }
+        } catch (err) {
+          console.error(`Error fetching progress for video ${v.id}:`, err);
+        }
+      });
+      await Promise.all(progressPromises);
+    }
+
+    videos.value = libraryVideos;
   } catch (error) {
     console.error('Error fetching library:', error);
   } finally {
@@ -100,7 +130,12 @@ const executeSearch = async () => {
   if (searchMode.value !== 'titles') {
     try {
       const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4556';
-      const res = await fetch(`${baseUrl}/lexiflow/search?word=${encodeURIComponent(searchQuery.value)}`);
+      let headers = {};
+      if (isAuthenticated.value) {
+        const token = await getAccessTokenSilently();
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const res = await fetch(`${baseUrl}/lexiflow/search?word=${encodeURIComponent(searchQuery.value)}`, { headers });
       if (res.ok) {
         const data = await res.json();
         // Only show results for videos the user is allowed to see (present in videos.value)
@@ -208,6 +243,11 @@ const highlightText = (text, queryStr) => {
                 <span class="badge-private" v-if="video.is_private">Private</span>
               </div>
               <div class="duration-badge">{{ video.duration }}</div>
+              
+              <!-- Progress Bar -->
+              <div v-if="video.progressPercent > 0" class="progress-bar-wrapper">
+                <div class="progress-bar-fill" :style="{ width: video.progressPercent + '%' }"></div>
+              </div>
               
               <div class="play-overlay">
                 <span class="play-icon">▶</span>
@@ -395,6 +435,22 @@ const highlightText = (text, queryStr) => {
   width: 100%;
   aspect-ratio: 16/9;
   overflow: hidden;
+}
+
+.progress-bar-wrapper {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  z-index: 2;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--accent-primary);
+  transition: width 0.3s ease;
 }
 
 .thumbnail-wrapper img {
