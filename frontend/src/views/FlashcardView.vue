@@ -44,7 +44,6 @@
                         <div class="title-row">
                             <h2 class="page-title">{{ activeDeck.name }}</h2>
                         </div>
-
                     </div>
 
                     <div class="stats-badge-row">
@@ -57,6 +56,12 @@
                             }}</span>
                             <span class="stats-label">Left In Session</span>
                         </div>
+
+                        <button class="stats-badge settings-badge-btn" @click="openSettingsModal"
+                            title="Deck Configuration Options">
+                            <span class="stats-num mechanical-gear">⚙️</span>
+                            <span class="stats-label">Settings</span>
+                        </button>
                     </div>
                 </div>
 
@@ -230,6 +235,67 @@
 
             </div>
         </div>
+
+        <div v-if="showSettingsModal" class="modal-backdrop" @click.self="showSettingsModal = false">
+            <div class="modal-content glass-panel">
+                <div class="modal-header">
+                    <h3>Deck Configuration Options</h3>
+                    <button class="close-btn" @click="showSettingsModal = false">✕</button>
+                </div>
+
+                <p class="modal-desc">Configure active view fields layout parameters or manage database status records.
+                </p>
+
+                <div class="modal-section">
+                    <span class="config-label">Front Content View Mapping</span>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" v-model="settingsConfig.front.character" /> Simplified Characters
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" v-model="settingsConfig.front.pinyin" /> Hanyu Pinyin Phonetics
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" v-model="settingsConfig.front.meaning" /> English Meaning Definition
+                        </label>
+                    </div>
+                </div>
+
+                <div class="modal-section">
+                    <span class="config-label">Back Cover View Mapping</span>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" v-model="settingsConfig.back.character" /> Simplified Characters
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" v-model="settingsConfig.back.pinyin" /> Hanyu Pinyin Phonetics
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" v-model="settingsConfig.back.meaning" /> English Meaning Definition
+                        </label>
+                    </div>
+                </div>
+
+                <div class="modal-actions-wrapper">
+                    <button class="btn btn-primary btn-sm" @click="saveDeckLayoutSettings">Save Changes</button>
+                </div>
+
+                <hr class="modal-separator" />
+
+                <div class="modal-section danger-zone">
+                    <span class="config-label text-danger">Destructive Operations Matrix</span>
+                    <div class="danger-buttons-row">
+                        <button class="btn btn-score rating-hard btn-block" @click="resetDeckProgress">
+                            🔄 Reset Progress
+                        </button>
+                        <button class="btn btn-score rating-again btn-block" @click="deleteDeckProfile">
+                            🗑️ Delete Deck
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </template>
 
@@ -245,8 +311,8 @@ const { isAuthenticated, getAccessTokenSilently } = useAuth0();
 // State Variables
 const userDecks = ref([]);
 const activeDeck = ref(null);
-const allDeckCards = ref([]); // Holds all structural cards inside the active deck (due + waiting)
-const activeSessionCards = ref([]); // Sliced target count allocation for the current study run
+const allDeckCards = ref([]);
+const activeSessionCards = ref([]);
 const currentCardIndex = ref(0);
 
 // Study Session UI States
@@ -254,6 +320,13 @@ const studyActive = ref(false);
 const isFlipped = ref(false);
 const showSessionSelector = ref(false);
 const isForcedPractice = ref(false);
+
+// Settings Layout State Control Management
+const showSettingsModal = ref(false);
+const settingsConfig = ref({
+    front: { character: true, pinyin: false, meaning: false },
+    back: { character: false, pinyin: true, meaning: true }
+});
 
 // Computed Count of items genuinely due today
 const dueTodayCount = computed(() => {
@@ -333,7 +406,6 @@ const loadFullDeckInventory = async () => {
     if (!activeDeck.value) return;
     try {
         const token = await getAccessTokenSilently();
-        // Endpoint returns ALL cards belonging to this deck
         const response = await fetch(`${apiBase}/lexiflow/flashcards/decks/${activeDeck.value.id}/review`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -359,7 +431,6 @@ const startStudySession = (limitCount) => {
     currentCardIndex.value = 0;
     isFlipped.value = false;
 
-    // Filter down strictly to overdue cards for standard, or use all for forced practice
     let referencePool = [...allDeckCards.value];
     if (!isForcedPractice.value) {
         const now = new Date();
@@ -368,7 +439,6 @@ const startStudySession = (limitCount) => {
 
     activeSessionCards.value = referencePool.slice(0, limitCount);
 
-    // FIX: Ensure study mode activates even if forced practice pool lengths fluctuate
     if (activeSessionCards.value.length > 0 || isForcedPractice.value) {
         studyActive.value = true;
     }
@@ -394,7 +464,6 @@ const gradeCardReview = async (rating) => {
         if (response.ok) {
             const updatedCardData = await response.json();
 
-            // OPTIMISTIC LOCAL TABLE COMPONENT STATE MUTATION FOR REAL-TIME UPDATE
             const inventoryIndex = allDeckCards.value.findIndex(c => c.id === currentCard.id);
             if (inventoryIndex !== -1) {
                 if (updatedCardData && updatedCardData.nextReviewDate) {
@@ -407,7 +476,6 @@ const gradeCardReview = async (rating) => {
                         nextReviewDate: updatedCardData.nextReviewDate
                     };
                 } else {
-                    // Fallback to push item date to future to update table counters safely
                     allDeckCards.value[inventoryIndex].nextReviewDate = new Date(Date.now() + 86400000 * 2).toISOString();
                 }
             }
@@ -416,7 +484,6 @@ const gradeCardReview = async (rating) => {
         currentCardIndex.value++;
     } catch (error) {
         console.error('Failed submitting card calibration metrics parameters score:', error);
-        // Step forward anyway to keep user from getting stuck
         currentCardIndex.value++;
     }
 };
@@ -425,7 +492,96 @@ const exitStudyMode = async () => {
     studyActive.value = false;
     isForcedPractice.value = false;
     await fetchUserFlashcardDecks();
-    await loadFullDeckInventory(); // Re-fetches all cards to refresh the table tracking view
+    await loadFullDeckInventory();
+};
+
+/* Settings Overlay Operational Logic Methods */
+const openSettingsModal = () => {
+    if (!activeDeck.value) return;
+
+    if (allDeckCards.value.length > 0) {
+        const baselineSample = allDeckCards.value[0];
+        settingsConfig.value.front = {
+            character: baselineSample.frontConfig?.character ?? true,
+            pinyin: baselineSample.frontConfig?.pinyin ?? false,
+            meaning: baselineSample.frontConfig?.meaning ?? false
+        };
+        settingsConfig.value.back = {
+            character: baselineSample.backConfig?.character ?? false,
+            pinyin: baselineSample.backConfig?.pinyin ?? true,
+            meaning: baselineSample.backConfig?.meaning ?? true
+        };
+    }
+    showSettingsModal.value = true;
+};
+
+const saveDeckLayoutSettings = async () => {
+    try {
+        const token = await getAccessTokenSilently();
+        const response = await fetch(`${apiBase}/lexiflow/flashcards/decks/${activeDeck.value.id}/layout`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                frontConfig: settingsConfig.value.front,
+                backConfig: settingsConfig.value.back
+            })
+        });
+
+        if (response.ok) {
+            showSettingsModal.value = false;
+            await loadFullDeckInventory();
+        } else {
+            alert('Failed to update your deck card layout configurations template.');
+        }
+    } catch (error) {
+        console.error('Error saving flashcard layout modifications:', error);
+    }
+};
+
+const resetDeckProgress = async () => {
+    if (!confirm('Are you absolutely sure you want to reset all scheduling progress parameters for this entire deck profile back to ground zero state?')) return;
+
+    try {
+        const token = await getAccessTokenSilently();
+        const response = await fetch(`${apiBase}/lexiflow/flashcards/decks/${activeDeck.value.id}/reset`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+            showSettingsModal.value = false;
+            studyActive.value = false;
+            await loadFullDeckInventory();
+            alert('Deck scheduling state history initialized successfully!');
+        }
+    } catch (error) {
+        console.error('Failed to reset spaced repetition progress state:', error);
+    }
+};
+
+const deleteDeckProfile = async () => {
+    if (!confirm('Warning! Proceeding drops this spaced repetition deck framework layout entirely. Raw original list vocab records will remain unaffected. Proceed?')) return;
+
+    try {
+        const token = await getAccessTokenSilently();
+        const response = await fetch(`${apiBase}/lexiflow/flashcards/decks/${activeDeck.value.id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+            showSettingsModal.value = false;
+            activeDeck.value = null;
+            allDeckCards.value = [];
+            studyActive.value = false;
+            await fetchUserFlashcardDecks();
+        }
+    } catch (error) {
+        console.error('Failed to eliminate deck resource:', error);
+    }
 };
 
 watch(() => isAuthenticated.value, (newVal) => {
@@ -592,13 +748,11 @@ onBeforeUnmount(() => {
 .main-content-area {
     flex: 1;
     overflow: hidden;
-    /* Changed from overflow-y: auto to structural viewport management */
     height: 100%;
 }
 
 .active-list-view {
     height: 100%;
-    /* Changed from min-height: 100% to strict constraint */
     padding: 2rem;
     display: flex;
     flex-direction: column;
@@ -607,7 +761,7 @@ onBeforeUnmount(() => {
 .list-details-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     padding-bottom: 1rem;
     margin-bottom: 0.5rem;
@@ -633,8 +787,10 @@ onBeforeUnmount(() => {
 .stats-badge-row {
     display: flex;
     gap: 1rem;
+    align-items: center;
 }
 
+/* Main Stats & Button Box Container Framework */
 .stats-badge {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -643,24 +799,53 @@ onBeforeUnmount(() => {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     min-width: 95px;
+    height: 68px;
+    /* Strict height lock to ensure true sizing equivalence across elements */
+    box-sizing: border-box;
 }
 
 .stats-num {
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--accent-primary);
+    line-height: 1.2;
+    text-align: center;
+}
+
+/* Specialized Settings Button Configuration */
+.settings-badge-btn {
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.settings-badge-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--accent-secondary);
+    box-shadow: var(--shadow-glow);
+}
+
+.settings-badge-btn:hover .mechanical-gear {
+    color: #ffffff;
+}
+
+.mechanical-gear {
+    color: rgba(255, 255, 255, 0.6);
+    transition: color 0.2s ease;
 }
 
 .text-session {
     color: #a855f7 !important;
-    /* Session indicator color purple */
 }
 
 .stats-label {
     font-size: 0.65rem;
     text-transform: uppercase;
     color: var(--text-muted);
+    margin-top: 2px;
+    letter-spacing: 0.02em;
+    text-align: center;
 }
 
 /* Session Selection Dialog Prompt */
@@ -710,7 +895,6 @@ onBeforeUnmount(() => {
     text-align: center;
     gap: 1rem;
     flex-shrink: 0;
-    /* Prevents prep dashboard from resizing uncomfortably */
 }
 
 .prep-graphics {
@@ -977,21 +1161,15 @@ onBeforeUnmount(() => {
     max-width: 600px;
 }
 
-.completion-icon {
-    font-size: 3.5rem;
-}
-
 /* Progress & Due Dates Registry Table */
 .deck-inventory-section {
     margin-top: 1.5rem;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     padding-top: 1.5rem;
     flex: 1;
-    /* Instructs inventory section to fill available remainder area */
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    /* Contains inner content from spilling out */
 }
 
 .section-title-inventory {
@@ -1005,15 +1183,12 @@ onBeforeUnmount(() => {
 .table-scroll-container {
     width: 100%;
     overflow-y: auto;
-    /* Changed to capture scroll internally identical to ListView */
     border-radius: var(--radius-md);
     border: 1px solid rgba(255, 255, 255, 0.06);
     background: rgba(0, 0, 0, 0.15);
-    /* Updated background match */
     flex: 1;
 }
 
-/* Scrollbar layout matching ListView definitions */
 .table-scroll-container::-webkit-scrollbar {
     width: 6px;
 }
@@ -1026,7 +1201,6 @@ onBeforeUnmount(() => {
 .inventory-table {
     width: 100%;
     border-collapse: separate;
-    /* Changed to match ListView metrics styling */
     border-spacing: 0;
     text-align: left;
     font-size: 0.88rem;
@@ -1034,10 +1208,8 @@ onBeforeUnmount(() => {
 
 .inventory-table th {
     position: sticky;
-    /* Sticky head anchor protection inside overflow frame */
     top: 0;
     background: #131d31;
-    /* Opaque matching color variable */
     z-index: 10;
     padding: 1rem;
     color: var(--text-secondary);
@@ -1075,6 +1247,137 @@ onBeforeUnmount(() => {
 
 .text-center {
     text-align: center;
+}
+
+/* Modals Overlay Configurations Styles */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    z-index: 999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    width: 440px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #ffffff;
+}
+
+.close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+}
+
+.close-btn:hover {
+    color: #ffffff;
+}
+
+.modal-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: -0.5rem;
+    line-height: 1.4;
+}
+
+.modal-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.config-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 0.75rem;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.checkbox-label input {
+    cursor: pointer;
+}
+
+.modal-actions-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.25rem;
+}
+
+.modal-separator {
+    border: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin: 0.25rem 0;
+}
+
+.danger-zone {
+    background: rgba(239, 68, 68, 0.03);
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    border: 1px dashed rgba(239, 68, 68, 0.2);
+}
+
+.text-danger {
+    color: #ef4444 !important;
+}
+
+.danger-buttons-row {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+.danger-buttons-row .btn {
+    margin-top: 0;
+    flex-direction: row;
+    justify-content: center;
+    padding: 0.5rem;
+    font-size: 0.82rem;
 }
 
 /* Table Inner Chip Assets */

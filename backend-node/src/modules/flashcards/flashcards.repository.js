@@ -18,11 +18,7 @@ async function findDeckByListId(listId) {
 
 async function createDeck({ userId, listId, name }) {
     return await prisma.flashcardDeck.create({
-        data: {
-            name,
-            userId, // Connects to user table record
-            listId  // Direct scalar write, or use: list: { connect: { id: listId } }
-        }
+        data: { name, userId, listId }
     });
 }
 
@@ -30,15 +26,9 @@ async function bulkSyncCards(deckId, listItems, frontConfig, backConfig) {
     for (const item of listItems) {
         await prisma.flashcard.upsert({
             where: {
-                deckId_vocabularyId: {
-                    deckId,
-                    vocabularyId: item.vocabularyId
-                }
+                deckId_vocabularyId: { deckId, vocabularyId: item.vocabularyId }
             },
-            update: {
-                frontConfig,
-                backConfig
-            },
+            update: { frontConfig, backConfig },
             create: {
                 deckId,
                 vocabularyId: item.vocabularyId,
@@ -52,14 +42,9 @@ async function bulkSyncCards(deckId, listItems, frontConfig, backConfig) {
 
 async function getOverdueCards(deckId) {
     return await prisma.flashcard.findMany({
-        where: {
-            deckId,
-            // nextReviewDate: { lte: new Date() }
-        },
-        include: {
-            vocabulary: true
-        },
-        take: 1000 // Batch size optimization limit
+        where: { deckId },
+        include: { vocabulary: true },
+        take: 1000
     });
 }
 
@@ -78,7 +63,7 @@ async function updateCardProgress(cardId, rating, currentCard, fsrs) {
                 difficulty: fsrs.difficulty,
                 state: fsrs.state,
                 scheduledDays: fsrs.scheduledDays,
-                elapsedDays: 0, // Reset counter back down to zero base line
+                elapsedDays: 0,
                 nextReviewDate: fsrs.nextReviewDate
             }
         }),
@@ -94,6 +79,46 @@ async function updateCardProgress(cardId, rating, currentCard, fsrs) {
     ]);
 }
 
+// NEW: Updates display parameters mapping on all items within a specific deck
+async function updateLayoutConfigs(deckId, frontConfig, backConfig) {
+    return await prisma.flashcard.updateMany({
+        where: { deckId },
+        data: { frontConfig, backConfig }
+    });
+}
+
+// NEW: Transactions pipeline to revert learning metrics data state to original baseline values
+async function resetProgressMetrics(deckId) {
+    return await prisma.$transaction([
+        // Wipe historical telemetry cards review entries
+        prisma.flashcardReview.deleteMany({
+            where: { flashcard: { deckId } }
+        }),
+        // Reset card state configurations back to new (0 values)
+        prisma.flashcard.updateMany({
+            where: { deckId },
+            data: {
+                stability: 0,
+                difficulty: 0,
+                state: 0,
+                scheduledDays: 0,
+                elapsedDays: 0,
+                nextReviewDate: new Date()
+            }
+        })
+    ]);
+}
+
+// NEW: Deletes deck cascading records entirely
+async function removeDeckProfile(deckId) {
+    return await prisma.$transaction([
+        // Clear children metrics first to protect database relational reference limits
+        prisma.flashcardReview.deleteMany({ where: { flashcard: { deckId } } }),
+        prisma.flashcard.deleteMany({ where: { deckId } }),
+        prisma.flashcardDeck.delete({ where: { id: deckId } })
+    ]);
+}
+
 module.exports = {
     findDecksByUserId,
     findDeckByListId,
@@ -101,5 +126,8 @@ module.exports = {
     bulkSyncCards,
     getOverdueCards,
     getCardById,
-    updateCardProgress
+    updateCardProgress,
+    updateLayoutConfigs,
+    resetProgressMetrics,
+    removeDeckProfile
 };

@@ -10,5 +10,8 @@ router.get('/decks', flashcardsController.getUserDecks);
 router.post('/sync', flashcardsController.syncListToDeck);
 router.get('/decks/:deckId/review', flashcardsController.getReviewSession);
 router.post('/cards/:cardId/review', flashcardsController.submitCardReview);
+router.put('/decks/:deckId/layout', flashcardsController.updateDeckLayout);
+router.post('/decks/:deckId/reset', flashcardsController.resetDeckProgress);
+router.delete('/decks/:deckId', flashcardsController.deleteDeckProfile);
 
 module.exports = router;

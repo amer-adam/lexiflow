@@ -1,5 +1,5 @@
 const flashcardsService = require('./flashcards.service');
-const { syncDeckSchema, submitReviewSchema } = require('./flashcards.validator');
+const { submitReviewSchema } = require('./flashcards.validator');
 
 async function getUserDecks(req, res, next) {
     try {
@@ -9,7 +9,6 @@ async function getUserDecks(req, res, next) {
         res.json(data);
     } catch (error) { next(error); }
 }
-
 
 async function syncListToDeck(req, res, next) {
     try {
@@ -27,11 +26,8 @@ async function syncListToDeck(req, res, next) {
             frontConfig,
             backConfig
         });
-
         return res.status(200).json(result);
-    } catch (error) {
-        next(error);
-    }
+    } catch (error) { next(error); }
 }
 
 async function getReviewSession(req, res, next) {
@@ -51,9 +47,40 @@ async function submitCardReview(req, res, next) {
     } catch (error) { next(error); }
 }
 
+// NEW: Layout configuration payload processor
+async function updateDeckLayout(req, res, next) {
+    try {
+        const { deckId } = req.params;
+        const { frontConfig, backConfig } = req.body;
+        const result = await flashcardsService.updateDeckLayout(deckId, frontConfig, backConfig);
+        res.json(result);
+    } catch (error) { next(error); }
+}
+
+// NEW: Progress state initializer hook controller
+async function resetDeckProgress(req, res, next) {
+    try {
+        const { deckId } = req.params;
+        const result = await flashcardsService.resetDeckProgress(deckId);
+        res.json(result);
+    } catch (error) { next(error); }
+}
+
+// NEW: Deck execution removal endpoint mapping
+async function deleteDeckProfile(req, res, next) {
+    try {
+        const { deckId } = req.params;
+        const result = await flashcardsService.deleteDeckProfile(deckId);
+        res.json(result);
+    } catch (error) { next(error); }
+}
+
 module.exports = {
     getUserDecks,
     syncListToDeck,
     getReviewSession,
-    submitCardReview
+    submitCardReview,
+    updateDeckLayout,
+    resetDeckProgress,
+    deleteDeckProfile
 };

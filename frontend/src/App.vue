@@ -21,18 +21,13 @@ const handleLogout = () => {
   <div class="app-container">
     <!-- Floating background characters (global) -->
     <div class="float-bg" aria-hidden="true">
-      <span
-        v-for="(ch, i) in floatingChars"
-        :key="i"
-        class="float-char"
-        :style="{
-          left: (7 + i * 8) + '%',
-          animationDelay: (i * 0.6) + 's',
-          animationDuration: (10 + i % 4 * 2.5) + 's',
-          fontSize: (1.5 + i % 3 * 0.8) + 'rem',
-          opacity: 0.04 + (i % 5) * 0.012
-        }"
-      >{{ ch }}</span>
+      <span v-for="(ch, i) in floatingChars" :key="i" class="float-char" :style="{
+        left: (7 + i * 8) + '%',
+        animationDelay: (i * 0.6) + 's',
+        animationDuration: (10 + i % 4 * 2.5) + 's',
+        fontSize: (1.5 + i % 3 * 0.8) + 'rem',
+        opacity: 0.04 + (i % 5) * 0.012
+      }">{{ ch }}</span>
     </div>
 
     <header class="topbar glass-panel">
@@ -45,6 +40,7 @@ const handleLogout = () => {
         <RouterLink to="/req" class="nav-link">Request Mode</RouterLink>
         <RouterLink to="/library" class="nav-link" v-if="isAuthenticated">Library</RouterLink>
         <RouterLink to="/lists" class="nav-link" v-if="isAuthenticated">Vocabulary</RouterLink>
+        <RouterLink to="/flashcards" class="nav-link" v-if="isAuthenticated">Flashcards</RouterLink>
       </nav>
 
       <div class="auth-section">
@@ -93,10 +89,23 @@ const handleLogout = () => {
 }
 
 @keyframes floatUp {
-  0%   { transform: translateY(110vh) rotate(0deg); opacity: 0; }
-  5%   { opacity: 1; }
-  95%  { opacity: 1; }
-  100% { transform: translateY(-20vh) rotate(20deg); opacity: 0; }
+  0% {
+    transform: translateY(110vh) rotate(0deg);
+    opacity: 0;
+  }
+
+  5% {
+    opacity: 1;
+  }
+
+  95% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(-20vh) rotate(20deg);
+    opacity: 0;
+  }
 }
 
 .topbar {
