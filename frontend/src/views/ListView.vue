@@ -1,177 +1,177 @@
 <template>
-  <div class="list-view-container">
-    <!-- Sidebar for Lists -->
-    <div class="sidebar glass-panel">
-      <div class="sidebar-header">
-        <h2 class="sidebar-title">Vocab Lists</h2>
-        <p class="sidebar-subtitle">Manage your HSK and custom word lists</p>
-      </div>
-
-      <!-- Create New List Form -->
-      <div class="create-list-box glass-panel-inner">
-        <h3 class="form-title">Create New List</h3>
-        <div class="create-list-form">
-          <input v-model="newListName" type="text" placeholder="List name..." class="input-base"
-            @keyup.enter="createList" />
-          <button class="btn btn-primary btn-block" @click="createList" :disabled="!newListName.trim()">
-            Create List
-          </button>
+  <div>
+    <div class="list-view-container">
+      <div class="sidebar glass-panel">
+        <div class="sidebar-header">
+          <h2 class="sidebar-title">Vocab Lists</h2>
+          <p class="sidebar-subtitle">Manage your HSK and custom word lists</p>
         </div>
-      </div>
 
-      <!-- Lists List -->
-      <div class="lists-list-wrapper">
-        <h3 class="section-title">Your Lists</h3>
-        <div class="lists-grid">
-          <div v-for="list in sortedLists" :key="list.id" class="list-card"
-            :class="{ active: activeList?.id === list.id }" @click="selectList(list)">
-            <div class="list-card-header">
-              <h3>{{ list.name }}</h3>
-              <span class="badge" :class="list.type.toLowerCase()">{{ list.type }}</span>
-            </div>
-            <div class="list-meta">
-              <span class="count">
-                📚 {{ list._count?.items || 0 }} words
-              </span>
-            </div>
-          </div>
-          <div v-if="lists.length === 0" class="empty-state">
-            No lists found. Create one above!
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Main Content Area -->
-    <div class="main-content-area">
-      <div v-if="activeList" class="active-list-view glass-panel">
-        <!-- Header -->
-        <div class="list-details-header">
-          <div class="title-section">
-            <div class="title-row">
-              <h2 class="page-title">{{ activeList.name }}</h2>
-              <span class="badge" :class="activeList.type.toLowerCase()">{{ activeList.type }}</span>
-            </div>
-            <p class="list-description">
-              {{ activeList.sourceMetadata?.description || 'Custom vocabulary list' }}
-            </p>
-          </div>
-
-          <div class="header-actions-group" style="display: flex; gap: 1rem; align-items: center;">
-            <button class="btn btn-primary btn-sm" @click="showFlashcardModal = true">
-              ⚡ Create Flashcard Deck
+        <div class="create-list-box glass-panel-inner">
+          <h3 class="form-title">Create New List</h3>
+          <div class="create-list-form">
+            <input v-model="newListName" type="text" placeholder="List name..." class="input-base"
+              @keyup.enter="createList" />
+            <button class="btn btn-primary btn-block" @click="createList" :disabled="!newListName.trim()">
+              Create List
             </button>
-
-            <div class="stats-badge">
-              <span class="stats-num">{{ words.length }}</span>
-              <span class="stats-label">Total Words</span>
-            </div>
           </div>
         </div>
 
-        <!-- Controls (Search & Add Word) -->
-        <div class="controls-container">
-          <!-- Search Box -->
-          <div class="search-box">
-            <input v-model="wordSearchQuery" type="text" placeholder="Search words, pinyin, or meaning in this list..."
-              class="input-base search-input" />
+        <div class="lists-list-wrapper">
+          <h3 class="section-title">Your Lists</h3>
+          <div class="lists-grid">
+            <div v-for="list in sortedLists" :key="list.id" class="list-card"
+              :class="{ active: activeList?.id === list.id }" @click="selectList(list)">
+              <div class="list-card-header">
+                <h3>{{ list.name }}</h3>
+                <span class="badge" :class="list.type.toLowerCase()">{{ list.type }}</span>
+              </div>
+              <div class="list-meta">
+                <span class="count">
+                  📚 {{ list._count?.items || 0 }} words
+                </span>
+              </div>
+            </div>
+            <div v-if="lists.length === 0" class="empty-state">
+              No lists found. Create one above!
+            </div>
           </div>
+        </div>
+      </div>
 
-          <div v-if="activeList.type !== 'OFFICIAL'" class="add-word-form glass-panel-inner">
-            <h3 class="form-title">Quick Add Word</h3>
-            <div class="form-inputs">
-              <input v-model="newWord.simplified" placeholder="Simplified (e.g. 你好)" class="input-base input-sm" />
-              <input v-model="newWord.pinyin" placeholder="Pinyin (e.g. nǐ hǎo)" class="input-base input-sm" />
-              <input v-model="newWord.meaning" placeholder="Meaning" class="input-base input-sm" />
-              <button class="btn btn-primary btn-sm" @click="addWord" :disabled="!newWord.simplified.trim()">
-                Add
+      <div class="main-content-area">
+        <div v-if="activeList" class="active-list-view glass-panel">
+          <div class="list-details-header">
+            <div class="title-section">
+              <div class="title-row">
+                <h2 class="page-title">{{ activeList.name }}</h2>
+                <span class="badge" :class="activeList.type.toLowerCase()">{{ activeList.type }}</span>
+              </div>
+              <p class="list-description">
+                {{ activeList.sourceMetadata?.description || 'Custom vocabulary list' }}
+              </p>
+            </div>
+
+            <div class="header-actions-group" style="display: flex; gap: 1rem; align-items: center;">
+              <div class="stats-badge">
+                <span class="stats-num">{{ words.length }}</span>
+                <span class="stats-label">Total Words</span>
+              </div>
+
+              <button class='stats-badge dynamic-action-badge' @click="handleFlashcardClick">
+                <template v-if="hasExistingDeck">
+                  <span class="stats-num emoji">🔍</span>
+                  <span class="stats-label">Go To Deck</span>
+                </template>
+                <template v-else>
+                  <span class="stats-num emoji">💠</span>
+                  <span class="stats-label">Create Deck</span>
+                </template>
               </button>
             </div>
           </div>
 
-          <div v-else class="add-word-disabled-notice glass-panel-inner">
-            <p>🔒 <strong>Official List Locked:</strong> You cannot manually append dictionary terms to structured
-              system or HSK lists.</p>
+          <div class="controls-container">
+            <div class="search-box">
+              <input v-model="wordSearchQuery" type="text"
+                placeholder="Search words, pinyin, or meaning in this list..." class="input-base search-input" />
+            </div>
+
+            <div v-if="activeList.type !== 'OFFICIAL'" class="add-word-form glass-panel-inner">
+              <h3 class="form-title">Quick Add Word</h3>
+              <div class="form-inputs">
+                <input v-model="newWord.simplified" placeholder="Simplified (e.g. 你好)" class="input-base input-sm" />
+                <input v-model="newWord.pinyin" placeholder="Pinyin (e.g. nǐ hǎo)" class="input-base input-sm" />
+                <input v-model="newWord.meaning" placeholder="Meaning" class="input-base input-sm" />
+                <button class="btn btn-primary btn-sm" @click="addWord" :disabled="!newWord.simplified.trim()">
+                  Add
+                </button>
+              </div>
+            </div>
+
+            <div v-else class="add-word-disabled-notice glass-panel-inner">
+              <p>🔒 <strong>Official List Locked:</strong> You cannot manually append dictionary terms to structured
+                system or HSK lists.</p>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table v-if="filteredWords.length > 0" class="vocab-table">
+              <thead>
+                <tr>
+                  <th class="col-char">Character</th>
+                  <th class="col-pinyin">Pinyin</th>
+                  <th class="col-meaning">Meaning</th>
+                  <th class="col-count text-center">Seen Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="item in filteredWords" :key="item.id" class="table-row">
+                  <td class="character-cell">
+                    <span class="character-text">{{ item.vocabulary?.simplified || item.simplified }}</span>
+                  </td>
+                  <td class="pinyin-cell">
+                    <span>{{ item.vocabulary?.pinyin || item.pinyin || '' }}</span>
+                  </td>
+                  <td class="meaning-cell">
+                    <div class="meaning-text" :title="item.vocabulary?.meaning || item.meaning">
+                      {{ item.vocabulary?.meaning || item.meaning || '' }}
+                    </div>
+                  </td>
+                  <td class="count-cell text-center">
+                    <span class="count-badge">{{ item.seenCount }}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div v-else class="empty-state">
+              <p v-if="words.length === 0">This list is empty. Add some words to get started!</p>
+              <p v-else>No words match your search filter.</p>
+            </div>
           </div>
         </div>
 
-        <!-- Words Table -->
-        <div class="table-container">
-          <table v-if="filteredWords.length > 0" class="vocab-table">
-            <thead>
-              <tr>
-                <th class="col-char">Character</th>
-                <th class="col-pinyin">Pinyin</th>
-                <th class="col-meaning">Meaning</th>
-                <th class="col-count text-center">Seen Count</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in filteredWords" :key="item.id" class="table-row">
-                <td class="character-cell">
-                  <span class="character-text">{{ item.vocabulary?.simplified || item.simplified }}</span>
-                </td>
-                <td class="pinyin-cell">
-                  <span>{{ item.vocabulary?.pinyin || item.pinyin || '' }}</span>
-                </td>
-                <td class="meaning-cell">
-                  <div class="meaning-text" :title="item.vocabulary?.meaning || item.meaning">
-                    {{ item.vocabulary?.meaning || item.meaning || '' }}
-                  </div>
-                </td>
-                <td class="count-cell text-center">
-                  <span class="count-badge">{{ item.seenCount }}</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <div v-else class="empty-state">
-            <p v-if="words.length === 0">This list is empty. Add some words to get started!</p>
-            <p v-else>No words match your search filter.</p>
+        <div v-else class="no-selection glass-panel">
+          <div class="no-selection-content">
+            <div class="no-selection-icon">📚</div>
+            <h2>No List Selected</h2>
+            <p>Choose a vocabulary list from the sidebar or create a new one to view and manage your characters.</p>
           </div>
-        </div>
-      </div>
-
-      <!-- No selection fallback -->
-      <div v-else class="no-selection glass-panel">
-        <div class="no-selection-content">
-          <div class="no-selection-icon">📚</div>
-          <h2>No List Selected</h2>
-          <p>Choose a vocabulary list from the sidebar or create a new one to view and manage your characters.</p>
         </div>
       </div>
     </div>
-  </div>
 
-  <div v-if="showFlashcardModal" class="modal-backdrop">
-    <div class="modal-content glass-panel">
-      <h3 class="form-title">Deck Card Configuration</h3>
-      <p class="modal-desc">Configure layout attributes for <strong>{{ activeList?.name }}</strong></p>
+    <div v-if="showFlashcardModal" class="modal-backdrop">
+      <div class="modal-content glass-panel">
+        <h3 class="form-title">Deck Card Configuration</h3>
+        <p class="modal-desc">Configure layout attributes for <strong>{{ activeList?.name }}</strong></p>
 
-      <div class="modal-section">
-        <span class="config-label">Front Elements Display:</span>
-        <div class="checkbox-group">
-          <label><input type="checkbox" v-model="deckFrontConfig.character" /> Character</label>
-          <label><input type="checkbox" v-model="deckFrontConfig.pinyin" /> Pinyin</label>
-          <label><input type="checkbox" v-model="deckFrontConfig.meaning" /> Meaning</label>
+        <div class="modal-section">
+          <span class="config-label">Front Elements Display:</span>
+          <div class="checkbox-group">
+            <label><input type="checkbox" v-model="deckFrontConfig.character" /> Character</label>
+            <label><input type="checkbox" v-model="deckFrontConfig.pinyin" /> Pinyin</label>
+            <label><input type="checkbox" v-model="deckFrontConfig.meaning" /> Meaning</label>
+          </div>
         </div>
-      </div>
 
-      <div class="modal-section">
-        <span class="config-label">Back Elements Display:</span>
-        <div class="checkbox-group">
-          <label><input type="checkbox" v-model="deckBackConfig.character" /> Character</label>
-          <label><input type="checkbox" v-model="deckBackConfig.pinyin" /> Pinyin</label>
-          <label><input type="checkbox" v-model="deckBackConfig.meaning" /> Meaning</label>
+        <div class="modal-section">
+          <span class="config-label">Back Elements Display:</span>
+          <div class="checkbox-group">
+            <label><input type="checkbox" v-model="deckBackConfig.character" /> Character</label>
+            <label><input type="checkbox" v-model="deckBackConfig.pinyin" /> Pinyin</label>
+            <label><input type="checkbox" v-model="deckBackConfig.meaning" /> Meaning</label>
+          </div>
         </div>
-      </div>
 
-      <div class="modal-actions">
-        <button class="btn btn-secondary btn-sm" @click="showFlashcardModal = false"
-          :disabled="isSyncingDeck">Cancel</button>
-        <button class="btn btn-primary btn-sm" @click="handleSyncAndNavigate" :disabled="isSyncingDeck">
-          {{ isSyncingDeck ? 'Syncing...' : 'Confirm & Go Revise' }}
-        </button>
+        <div class="modal-actions">
+          <button class="btn btn-secondary btn-sm" @click="showFlashcardModal = false"
+            :disabled="isSyncingDeck">Cancel</button>
+          <button class="btn btn-primary btn-sm" @click="handleSyncAndNavigate" :disabled="isSyncingDeck">
+            {{ isSyncingDeck ? 'Syncing...' : 'Confirm & Go Revise' }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -180,8 +180,6 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue';
 import { useAuth0 } from '@auth0/auth0-vue';
-
-
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -193,6 +191,58 @@ const isSyncingDeck = ref(false);
 // Configuration options mapping to match your flashcard engine requirements
 const deckFrontConfig = ref({ character: true, pinyin: false, meaning: false });
 const deckBackConfig = ref({ character: false, pinyin: true, meaning: true });
+
+// Tracks existing user decks to verify flashcard status
+const flashcardDecks = ref([]);
+
+// API Configuration
+const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4556';
+const { isAuthenticated, getAccessTokenSilently } = useAuth0();
+
+// State
+const lists = ref([]);
+const activeList = ref(null);
+const words = ref([]);
+const wordSearchQuery = ref('');
+
+// Form State
+const newListName = ref('');
+const newWord = ref({
+  simplified: '',
+  pinyin: '',
+  meaning: ''
+});
+
+// Computed boolean property detecting flashcard deck presence matching the activeList
+const hasExistingDeck = computed(() => {
+  if (!activeList.value) return false;
+  return flashcardDecks.value.some(deck => deck.listId === activeList.value.id);
+});
+
+// Interceptor controlling logic actions based on flashcard presence
+const handleFlashcardClick = () => {
+  if (hasExistingDeck.value) {
+    router.push('/flashcards');
+  } else {
+    showFlashcardModal.value = true;
+  }
+};
+
+// Fetch user decks registry to cross-verify sync status mapping indexes
+const fetchUserDecksRegistry = async () => {
+  try {
+    if (!isAuthenticated.value) return;
+    const token = await getAccessTokenSilently();
+    const response = await fetch(`${apiBase}/lexiflow/flashcards/decks`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (response.ok) {
+      flashcardDecks.value = await response.json();
+    }
+  } catch (error) {
+    console.error('Failed to update referencing flashcards mapping alignment records:', error);
+  }
+};
 
 // Sync action handler that routes users to the flashcards page upon success
 const handleSyncAndNavigate = async () => {
@@ -218,8 +268,8 @@ const handleSyncAndNavigate = async () => {
 
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-    // Close modal and push user seamlessly to the flashcards module route
     showFlashcardModal.value = false;
+    await fetchUserDecksRegistry(); // Re-fetch registry updates to log verification indexes changes
     router.push('/flashcards');
   } catch (error) {
     console.error('Failed to quick-initialize flashcard deck:', error);
@@ -228,35 +278,13 @@ const handleSyncAndNavigate = async () => {
   }
 };
 
-// API Configuration
-const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4556';
-
-const { isAuthenticated, getAccessTokenSilently } = useAuth0();
-
-// State
-const lists = ref([]);
-const activeList = ref(null);
-const words = ref([]);
-const wordSearchQuery = ref('');
-
-// Form State
-const newListName = ref('');
-const newWord = ref({
-  simplified: '',
-  pinyin: '',
-  meaning: ''
-});
-
-// Computed property to enforce sidebar ordering rule:
-// 1. SEEN lists on top
-// 2. USER_CREATED / SAVED lists in the middle
-// 3. OFFICIAL lists on the bottom
+// Computed property to enforce sidebar ordering rule
 const sortedLists = computed(() => {
   return [...lists.value].sort((a, b) => {
     const getOrderWeight = (type) => {
       if (type === 'SEEN') return 1;
       if (type === 'OFFICIAL') return 3;
-      return 2; // Default catch-all weight for USER_CREATED / SAVED 
+      return 2;
     };
     return getOrderWeight(a.type) - getOrderWeight(b.type);
   });
@@ -285,13 +313,12 @@ const fetchLists = async () => {
       const token = await getAccessTokenSilently();
       headers['Authorization'] = `Bearer ${token}`;
     } else {
-      return; // Route protection requires auth
+      return;
     }
     const response = await fetch(`${apiBase}/lexiflow/lists`, { headers });
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     lists.value = await response.json();
 
-    // Auto-select first list based on computed structural sorting priority rules
     if (sortedLists.value.length > 0 && !activeList.value) {
       selectList(sortedLists.value[0]);
     }
@@ -305,9 +332,7 @@ const createList = async () => {
   if (!newListName.value.trim()) return;
 
   try {
-    const headers = {
-      'Content-Type': 'application/json'
-    };
+    const headers = { 'Content-Type': 'application/json' };
     if (isAuthenticated.value) {
       const token = await getAccessTokenSilently();
       headers['Authorization'] = `Bearer ${token}`;
@@ -317,14 +342,14 @@ const createList = async () => {
       headers,
       body: JSON.stringify({
         name: newListName.value.trim(),
-        type: 'USER_CREATED' // hardcoded execution payload replacing previous form dropdown state
+        type: 'USER_CREATED'
       })
     });
 
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-    newListName.value = ''; // Reset
-    await fetchLists(); // Refresh lists
+    newListName.value = '';
+    await fetchLists();
   } catch (error) {
     console.error('Failed to create list:', error);
   }
@@ -333,8 +358,8 @@ const createList = async () => {
 // Select a list and fetch its words
 const selectList = async (list) => {
   activeList.value = list;
-  words.value = []; // Clear current words
-  wordSearchQuery.value = ''; // Reset search filter
+  words.value = [];
+  wordSearchQuery.value = '';
 
   try {
     const headers = {};
@@ -352,13 +377,10 @@ const selectList = async (list) => {
 
 // Add a word to the active list
 const addWord = async () => {
-  // Defensive guard block preventing write queries executing against OFFICIAL modules
   if (!activeList.value || activeList.value.type === 'OFFICIAL' || !newWord.value.simplified.trim()) return;
 
   try {
-    const headers = {
-      'Content-Type': 'application/json'
-    };
+    const headers = { 'Content-Type': 'application/json' };
     if (isAuthenticated.value) {
       const token = await getAccessTokenSilently();
       headers['Authorization'] = `Bearer ${token}`;
@@ -375,10 +397,8 @@ const addWord = async () => {
 
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-    // Reset form
     newWord.value = { simplified: '', pinyin: '', meaning: '' };
 
-    // Refresh words and lists (to update count)
     await selectList(activeList.value);
     await fetchLists();
   } catch (error) {
@@ -386,16 +406,18 @@ const addWord = async () => {
   }
 };
 
-// Watch for authentication state changes (handles Auth0 delay on boot)
+// Watch for authentication state changes
 watch(() => isAuthenticated.value, (newVal) => {
   if (newVal) {
     fetchLists();
+    fetchUserDecksRegistry();
   }
 });
 
 onMounted(() => {
   if (isAuthenticated.value) {
     fetchLists();
+    fetchUserDecksRegistry();
   }
 });
 </script>
@@ -641,25 +663,54 @@ onMounted(() => {
 .stats-badge {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 0.75rem 1.25rem;
+  padding: 0.5rem 1.25rem;
   border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  min-width: 95px;
+  height: 68px;
+  /* Strict height lock to ensure true sizing equivalence across elements */
+  box-sizing: border-box;
+}
+
+
+
+/* Specific Style Overrides when Flashcard action is styled as badge component */
+.dynamic-action-badge {
+  cursor: pointer;
+  /* background: rgba(255, 255, 255, 0.02); */
+  /* border: 1px solid rgba(255, 255, 255, 0.08); */
+  transition: var(--transition);
+}
+
+.dynamic-action-badge:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--accent-secondary);
+  box-shadow: var(--shadow-glow);
+}
+
+.emoji {
+  color: rgba(255, 255, 255, 0.6);
+  transition: color 0.2s ease;
 }
 
 .stats-num {
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--accent-primary);
-  line-height: 1.1;
+  line-height: 1.2;
+  text-align: center;
 }
 
 .stats-label {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   text-transform: uppercase;
   color: var(--text-muted);
-  letter-spacing: 0.05em;
+  margin-top: 2px;
+  letter-spacing: 0.02em;
+  text-align: center;
 }
 
 /* Controls (Search & Quick Add) */
@@ -700,7 +751,6 @@ onMounted(() => {
   display: flex;
   gap: 0.5rem;
   align-items: center;
-
 }
 
 .input-sm {
@@ -737,7 +787,6 @@ onMounted(() => {
   position: sticky;
   top: 0;
   background: #131d31;
-  /* opaque table header */
   z-index: 10;
   font-weight: 600;
   color: var(--text-secondary);

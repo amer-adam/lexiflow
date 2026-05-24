@@ -41,6 +41,7 @@ const handleLogout = () => {
         <RouterLink to="/library" class="nav-link" v-if="isAuthenticated">Library</RouterLink>
         <RouterLink to="/lists" class="nav-link" v-if="isAuthenticated">Vocabulary</RouterLink>
         <RouterLink to="/flashcards" class="nav-link" v-if="isAuthenticated">Flashcards</RouterLink>
+        <RouterLink to="/quiz" class="nav-link" v-if="isAuthenticated">Quizzes</RouterLink>
       </nav>
 
       <div class="auth-section">

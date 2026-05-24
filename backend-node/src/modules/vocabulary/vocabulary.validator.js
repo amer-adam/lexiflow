@@ -13,6 +13,8 @@ const addVocabularySchema = z.object({
   traditional: z.string().optional(),
   hskLevel: z.number().int().optional(),
   sourceVideoId: z.string().optional(),
+  contextSentence: z.string().optional(),
+  contextTranslation: z.string().optional(),
 });
 
 module.exports = {

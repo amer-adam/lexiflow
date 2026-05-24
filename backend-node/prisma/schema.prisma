@@ -19,8 +19,9 @@ enum ListType {
 
 enum QuestionType {
   MULTIPLE_CHOICE
-  FILL_IN_THE_BLANK
+  FILL_BLANK
   SHORT_ANSWER
+  TRUE_FALSE
 }
 
 // ==========================================
@@ -78,21 +79,21 @@ model VocabularyList {
 }
 
 model VocabularyListItem {
-  id               String  @id @default(uuid())
+  id               String   @id @default(uuid())
   listId           String
   vocabularyId     String
   sourceVideoId    String? // The video where this was seen/saved
-  familiarityScore Float   @default(0.0)
+  familiarityScore Float    @default(0.0)
+  seenCount        Int      @default(1)
+  lastSeenAt       DateTime @default(now())
+  addedAt          DateTime @default(now())
 
-  // "Seen Words" mastery tracking logic
-  seenCount  Int      @default(1)
-  lastSeenAt DateTime @default(now())
-  addedAt    DateTime @default(now())
+  contextSentence    String? // The raw sentence segment containing the target word
+  contextTranslation String? // English translation matching that specific subtitle segment
 
   list       VocabularyList @relation(fields: [listId], references: [id], onDelete: Cascade)
   vocabulary VocabularyItem @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
 
-  // Prevent duplicate words in the same list
   @@unique([listId, vocabularyId])
 }
 
@@ -104,7 +105,7 @@ model FlashcardDeck {
   id        String   @id @default(uuid())
   userId    String
   name      String
-  listId    String  @unique // Linked 1:1 with a VocabularyList
+  listId    String   @unique // Linked 1:1 with a VocabularyList
   createdAt DateTime @default(now())
 
   user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -193,12 +194,15 @@ model QuizAttempt {
 }
 
 model QuizAnswer {
-  id         String   @id @default(uuid())
+  id         String  @id @default(uuid())
   attemptId  String
   questionId String
   userAnswer String
   isCorrect  Boolean
-  answeredAt DateTime @default(now())
+
+  gradingScore Float? // Cosine similarity float value between 0.0 and 1.0 from SBERT
+  feedback     String? // Textual flag indicator: e.g., "Exact", "Acceptable", "Partial Credit"
+  answeredAt   DateTime @default(now())
 
   attempt  QuizAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
   question QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)

@@ -57,41 +57,35 @@ async function addWordToList(listId, payload) {
   const traditional = payload.traditional || null;
   const hskLevel = payload.hskLevel !== undefined ? payload.hskLevel : (payload.hsk_level !== undefined ? payload.hsk_level : null);
   const sourceVideoId = payload.sourceVideoId || null;
+  const contextSentence = payload.contextSentence || null;
+  const contextTranslation = payload.contextTranslation || null;
 
-  // First Phase: Upsert VocabularyItem based on 'simplified'
+  // 1. Upsert base master structural entries
   const vocabularyItem = await prisma.vocabularyItem.upsert({
     where: { simplified },
-    update: {}, // Don't overwrite existing core data
-    create: {
-      simplified,
-      traditional,
-      pinyin,
-      meaning,
-      hskLevel,
-    },
+    update: {},
+    create: { simplified, traditional, pinyin, meaning, hskLevel },
   });
 
-  // Second Phase: Upsert VocabularyListItem based on compound unique key
+  // 2. Bind relation details along with exact context tracking values
   const listItem = await prisma.vocabularyListItem.upsert({
-    where: {
-      listId_vocabularyId: {
-        listId,
-        vocabularyId: vocabularyItem.id,
-      },
-    },
+    where: { listId_vocabularyId: { listId, vocabularyId: vocabularyItem.id } },
     update: {
       seenCount: { increment: 1 },
       lastSeenAt: new Date(),
+      contextSentence: contextSentence || undefined,
+      contextTranslation: contextTranslation || undefined,
     },
     create: {
       listId,
       vocabularyId: vocabularyItem.id,
       sourceVideoId,
-      seenCount: 1,
+      contextSentence,
+      contextTranslation,
     },
   });
 
-  return { vocabularyItem, listItem };
+  return listItem;
 }
 
 async function bulkAddWordsToList(listId, words) {

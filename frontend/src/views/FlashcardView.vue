@@ -53,13 +53,13 @@
                         </div>
                         <div class="stats-badge" v-if="studyActive">
                             <span class="stats-num text-session">{{ activeSessionCards.length - currentCardIndex
-                            }}</span>
+                                }}</span>
                             <span class="stats-label">Left In Session</span>
                         </div>
 
                         <button class="stats-badge settings-badge-btn" @click="openSettingsModal"
                             title="Deck Configuration Options">
-                            <span class="stats-num mechanical-gear">⚙️</span>
+                            <span class="stats-num emoji">⚙️</span>
                             <span class="stats-label">Settings</span>
                         </button>
                     </div>
@@ -73,7 +73,7 @@
                             <div class="progress-bar-fill"
                                 :style="{ width: `${((currentCardIndex) / activeSessionCards.length) * 100}%` }"></div>
                             <span class="progress-text">Card {{ currentCardIndex + 1 }} of {{ activeSessionCards.length
-                                }}</span>
+                            }}</span>
                         </div>
 
                         <div class="flashcard-container" @click="isFlipped = !isFlipped">
@@ -826,11 +826,11 @@ onBeforeUnmount(() => {
     box-shadow: var(--shadow-glow);
 }
 
-.settings-badge-btn:hover .mechanical-gear {
+.settings-badge-btn:hover .emoji {
     color: #ffffff;
 }
 
-.mechanical-gear {
+.emoji {
     color: rgba(255, 255, 255, 0.6);
     transition: color 0.2s ease;
 }

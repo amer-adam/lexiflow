@@ -1,37 +1,42 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from typing import Optional
-import uuid
-import subprocess
-import json
 import os
+import re
+import uuid
+import json
+import time
+import asyncio
+import subprocess
 import requests
 from pathlib import Path
+from typing import Optional, List, Dict, Any
 from datetime import datetime
-from fastapi.middleware.cors import CORSMiddleware
-from pymongo import MongoClient
-from bson import ObjectId
-import asyncio
 
+from fastapi import FastAPI, APIRouter, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from dotenv import load_dotenv
+
+# Existing core processing libraries
 from lingua import Language, LanguageDetectorBuilder
 from pypinyin import pinyin
 
-
-from time import sleep, time
-import time
-
+# Internal media processing module imports
 from transcribe import api_transcribe
 from postprocces import api_postprocess
-# from translate import Translator
 from src.download import download_url, uri_validator, get_duration
-from dotenv import load_dotenv
+
+from services.quiz.generator import QuizGenerator
+from services.quiz.judge import QuizJudge
+
+# Initialize environment variables
 load_dotenv(os.path.join(os.path.dirname(__file__), "../.env"))
 
 app = FastAPI()
 
 active_jobs = {}  # Format: {job_id: {"status": ..., "result": ...}}
 
-
+# Initialize Quiz Layer Singletons
+quiz_generator = QuizGenerator()
+quiz_judge = QuizJudge()
 
 class JobRequest(BaseModel):
     url: str
@@ -56,6 +61,24 @@ class DurationResponse(BaseModel):
 
 class DurationRequest(BaseModel):
     url: str
+
+class VocabItemPayload(BaseModel):
+    id: Optional[str] = None
+    vocabularyListItemId: Optional[str] = None
+    simplified: str
+    meaning: str
+    pinyin: Optional[str] = ""
+    contextSentence: Optional[str] = ""
+    contextTranslation: Optional[str] = ""
+
+class QuizGenerateRequest(BaseModel):
+    vocab_items: List[VocabItemPayload]
+    count: int
+    allowed_types: List[str]
+
+class ShortAnswerEvaluateRequest(BaseModel):
+    correct_reference: str
+    user_response: str
 
 
 @app.post("/duration")
@@ -324,6 +347,44 @@ async def fetch_dictionary_definition(word: str):
         return {"word": word, "definitions": [], "pinyin": ''}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/quiz/generate", response_model=List[Dict[str, Any]], tags=["Quiz System Engine"])
+async def generate_quiz_payload(payload: QuizGenerateRequest):
+    """
+    Transforms plain vocabulary arrays into randomized multiple-choice, 
+    fill-in-the-blank, or short-answer prompt blocks using linguistic heuristics.
+    """
+    try:
+        items_dict = [item.model_dump() for item in payload.vocab_items]
+        generated_questions = quiz_generator.generate_quiz(
+            vocab_items=items_dict,
+            count=payload.count,
+            allowed_types=payload.allowed_types
+        )
+        return generated_questions
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate quiz collection safely: {str(e)}"
+        )
+
+@app.post("/quiz/evaluate", tags=["Quiz System Engine"])
+async def evaluate_short_answer_response(payload: ShortAnswerEvaluateRequest):
+    """
+    Evaluates dynamic open-ended user responses by calculating text semantic similarity 
+    against baseline configurations via multilingual Sentence-BERT embeddings.
+    """
+    try:
+        evaluation_report = quiz_judge.evaluate_short_answer(
+            correct_reference=payload.correct_reference,
+            user_response=payload.user_response
+        )
+        return evaluation_report
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Semantic short-answer text evaluation failed: {str(e)}"
+        )
 
 
 # Add CORS middleware if needed

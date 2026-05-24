@@ -6,10 +6,9 @@ const authMiddleware = require('../../middlewares/auth.middleware');
 // Apply JWT authentication to all vocabulary routes
 router.use(authMiddleware);
 
-// GET /dictionary (from Phase 1)
+// GET /dictionary 
 router.get('/dictionary', vocabularyController.getDictionaryDefinition);
 
-// New Routes
 router.post('/lists', vocabularyController.createList);
 router.get('/lists', vocabularyController.getUserLists);
 router.post('/lists/:listId/words', vocabularyController.addWordToList);

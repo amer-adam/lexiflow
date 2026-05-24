@@ -99,9 +99,11 @@ async function syncWatchProgressToVocab(userId, videoId, currentTime, duration) 
       if (segment.end <= currentTime) {
         newHighestSegmentIndex = i;
         const segmentCharacters = segment.characters || {};
+        const segmentContextSentence = segment.text || segment.sentence || "";
+        const segmentContextTranslation = segment.translation || segment.translated_text || "";
 
         for (const [character, info] of Object.entries(segmentCharacters)) {
-          const cleanChar = character.replace('@', ''); // Clean potential parsing chars
+          const cleanChar = character.replace('@', '');
           const pinyin = info.pinyin || '';
           const hskLevel = info.hsk_level !== undefined ? info.hsk_level : (info.hskLevel || null);
           const translations = info.translations || [];
@@ -117,12 +119,18 @@ async function syncWatchProgressToVocab(userId, videoId, currentTime, duration) 
             continue;
           }
 
+          console.log("\n\n[Watch Sync] Adding word to sync:", cleanChar, pinyin, meaning);
+          console.log("[Watch Sync] Context sentence:", segmentContextSentence);
+          console.log("[Watch Sync] Context translation:\n\n", segmentContextTranslation);
+
           wordsToSync.push({
             simplified: cleanChar,
             pinyin,
             meaning,
             hskLevel,
-            sourceVideoId: videoId
+            sourceVideoId: videoId,
+            contextSentence: segmentContextSentence,
+            contextTranslation: segmentContextTranslation
           });
         }
       }
