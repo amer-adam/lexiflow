@@ -1,7 +1,14 @@
 <template>
   <div class="video-box">
     <div v-show="isYoutube" ref="youtubePlayer" id="youtube-player"></div>
-    <video v-if="!isYoutube" class="video-native" ref="htmlPlayer" :src="parsedMediaUrl" controls @timeupdate="onHtmlTimeUpdate"></video>
+    <video
+      v-if="!isYoutube"
+      class="video-native"
+      ref="htmlPlayer"
+      :src="parsedMediaUrl"
+      controls
+      @timeupdate="onHtmlTimeUpdate"
+    ></video>
   </div>
 </template>
 
@@ -18,6 +25,7 @@ export default {
       default: 0
     }
   },
+  emits: ['time-update', 'duration-update'],
   data() {
     return {
       player: null,
@@ -52,7 +60,6 @@ export default {
         tag.src = 'https://www.youtube.com/iframe_api';
         const firstScriptTag = document.getElementsByTagName('script')[0];
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
         window.onYouTubeIframeAPIReady = () => {
           this.createPlayer();
         };
@@ -64,7 +71,6 @@ export default {
       if (this.player) {
         this.player.destroy();
       }
-
       this.player = new window.YT.Player(this.$refs.youtubePlayer, {
         height: '100%',
         width: '100%',
@@ -82,26 +88,22 @@ export default {
       });
     },
     onPlayerReady(event) {
-      // Start tracking time updates
       this.timeUpdateInterval = setInterval(() => {
         this.getCurrentTime();
-      }, 100); // Update every second
+      }, 100);
     },
     onPlayerStateChange(event) {
-      // Clean up interval when video ends
       if (event.data === window.YT.PlayerState.PLAYING) {
         clearInterval(this.timeUpdateInterval);
         this.timeUpdateInterval = setInterval(() => {
           this.getCurrentTime();
-        }, 100); // Update every 0.1 second
-      }
-      else if (event.data === window.YT.PlayerState.PAUSED || event.data === window.YT.PlayerState.BUFFERING) {
+        }, 100);
+      } else if (event.data === window.YT.PlayerState.PAUSED || event.data === window.YT.PlayerState.BUFFERING) {
         clearInterval(this.timeUpdateInterval);
         this.timeUpdateInterval = setInterval(() => {
           this.getCurrentTime();
-        }, 1000); // Update every second
-      }
-      else {
+        }, 1000);
+      } else {
         clearInterval(this.timeUpdateInterval);
       }
     },
@@ -124,6 +126,52 @@ export default {
           this.$emit('duration-update', this.$refs.htmlPlayer.duration);
         }
       }
+    },
+    // ── Public control methods ──
+    play() {
+      if (this.player && this.player.playVideo) {
+        this.player.playVideo();
+      } else if (this.$refs.htmlPlayer) {
+        this.$refs.htmlPlayer.play();
+      }
+    },
+    pause() {
+      if (this.player && this.player.pauseVideo) {
+        this.player.pauseVideo();
+      } else if (this.$refs.htmlPlayer) {
+        this.$refs.htmlPlayer.pause();
+      }
+    },
+    seekTo(time) {
+      if (this.player && this.player.seekTo) {
+        this.player.seekTo(time, true);
+      } else if (this.$refs.htmlPlayer) {
+        this.$refs.htmlPlayer.currentTime = time;
+      }
+    },
+    getTime() {
+      if (this.player && this.player.getCurrentTime) {
+        return this.player.getCurrentTime();
+      } else if (this.$refs.htmlPlayer) {
+        return this.$refs.htmlPlayer.currentTime;
+      }
+      return 0;
+    },
+    getDuration() {
+      if (this.player && this.player.getDuration) {
+        return this.player.getDuration();
+      } else if (this.$refs.htmlPlayer) {
+        return this.$refs.htmlPlayer.duration || 0;
+      }
+      return 0;
+    },
+    isPlaying() {
+      if (this.player && this.player.getPlayerState) {
+        return this.player.getPlayerState() === window.YT.PlayerState.PLAYING;
+      } else if (this.$refs.htmlPlayer) {
+        return !this.$refs.htmlPlayer.paused;
+      }
+      return false;
     }
   },
   beforeDestroy() {
@@ -145,7 +193,6 @@ export default {
           this.loadYouTubeAPI();
         }
       } else if (this.$refs.htmlPlayer) {
-        // For local files, seek to startTime once the new source loads
         this.$refs.htmlPlayer.addEventListener('loadeddata', () => {
           this.$refs.htmlPlayer.currentTime = this.startTime || 0;
         }, { once: true });
@@ -163,33 +210,24 @@ export default {
 };
 </script>
 
-
 <style scoped>
 .video-box {
-  /* width: 100%; */
-  width: 1024px;
-  margin: 0 auto;
-  aspect-ratio: 16 / 9;
+  width: 100%;
+  height: 100%;
   background: #000;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.video-iframe {
+#youtube-player {
   width: 100%;
   height: 100%;
-  border: none;
 }
 
 .video-native {
   width: 100%;
   height: 100%;
   border-radius: inherit;
-}
-
-.no-video {
-  color: #fff;
-  text-align: center;
 }
 </style>

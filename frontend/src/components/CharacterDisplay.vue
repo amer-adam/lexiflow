@@ -1,5 +1,9 @@
 <template>
-  <div class="subtitle-card">
+  <div
+    class="subtitle-card"
+    :class="{ 'theater-sub': theaterMode }"
+    :style="theaterMode ? { background: `rgba(0, 0, 0, ${subBgOpacity / 100})`, backdropFilter: subBgOpacity > 0 ? 'blur(8px)' : 'none', webkitBackdropFilter: subBgOpacity > 0 ? 'blur(8px)' : 'none' } : {}"
+  >
 
     <!-- Tooltip -->
     <Transition>
@@ -24,7 +28,7 @@
     </Transition>
 
     <!-- Paired pinyin + character columns -->
-    <div class="chars-row">
+    <div class="chars-row" v-if="showCharacters || showPinyin">
       <div
         v-for="(char, key) in characters"
         :key="key"
@@ -34,17 +38,25 @@
         @mouseleave="hideTooltip"
         @click="$emit('search-word', stripCharacters(key))"
       >
-        <span class="cell-pinyin" :style="{ color: getHskColor(char.hsk_level) }">
+        <span
+          v-if="showPinyin"
+          class="cell-pinyin"
+          :style="{ color: getHskColor(char.hsk_level) }"
+        >
           {{ stripCharacters(char.pinyin) }}
         </span>
-        <span class="cell-char" :style="{ color: getHskColor(char.hsk_level) }">
+        <span
+          v-if="showCharacters"
+          class="cell-char"
+          :style="{ color: getHskColor(char.hsk_level) }"
+        >
           {{ stripCharacters(key) }}
         </span>
       </div>
     </div>
 
     <!-- Translation -->
-    <div class="row-trans">
+    <div class="row-trans" v-if="showTranslation && translated_text">
       <span class="trans-text">{{ translated_text }}</span>
     </div>
 
@@ -61,6 +73,26 @@ export default {
     translated_text: {
       type: String,
       default: ''
+    },
+    showPinyin: {
+      type: Boolean,
+      default: true
+    },
+    showCharacters: {
+      type: Boolean,
+      default: true
+    },
+    showTranslation: {
+      type: Boolean,
+      default: true
+    },
+    theaterMode: {
+      type: Boolean,
+      default: false
+    },
+    subBgOpacity: {
+      type: Number,
+      default: 50
     }
   },
   emits: ['search-word'],
@@ -97,7 +129,6 @@ export default {
 
       this.modalPosition = {
         x: cellRect.left - cardRect.left + cellRect.width / 2,
-        // position above the cell
         y: cellRect.top - cardRect.top - 8
       };
     },
@@ -130,6 +161,32 @@ export default {
   width: fit-content;
   margin: 0 auto;
   box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+
+/* Theater mode: fully transparent bg, larger text */
+.subtitle-card.theater-sub {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 4px 8px;
+}
+
+.theater-sub .cell-char {
+  font-size: 2.25rem;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,1);
+}
+
+.theater-sub .cell-pinyin {
+  font-size: 0.9rem;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+}
+
+.theater-sub .trans-text {
+  font-size: 1.1rem;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.9);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 /* ── Character cells row ── */
@@ -207,7 +264,6 @@ export default {
   padding: 8px 12px;
   font-size: 0.82rem;
   z-index: 200;
-  /* anchor at bottom-center, grow upward */
   transform: translate(-50%, -100%);
   box-shadow: 0 8px 24px rgba(0,0,0,0.5);
   white-space: nowrap;
