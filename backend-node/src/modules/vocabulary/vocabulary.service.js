@@ -165,11 +165,111 @@ async function syncWatchProgressToVocab(userId, videoId, currentTime, duration) 
   }
 }
 
+async function createListFromVideo({ videoId, userId }) {
+  const videoResult = await videosRepository.getResultByJobOrVideoId(videoId);
+  if (!videoResult) {
+    const err = new Error('Video not found or processing not completed');
+    err.status = 404;
+    throw err;
+  }
+
+  const baseName = videoResult.title || videoResult.result?.title || 'Video Vocabulary';
+  let listName = baseName;
+  let counter = 1;
+  while (true) {
+    const existing = await prisma.vocabularyList.findFirst({
+      where: { userId, name: listName }
+    });
+    if (!existing) break;
+    listName = `${baseName} (${counter++})`;
+  }
+
+  const list = await vocabularyRepository.createList({
+    userId,
+    name: listName,
+    type: 'USER_CREATED',
+    sourceMetadata: {
+      description: `Vocabulary list generated from video: ${baseName}`,
+      sourceVideoId: videoId
+    }
+  });
+
+  const wordsMap = new Map();
+  const segments = videoResult.result?.segments || [];
+  for (const segment of segments) {
+    const segmentCharacters = segment.characters || {};
+    const segmentContextSentence = segment.text || segment.sentence || "";
+    const segmentContextTranslation = segment.translation || segment.translated_text || "";
+
+    for (const [character, info] of Object.entries(segmentCharacters)) {
+      const cleanChar = character.replace('@', '');
+      const pinyin = info.pinyin || '';
+      const hskLevel = info.hsk_level !== undefined ? info.hsk_level : (info.hskLevel || null);
+      const translations = info.translations || [];
+      const meaning = Array.isArray(translations) ? translations.join(', ') : (info.meaning || info.translation || 'Seen word');
+
+      if (!cleanChar || !pinyin || !meaning) continue;
+      if (cleanChar === pinyin) continue;
+
+      if (!wordsMap.has(cleanChar)) {
+        wordsMap.set(cleanChar, {
+          simplified: cleanChar,
+          pinyin,
+          meaning,
+          hskLevel,
+          sourceVideoId: videoId,
+          contextSentence: segmentContextSentence,
+          contextTranslation: segmentContextTranslation
+        });
+      }
+    }
+  }
+
+  const wordsToInsert = Array.from(wordsMap.values());
+  let wordsAdded = 0;
+  for (const word of wordsToInsert) {
+    try {
+      await vocabularyRepository.addWordToList(list.id, word);
+      wordsAdded++;
+    } catch (err) {
+      console.error(`Failed to add word ${word.simplified} to list ${list.id} during list creation:`, err);
+    }
+  }
+
+  return {
+    success: true,
+    listId: list.id,
+    listName: list.name,
+    wordsAdded
+  };
+}
+
+async function deleteList(listId, userId) {
+  const list = await prisma.vocabularyList.findUnique({
+    where: { id: listId }
+  });
+  if (!list) {
+    const err = new Error('List not found');
+    err.status = 404;
+    throw err;
+  }
+  if (!list.userId || list.userId !== userId) {
+    const err = new Error('Access denied. Cannot delete this list.');
+    err.status = 403;
+    throw err;
+  }
+  return await prisma.vocabularyList.delete({
+    where: { id: listId }
+  });
+}
+
 module.exports = {
   createList,
+  createListFromVideo,
   getUserLists,
   addWordToList,
   getListDetails,
   getDefinition,
-  syncWatchProgressToVocab
+  syncWatchProgressToVocab,
+  deleteList
 };

@@ -24,6 +24,9 @@ const router        = useRouter()
 const route         = useRoute()
 const dictSearchRef = ref(null)
 const videoBoxRef   = ref(null)
+const videoTitle = ref('')
+const videoDescription = ref('')
+const isCreatingList = ref(false)
 
 // ─── Subtitle settings ───────────────────────────────────────────────────────
 const showPinyin      = ref(true)
@@ -113,6 +116,8 @@ const replaySegment = () => {
 
 // ─── Load video ──────────────────────────────────────────────────────────────
 const loadVideo = async (jobId, jumpTime = null) => {
+  videoTitle.value = 'Loading video info...'
+  videoDescription.value = ''
   try {
     const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4556'
     let headers = {}
@@ -145,6 +150,8 @@ const loadVideo = async (jobId, jumpTime = null) => {
         subtitlesJson.value  = data.result
         activeVideoId.value  = jobId
         duration.value       = data.duration || data.result?.duration || 0
+        videoTitle.value     = data.title || data.result?.title || 'Unknown Title'
+        videoDescription.value = data.description || data.result?.description || ''
 
         const isOldYt = oldUrl && !!oldUrl.match(/(?:youtube\.com|youtu\.be)/)
         const isNewYt = newUrl && !!newUrl.match(/(?:youtube\.com|youtu\.be)/)
@@ -227,6 +234,43 @@ onUnmounted(() => {
   saveWatchProgress(true)
   if (hideUITimer) clearTimeout(hideUITimer)
 })
+
+// ─── Create Vocab List ───────────────────────────────────────────────────────
+const createVocabListFromVideo = async () => {
+  if (isCreatingList.value) return
+  isCreatingList.value = true
+  try {
+    const headers = { 'Content-Type': 'application/json' }
+    if (isAuthenticated.value) {
+      const token = await getAccessTokenSilently()
+      headers['Authorization'] = `Bearer ${token}`
+    } else {
+      alert('Please log in to create a vocabulary list.')
+      return
+    }
+
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4556'
+    const response = await fetch(`${baseUrl}/lexiflow/lists/from-video`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ videoId: activeVideoId.value })
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to create list: ${response.statusText}`)
+    }
+
+    const result = await response.json()
+    if (result.success && result.listId) {
+      router.push({ name: 'VocabularyLists', query: { listId: result.listId } })
+    }
+  } catch (err) {
+    console.error('Error creating vocabulary list:', err)
+    alert(`Error creating list: ${err.message}`)
+  } finally {
+    isCreatingList.value = false
+  }
+}
 
 // ─── Search word ─────────────────────────────────────────────────────────────
 const handleSearchWord = (word) => {
@@ -313,6 +357,20 @@ watch(theaterMode, (val) => {
     <div class="watch-layout">
       <!-- Player column -->
       <div class="main-column">
+        <!-- Video Meta section -->
+        <div class="video-meta-section glass-panel" v-show="!theaterMode">
+          <div class="video-meta-info">
+            <h1 class="video-title">{{ videoTitle }}</h1>
+            <p class="video-description" v-if="videoDescription">{{ videoDescription }}</p>
+          </div>
+          <div class="video-meta-actions">
+            <button class="btn btn-primary btn-create-list" @click="createVocabListFromVideo" :disabled="isCreatingList || !subtitlesJson.segments?.length">
+              <span v-if="isCreatingList">⏳ Creating List...</span>
+              <span v-else>📁 Create Vocab List</span>
+            </button>
+          </div>
+        </div>
+
         <!-- Video Container -->
         <div class="video-container glass-panel">
           <VideoBox
@@ -932,5 +990,64 @@ watch(theaterMode, (val) => {
 .sidebar-column {
   position: sticky;
   top: 5rem;
+}
+
+/* Video Meta Section */
+.video-meta-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  gap: 1.5rem;
+  border-radius: var(--radius-xl);
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 1rem;
+}
+
+.video-meta-info {
+  flex: 1;
+}
+
+.video-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.video-description {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.video-meta-actions {
+  display: flex;
+  align-items: center;
+}
+
+.btn-create-list {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+}
+
+.btn-create-list:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
+}
+
+.btn-create-list:active:not(:disabled) {
+  transform: translateY(0);
 }
 </style>

@@ -10,8 +10,10 @@ router.use(authMiddleware);
 router.get('/dictionary', vocabularyController.getDictionaryDefinition);
 
 router.post('/lists', vocabularyController.createList);
+router.post('/lists/from-video', vocabularyController.createListFromVideo);
 router.get('/lists', vocabularyController.getUserLists);
 router.post('/lists/:listId/words', vocabularyController.addWordToList);
 router.get('/lists/:listId/words', vocabularyController.getListDetails);
+router.delete('/lists/:listId', vocabularyController.deleteList);
 
 module.exports = router;

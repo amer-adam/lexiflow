@@ -1,5 +1,5 @@
 const vocabularyService = require('./vocabulary.service');
-const { createListSchema, addVocabularySchema } = require('./vocabulary.validator');
+const { createListSchema, addVocabularySchema, createListFromVideoSchema } = require('./vocabulary.validator');
 
 async function createList(req, res, next) {
   try {
@@ -72,10 +72,40 @@ async function getDictionaryDefinition(req, res, next) {
   }
 }
 
+async function createListFromVideo(req, res, next) {
+  try {
+    const validatedData = createListFromVideoSchema.parse(req.body);
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const result = await vocabularyService.createListFromVideo({ ...validatedData, userId });
+    return res.status(201).json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function deleteList(req, res, next) {
+  try {
+    const listId = req.params.listId;
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    await vocabularyService.deleteList(listId, userId);
+    return res.status(204).end();
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   createList,
+  createListFromVideo,
   getUserLists,
   addWordToList,
   getListDetails,
-  getDictionaryDefinition
+  getDictionaryDefinition,
+  deleteList
 };

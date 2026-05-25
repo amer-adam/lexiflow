@@ -17,7 +17,12 @@ const addVocabularySchema = z.object({
   contextTranslation: z.string().optional(),
 });
 
+const createListFromVideoSchema = z.object({
+  videoId: z.string().min(1, 'Video ID is required'),
+});
+
 module.exports = {
   createListSchema,
   addVocabularySchema,
+  createListFromVideoSchema,
 };

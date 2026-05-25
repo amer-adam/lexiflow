@@ -186,7 +186,9 @@ async function getJobStatus(jobId) {
         current_step: job.current_step || null,
         result: job.result || null,
         url: job.url || null,
-        duration: job.duration || 0
+        duration: job.duration || 0,
+        title: job.title || job.result?.title || 'Unknown Title',
+        description: job.result?.description || ''
     };
 
     if (job.status === 'completed') {

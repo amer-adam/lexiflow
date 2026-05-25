@@ -47,6 +47,15 @@
               <div class="title-row">
                 <h2 class="page-title">{{ activeList.name }}</h2>
                 <span class="badge" :class="activeList.type.toLowerCase()">{{ activeList.type }}</span>
+                <button
+                  v-if="activeList.type !== 'OFFICIAL' && activeList.type !== 'SEEN'"
+                  class="btn-delete-list"
+                  @click="deleteActiveList"
+                  :disabled="isDeletingList"
+                >
+                  <span v-if="isDeletingList">⏳ Deleting...</span>
+                  <span v-else>🗑 Delete List</span>
+                </button>
               </div>
               <p class="list-description">
                 {{ activeList.sourceMetadata?.description || 'Custom vocabulary list' }}
@@ -180,9 +189,10 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue';
 import { useAuth0 } from '@auth0/auth0-vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 
 const router = useRouter();
+const route = useRoute();
 
 // Modal UI State tracking variables
 const showFlashcardModal = ref(false);
@@ -204,6 +214,7 @@ const lists = ref([]);
 const activeList = ref(null);
 const words = ref([]);
 const wordSearchQuery = ref('');
+const isDeletingList = ref(false);
 
 // Form State
 const newListName = ref('');
@@ -319,11 +330,57 @@ const fetchLists = async () => {
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     lists.value = await response.json();
 
+    const queryListId = route.query.listId;
+    if (queryListId) {
+      const matched = lists.value.find(l => l.id === queryListId);
+      if (matched) {
+        selectList(matched);
+        return;
+      }
+    }
+
     if (sortedLists.value.length > 0 && !activeList.value) {
       selectList(sortedLists.value[0]);
     }
   } catch (error) {
     console.error('Failed to fetch lists:', error);
+  }
+};
+
+// Delete a list
+const deleteActiveList = async () => {
+  if (!activeList.value) return;
+  if (!confirm(`Are you sure you want to delete the vocabulary list "${activeList.value.name}"? This action cannot be undone.`)) {
+    return;
+  }
+
+  isDeletingList.value = true;
+  try {
+    const headers = {};
+    if (isAuthenticated.value) {
+      const token = await getAccessTokenSilently();
+      headers['Authorization'] = `Bearer ${token}`;
+    } else {
+      return;
+    }
+
+    const response = await fetch(`${apiBase}/lexiflow/lists/${activeList.value.id}`, {
+      method: 'DELETE',
+      headers
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    activeList.value = null;
+    words.value = [];
+    await fetchLists();
+  } catch (error) {
+    console.error('Failed to delete list:', error);
+    alert(`Failed to delete list: ${error.message}`);
+  } finally {
+    isDeletingList.value = false;
   }
 };
 
@@ -1005,5 +1062,30 @@ onMounted(() => {
   .main-content {
     height: 600px;
   }
+}
+
+.btn-delete-list {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: 1rem;
+}
+
+.btn-delete-list:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.6);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-delete-list:active:not(:disabled) {
+  transform: translateY(0);
 }
 </style>
