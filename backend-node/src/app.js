@@ -3,16 +3,21 @@ const cors = require('cors');
 const path = require('path');
 const routes = require('./routes');
 const { uploadDir } = require('./middlewares/upload');
-const vocabularyRoutes = require('./modules/vocabulary/vocabulary.routes');
 const env = require('./config/env');
 
 const app = express();
 
-// Configure CORS to trust the frontend URL
+app.use((req, res, next) => {
+    console.log(`[${req.method}] request to ${req.url} from origin: ${req.headers.origin}`);
+    next();
+});
+
 const corsOptions = {
     origin: [
-        env.FRONTEND_URL,          // Uses https://test.amerai.top from your .env
-        'http://localhost:4555'    // Keeps local development working automatically
+        env.FRONTEND_URL ? env.FRONTEND_URL.trim() : '',
+        'https://lexiflow.amerai.top',
+        'http://localhost:4555',
+        'http://localhost:3000'
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     credentials: true,
@@ -22,7 +27,6 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use('/media', express.static(uploadDir));
-app.use('/api/vocabulary', vocabularyRoutes);
 
 // Register all routes under /lexiflow
 app.use('/lexiflow', routes);
