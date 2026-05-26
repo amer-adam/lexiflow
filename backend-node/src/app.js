@@ -7,7 +7,18 @@ const vocabularyRoutes = require('./modules/vocabulary/vocabulary.routes');
 
 const app = express();
 
-app.use(cors());
+// Configure CORS to trust the frontend URL
+const corsOptions = {
+    origin: [
+        env.FRONTEND_URL,          // Uses https://test.amerai.top from your .env
+        'http://localhost:4555'    // Keeps local development working automatically
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    credentials: true,
+};
+
+// Apply CORS middleware BEFORE your routes
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use('/media', express.static(uploadDir));
 app.use('/api/vocabulary', vocabularyRoutes);

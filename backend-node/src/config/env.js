@@ -19,6 +19,11 @@ module.exports = {
     RESULTS_COLLECTION: process.env.RESULTS_COLLECTION || 'results',
     AGENDA_COLLECTION: process.env.AGENDA_COLLECTION || 'agendaJobs',
     USER_VIDEOS_COLLECTION: 'user_videos',
+
+    // cors
+    FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3000',
+    NODE_URL: process.env.NODE_URL || 'http://localhost:4556',
+
     // AI Worker Routing Config
     PYTHON_API: process.env.PYTHON_API || 'http://localhost:4557', // Your local PC (via Tailscale/Ngrok/IP)
     PYTHON_API_SALAD: process.env.PYTHON_API_SALAD || 'https://your-salad-pod-url.salad.cloud',
