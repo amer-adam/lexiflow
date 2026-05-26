@@ -4,6 +4,7 @@ const path = require('path');
 const routes = require('./routes');
 const { uploadDir } = require('./middlewares/upload');
 const vocabularyRoutes = require('./modules/vocabulary/vocabulary.routes');
+const env = require('./config/env');
 
 const app = express();
 
