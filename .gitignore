@@ -9,3 +9,4 @@
 digest.txt
 **/prisma/migrations/*
 frontend/digest_frontend.txt
+prod.env
