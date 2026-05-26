@@ -1,6 +1,15 @@
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../../../.env') }); // Adjusted path from src/config/env.js to root .env
+const fs = require('fs');
 
+// Look for .env in the current working directory (where the app was started)
+let envPath = path.join(process.cwd(), '.env');
+
+// Fallback: If it's not found there, check one directory up (../.env)
+if (!fs.existsSync(envPath)) {
+    envPath = path.join(process.cwd(), '../.env');
+}
+
+require('dotenv').config({ path: envPath });
 module.exports = {
     PORT: 4556,
     PROCESSING_RATE: 12, // seconds per minute of video
