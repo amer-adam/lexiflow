@@ -1,14 +1,24 @@
 const { PrismaClient } = require('@prisma/client');
 const fs = require('fs');
 const path = require('path');
+const { env } = require('process');
+
+// Look for .env in the current working directory (where the app was started)
+let envPath = path.join(process.cwd(), '.env');
+
+// Fallback: If it's not found there, check one directory up (../.env)
+if (!fs.existsSync(envPath)) {
+  envPath = path.join(process.cwd(), '../.env');
+}
+
+require('dotenv').config({ path: envPath });
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('Starting HSK database seed...');
-  
-  // Resolve path to hsk.json (located in backend-fastapi)
-  const hskPath = path.resolve(__dirname, '../../backend-fastapi/hsk.json');
+
+  const hskPath = path.resolve(process.env.HSK_JSON_PATH);
   if (!fs.existsSync(hskPath)) {
     throw new Error(`HSK JSON file not found at: ${hskPath}`);
   }
@@ -21,7 +31,7 @@ async function main() {
   for (let level = 1; level <= 6; level++) {
     const listName = `HSK Level ${level}`;
     const listDescription = `HSK Level ${level} vocabulary`;
-    
+
     let list = await prisma.vocabularyList.findFirst({
       where: {
         userId: null,
