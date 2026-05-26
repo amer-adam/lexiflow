@@ -20,7 +20,7 @@ module.exports = {
     AGENDA_COLLECTION: process.env.AGENDA_COLLECTION || 'agendaJobs',
     USER_VIDEOS_COLLECTION: 'user_videos',
     // AI Worker Routing Config
-    PYTHON_API_LOCAL: process.env.PYTHON_API_LOCAL || 'http://localhost:4557', // Your local PC (via Tailscale/Ngrok/IP)
+    PYTHON_API: process.env.PYTHON_API || 'http://localhost:4557', // Your local PC (via Tailscale/Ngrok/IP)
     PYTHON_API_SALAD: process.env.PYTHON_API_SALAD || 'https://your-salad-pod-url.salad.cloud',
 
     // Salad Cloud Config

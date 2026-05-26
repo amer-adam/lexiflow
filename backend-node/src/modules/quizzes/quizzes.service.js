@@ -27,7 +27,7 @@ async function generateNewUserQuiz({ userId, listId, count, allowedTypes }) {
     const mappedTypes = allowedTypes.map(t => t === 'FILL_IN_THE_BLANK' ? 'FILL_BLANK' : t);
 
 
-    const activeUrl = workerRouter.getActiveWorkerUrl() || env.PYTHON_API_LOCAL;
+    const activeUrl = workerRouter.getActiveWorkerUrl() || env.PYTHON_API;
 
     console.log(activeUrl, "activeUrl")
     console.log(targetItemsPayload, "targetItemsPayload")
@@ -96,7 +96,7 @@ async function gradeUserAttempt(quizId, userId, submittedAnswers) {
         if (question.type === 'SHORT_ANSWER') {
             try {
                 // Query SBERT model cluster directly to parse acceptable variances
-                const activeUrl = workerRouter.getActiveWorkerUrl() || env.PYTHON_API_LOCAL;
+                const activeUrl = workerRouter.getActiveWorkerUrl() || env.PYTHON_API;
                 const judgeResponse = await axios.post(`${activeUrl}/quiz/evaluate`, {
                     correct_reference: question.correctAnswer,
                     user_response: rawAnswerText

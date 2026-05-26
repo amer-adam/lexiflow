@@ -22,8 +22,8 @@ async function isWorkerOnline(baseUrl) {
  * Update the health status of our workers.
  */
 async function checkWorkerHealth() {
-    localWorkerOnline = await isWorkerOnline(env.PYTHON_API_LOCAL);
-    
+    localWorkerOnline = await isWorkerOnline(env.PYTHON_API);
+
     // Only check Salad if we need to or if it was recently started
     if (!localWorkerOnline && env.SALAD_API_KEY) {
         saladWorkerOnline = await isWorkerOnline(env.PYTHON_API_SALAD);
@@ -40,7 +40,7 @@ async function checkWorkerHealth() {
  * Returns null if no worker is currently available to accept jobs.
  */
 function getActiveWorkerUrl() {
-    if (localWorkerOnline) return env.PYTHON_API_LOCAL;
+    if (localWorkerOnline) return env.PYTHON_API;
     if (saladWorkerOnline) return env.PYTHON_API_SALAD;
     return null;
 }
@@ -58,7 +58,7 @@ async function autoscaleSalad(agenda) {
             lastFinishedAt: { $exists: false },
             nextRunAt: { $ne: null }
         });
-        
+
         const activeJobsCount = await agenda._collection.countDocuments({
             lastFinishedAt: { $exists: false },
             nextRunAt: null
@@ -85,7 +85,7 @@ async function autoscaleSalad(agenda) {
 
             // Check if we need Salad.
             const saladStatus = await saladService.getSaladStatus();
-            
+
             if (totalJobs >= env.MIN_JOBS_FOR_SALAD) {
                 // We have enough jobs. Is Salad running?
                 if (['stopped', 'failed', 'unknown'].includes(saladStatus)) {
