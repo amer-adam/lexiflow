@@ -5,7 +5,8 @@ const collections = {
     db: null,
     jobsCollection: null,
     resultsCollection: null,
-    userVideosCollection: null
+    userVideosCollection: null,
+    translationReportsCollection: null
 };
 
 async function connectToMongoDB() {
@@ -26,11 +27,14 @@ async function connectToMongoDB() {
         collections.jobsCollection = collections.db.collection(env.JOBS_COLLECTION);
         collections.resultsCollection = collections.db.collection(env.RESULTS_COLLECTION);
         collections.userVideosCollection = collections.db.collection(env.USER_VIDEOS_COLLECTION);
+        collections.translationReportsCollection = collections.db.collection('translation_reports');
 
         // Create indexes
         await collections.resultsCollection.createIndex({ video_id: 1 }, { unique: true });
         await collections.jobsCollection.createIndex({ job_id: 1 }, { unique: true });
         await collections.userVideosCollection.createIndex({ user_id: 1, job_id: 1 }, { unique: true });
+        await collections.translationReportsCollection.createIndex({ job_id: 1, segment_index: 1 });
+        await collections.translationReportsCollection.createIndex({ job_id: 1, segment_index: 1, user_id: 1 }, { unique: true });
 
         // Clear jobs table on start (DISABLED in production, but was in original code)
         // await collections.jobsCollection.deleteMany({});

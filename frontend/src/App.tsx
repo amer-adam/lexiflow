@@ -15,6 +15,7 @@ import {
 import { NavContext, type ViewId } from "@/app/nav";
 import { cn } from "@/lib/utils";
 import { SessionControl } from "@/components/SessionControl";
+import { SessionSummaryToast } from "@/components/SessionSummaryToast";
 import { useSession } from "@/app/session";
 import { Button } from "@/components/ui/button";
 
@@ -152,6 +153,7 @@ export default function App() {
             </div>
           </main>
         </div>
+        <SessionSummaryToast />
       </div>
     </NavContext.Provider>
   );

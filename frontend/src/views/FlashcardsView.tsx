@@ -5,6 +5,7 @@ import { InfoTip } from "@/components/InfoTip";
 import { Button } from "@/components/ui/button";
 import { Stat, Loading, ErrorState, EmptyState } from "@/components/bits";
 import { CardLayoutModal, type SideConfig } from "@/components/CardLayoutModal";
+import { SpeakButton } from "@/components/SpeakButton";
 import { useApi, useQuery } from "@/app/useApi";
 import { useNav } from "@/app/nav";
 import { cn } from "@/lib/utils";
@@ -28,7 +29,10 @@ function CardFace({ c, side }: { c: Card; side: SideConfig }) {
   return (
     <div className="text-center space-y-2">
       {side.character && (
-        <div className="font-hans-serif text-6xl leading-none" style={{ color: hskColor(c.vocab.hskLevel) }}>{c.vocab.simplified}</div>
+        <div className="font-hans-serif text-6xl leading-none flex items-center justify-center gap-2" style={{ color: hskColor(c.vocab.hskLevel) }}>
+          {c.vocab.simplified}
+          <SpeakButton text={c.vocab.simplified} size="md" />
+        </div>
       )}
       {side.pinyin && <div className="text-2xl text-muted-foreground">{c.vocab.pinyin}</div>}
       {side.meaning && <div className="text-2xl font-medium">{c.vocab.meaning}</div>}
@@ -199,7 +203,7 @@ export function FlashcardsView() {
           You reviewed {sessionCards?.length} cards. FSRS has rescheduled each one based on your ratings.
         </p>
         <div className="flex gap-2 justify-center">
-          <Button variant="outline" onClick={() => { setSessionCards(null); reload(); }}>Back to deck</Button>
+          <Button variant="outline" onClick={() => { setSessionCards(null); setDone(false); reload(); }}>Back to deck</Button>
           <Button onClick={() => setChooserOpen(true)} className="gap-1.5"><RotateCcw className="h-4 w-4" /> Review again</Button>
         </div>
       </div>

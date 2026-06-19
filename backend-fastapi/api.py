@@ -1,5 +1,7 @@
 import os
 import re
+import io
+import wave
 import uuid
 import json
 import time
@@ -10,7 +12,7 @@ from pathlib import Path
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 
-from fastapi import FastAPI, APIRouter, HTTPException, status
+from fastapi import FastAPI, APIRouter, HTTPException, status, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -347,6 +349,37 @@ async def fetch_dictionary_definition(word: str):
         return {"word": word, "definitions": [], "pinyin": ''}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/tts")
+async def synthesize_speech(text: str, voice: Optional[str] = None):
+    """Proxies to the CosyVoice FastAPI server (tts-service), same pattern as
+    api_translate()/libretranslate above. The official server streams raw
+    16-bit PCM with no container, so we wrap it into a real .wav here before
+    handing it back to backend-node."""
+    url = os.getenv("TTS_API_URL", "http://tts-service:50000")
+    sample_rate = 22050
+
+    try:
+        response = requests.get(
+            f"{url}/inference_sft",
+            data={"tts_text": text, "spk_id": voice or "中文女"},
+            timeout=30,
+        )
+    except requests.RequestException as e:
+        raise HTTPException(status_code=503, detail=f"TTS service unreachable: {e}")
+
+    if response.status_code != 200:
+        raise HTTPException(status_code=502, detail=f"TTS synthesis failed: {response.text}")
+
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(sample_rate)
+        wf.writeframes(response.content)
+
+    return Response(content=buf.getvalue(), media_type="audio/wav")
+
 
 @app.post("/quiz/generate", response_model=List[Dict[str, Any]], tags=["Quiz System Engine"])
 async def generate_quiz_payload(payload: QuizGenerateRequest):

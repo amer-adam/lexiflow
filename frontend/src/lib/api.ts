@@ -212,6 +212,29 @@ export class Api {
   dictionary(word: string): Promise<DictionaryEntry> {
     return this.req<DictionaryEntry>(`/dictionary?word=${encodeURIComponent(word)}`);
   }
+  /** Synthesize (or fetch cached) speech audio for any text; returns a playable URL. */
+  async speak(text: string): Promise<string> {
+    const r = await this.req<{ url: string }>(`/tts?text=${encodeURIComponent(text)}`);
+    return r.url.startsWith("http") ? r.url : `${ENV.apiBase}${r.url}`;
+  }
+  /** File a crowd-report that a subtitle line's translation/pinyin/text looks wrong. */
+  async reportSegment(jobId: string, segmentIndex: number, reason: "translation" | "pinyin" | "text" | "other", note?: string): Promise<void> {
+    await this.req<void>("/reports", { method: "POST", body: JSON.stringify({ jobId, segmentIndex, reason, note }) });
+    invalidate(`reports:${jobId}`);
+  }
+  /** Per-segment report counts + flagged status for a video. */
+  getSegmentReports(jobId: string): Promise<{ jobId: string; viewerCount: number; threshold: { minReports: number; percent: number }; segments: { segmentIndex: number; count: number; percent: number; flagged: boolean }[] }> {
+    return cachedFetch(`reports:${jobId}`, () => this.req(`/reports/${jobId}`));
+  }
+  /** Export a vocabulary list as a downloadable file (csv | anki | pdf). */
+  async exportList(listId: string, format: "csv" | "anki" | "pdf"): Promise<Blob> {
+    const token = await this.getToken();
+    const res = await fetch(`${ENV.apiBase}/lexiflow/lists/${listId}/export?format=${format}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    return res.blob();
+  }
   /** Search every subtitle line (across the user's videos) containing a word. */
   async searchSubtitles(word: string): Promise<SubtitleMatch[]> {
     const r = await this.req<{ results: any[] }>(`/search?word=${encodeURIComponent(word)}`);

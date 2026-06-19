@@ -447,7 +447,7 @@ class VadSileroTranscription(AbstractTranscription):
             print("Created Silerio model")
 
     def _create_model(self):
-        model, utils = torch.hub.load(repo_or_dir='snakers4/silero-vad', model='silero_vad')
+        model, utils = torch.hub.load(repo_or_dir='snakers4/silero-vad', model='silero_vad', trust_repo=True)
         
         # Silero does not benefit from multi-threading
         torch.set_num_threads(1) # JIT

@@ -51,14 +51,45 @@ services:
       - "4557:4557"
     environment:
       - TRANSLATION_API_URL=http://libretranslate:5000/translate
+      - TTS_API_URL=http://tts-service:50000
       - FRONTEND_URL=${FRONTEND_URL}
       - OMP_NUM_THREADS=12
       - MKL_NUM_THREADS=12
+    # Requires nvidia-container-toolkit on the host (see README/setup docs) —
+    # without it Docker silently runs this on plain runc with no GPU access,
+    # and faster-whisper/ctranslate2 fall back to (much slower) CPU inference.
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     restart: unless-stopped
     depends_on:
       - libretranslate
+      - tts-service
 
-
+  # Fun-CosyVoice3-0.5B-2512 served by CosyVoice's own official FastAPI
+  # server (see tts-service/Dockerfile) — a plain off-the-shelf container,
+  # not merged into backend-fastapi, same shape as libretranslate below.
+  # Only backend-fastapi talks to it; the frontend/backend-node never call
+  # it directly.
+  tts-service:
+    build:
+      context: ./tts-service
+    ports:
+      - "4558:50000"
+    volumes:
+      - tts-models:/opt/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
 
   libretranslate:
     image: libretranslate/libretranslate
@@ -76,3 +107,8 @@ services:
   # NOTE: PostgreSQL is provided by the HOST machine (systemd `postgresql`),
   # which already holds the lexiflow_db database. backend-node reaches it via
   # host.docker.internal (see that service). No DB container is run here.
+
+volumes:
+  # Caches the downloaded Fun-CosyVoice3-0.5B-2512 model across container
+  # restarts/rebuilds so it isn't re-fetched every time (see tts-service/entrypoint.sh).
+  tts-models:

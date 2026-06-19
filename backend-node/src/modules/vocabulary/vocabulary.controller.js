@@ -1,4 +1,5 @@
 const vocabularyService = require('./vocabulary.service');
+const exportService = require('./export.service');
 const { createListSchema, addVocabularySchema, createListFromVideoSchema } = require('./vocabulary.validator');
 
 async function createList(req, res, next) {
@@ -113,6 +114,38 @@ async function markVideoSeen(req, res, next) {
   }
 }
 
+async function exportList(req, res, next) {
+  try {
+    const listId = req.params.listId;
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const format = (req.query.format || 'csv').toLowerCase();
+    const { list, items } = await exportService.loadListForExport(listId, userId);
+    const safeName = list.name.replace(/[^a-z0-9_\- ]/gi, '').trim() || 'vocabulary';
+
+    if (format === 'csv') {
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${safeName}.csv"`);
+      return res.send(exportService.toCsv(list, items));
+    }
+    if (format === 'anki') {
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${safeName}_anki.txt"`);
+      return res.send(exportService.toAnki(list, items));
+    }
+    if (format === 'pdf') {
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${safeName}.pdf"`);
+      return exportService.toPdf(list, items, res);
+    }
+    return res.status(400).json({ error: 'Unsupported format. Use csv, anki, or pdf.' });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   createList,
   createListFromVideo,
@@ -121,5 +154,6 @@ module.exports = {
   addWordToList,
   getListDetails,
   getDictionaryDefinition,
-  deleteList
+  deleteList,
+  exportList
 };

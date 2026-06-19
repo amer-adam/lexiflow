@@ -234,6 +234,20 @@ export const CONCEPTS: Record<string, Concept> = {
     what: "You choose what shows on each side of a card — character, pinyin, and/or meaning. For example: character on the front, pinyin + meaning on the back.",
     why: "Different layouts train different skills: character→meaning tests reading; meaning→character tests production. You can tune it per deck.",
   },
+  translationReport: {
+    title: "Crowd-reported translation errors",
+    what: "Flag a subtitle line if its translation, pinyin, or text looks wrong. Each report is anonymous and tied to that exact line.",
+    why: "Once enough viewers of a video (a percentage threshold, not a fixed count) flag the same line, it's queued for an AI review pass that can correct the translation automatically — so error fixing scales with the audience instead of needing a human moderator for every video.",
+    more: [
+      "A line shows a report badge once it crosses the threshold.",
+      "AI review is not wired up yet — flagged lines are currently just visible to you.",
+    ],
+  },
+  speak: {
+    title: "Listen (text-to-speech)",
+    what: "Tap the speaker icon to hear any word or sentence read aloud in Mandarin.",
+    why: "Hearing pronunciation alongside characters and pinyin reinforces tone and sound — useful everywhere a word appears: subtitles, dictionary lookups, flashcards, and quizzes.",
+  },
 };
 
 export type ConceptId = keyof typeof CONCEPTS;

@@ -57,8 +57,19 @@ class FasterWhisperContainer(AbstractWhisperContainer):
         if (device is None):
             device = "auto"
 
-        model = WhisperModel(model_url, device=device, compute_type=self.compute_type, 
-                             cpu_threads=self.cpu_threads, num_workers=self.num_workers)
+        try:
+            model = WhisperModel(model_url, device=device, compute_type=self.compute_type,
+                                 cpu_threads=self.cpu_threads, num_workers=self.num_workers)
+        except RuntimeError as e:
+            # Host NVIDIA driver too old for the CUDA runtime baked into this
+            # container (or no GPU at all) — fall back to CPU rather than
+            # failing the whole job.
+            if device != "cpu" and "CUDA" in str(e):
+                print(f"CUDA unavailable ({e}); falling back to CPU for Whisper.")
+                model = WhisperModel(model_url, device="cpu", compute_type="int8",
+                                     cpu_threads=self.cpu_threads, num_workers=self.num_workers)
+            else:
+                raise
         return model
 
     def create_callback(self, language: str = None, task: str = None, 

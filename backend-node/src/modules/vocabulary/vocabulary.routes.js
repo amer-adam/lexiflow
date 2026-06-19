@@ -15,6 +15,7 @@ router.post('/lists/seen-from-video', vocabularyController.markVideoSeen);
 router.get('/lists', vocabularyController.getUserLists);
 router.post('/lists/:listId/words', vocabularyController.addWordToList);
 router.get('/lists/:listId/words', vocabularyController.getListDetails);
+router.get('/lists/:listId/export', vocabularyController.exportList);
 router.delete('/lists/:listId', vocabularyController.deleteList);
 
 module.exports = router;

@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  Search, Plus, Layers, BookOpen, Trash2, ArrowUpDown, MessageSquareQuote, Loader2, Lock, UserPlus,
+  Search, Plus, Layers, BookOpen, Trash2, ArrowUpDown, MessageSquareQuote, Loader2, Lock, UserPlus, Clock, Download,
 } from "lucide-react";
 import { hskColor, type VList, type ListType, type ListItem, type HskLevel } from "@/lib/data";
 import { HskBadge, FamiliarityBar, Loading, ErrorState, EmptyState } from "@/components/bits";
@@ -9,9 +9,12 @@ import { VirtualList } from "@/components/VirtualList";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CardLayoutModal, type SideConfig } from "@/components/CardLayoutModal";
+import { SpeakButton } from "@/components/SpeakButton";
 import { useNav } from "@/app/nav";
 import { useApi, useQuery } from "@/app/useApi";
+import { type SubtitleMatch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const TYPE_STYLE: Record<ListType, string> = {
@@ -42,6 +45,9 @@ export function VocabView() {
   const [qaPinyin, setQaPinyin] = useState("");
   const [qaMeaning, setQaMeaning] = useState("");
   const [qaBusy, setQaBusy] = useState(false);
+  const [occurrenceWord, setOccurrenceWord] = useState<string | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exportBusy, setExportBusy] = useState<string | null>(null);
 
   const sortedLists = useMemo(
     () => [...(lists ?? [])].sort((a, b) => ORDER_WEIGHT[a.type] - ORDER_WEIGHT[b.type]),
@@ -94,6 +100,28 @@ export function VocabView() {
       alert("Could not delete list: " + (e?.message ?? "unknown error"));
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function exportActive(format: "csv" | "anki" | "pdf") {
+    if (!active) return;
+    setExportBusy(format);
+    try {
+      const blob = await api.exportList(active.id, format);
+      const ext = format === "anki" ? "txt" : format;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${active.name.replace(/[^a-z0-9_\- ]/gi, "").trim() || "vocabulary"}${format === "anki" ? "_anki" : ""}.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setExportOpen(false);
+    } catch (e: any) {
+      alert("Could not export list: " + (e?.message ?? "unknown error"));
+    } finally {
+      setExportBusy(null);
     }
   }
 
@@ -195,6 +223,30 @@ export function VocabView() {
                       <Trash2 className="h-4 w-4" /> Delete
                     </Button>
                   )}
+                  <Popover open={exportOpen} onOpenChange={setExportOpen}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="gap-1.5">
+                        <Download className="h-4 w-4" /> Export
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent align="end" className="w-48 p-1.5">
+                      {([
+                        ["csv", "CSV (spreadsheet)"],
+                        ["anki", "Anki import (.txt)"],
+                        ["pdf", "PDF (printable)"],
+                      ] as const).map(([fmt, label]) => (
+                        <button
+                          key={fmt}
+                          className="w-full flex items-center gap-2 px-2.5 py-2 text-sm rounded-md hover:bg-muted text-left disabled:opacity-50"
+                          onClick={() => exportActive(fmt)}
+                          disabled={exportBusy !== null}
+                        >
+                          {exportBusy === fmt ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                          {label}
+                        </button>
+                      ))}
+                    </PopoverContent>
+                  </Popover>
                   <Button size="sm" className="gap-1.5" variant={active.hasDeck ? "secondary" : "default"} onClick={createOrOpenDeck} disabled={busy}>
                     {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Layers className="h-4 w-4" />}
                     {active.hasDeck ? "Open deck" : "Create deck"}
@@ -264,7 +316,7 @@ export function VocabView() {
                 items={items}
                 rowHeight={ROW_H}
                 height={Math.min(560, Math.max(ROW_H * 3, items.length * ROW_H))}
-                renderRow={(it) => <WordRow it={it} />}
+                renderRow={(it) => <WordRow it={it} onSeenClick={() => setOccurrenceWord(it.vocab.simplified)} />}
               />
             )}
           </>
@@ -279,25 +331,79 @@ export function VocabView() {
           busy={busy}
         />
       )}
+
+      <OccurrencesModal word={occurrenceWord} onOpenChange={(o) => !o && setOccurrenceWord(null)} />
     </div>
   );
 }
 
-function WordRow({ it }: { it: ListItem }) {
+function WordRow({ it, onSeenClick }: { it: ListItem; onSeenClick: () => void }) {
   return (
     <div className={cn(GRID, "h-full border-b border-border/60 hover:bg-muted/40 text-sm")}>
       <div className="flex items-center gap-2 min-w-0">
         <span className="font-hans-serif text-2xl leading-none shrink-0" style={{ color: hskColor(it.vocab.hskLevel) }}>
           {it.vocab.simplified}
         </span>
+        <SpeakButton text={it.vocab.simplified} />
         {it.contextSentence && <ContextPopover sentence={it.contextSentence} translation={it.contextTranslation} />}
       </div>
       <span className="text-muted-foreground truncate">{it.vocab.pinyin}</span>
       <span className="truncate">{it.vocab.meaning}</span>
       <span><HskBadge level={it.vocab.hskLevel} /></span>
       <FamiliarityBar value={it.familiarity} />
-      <span className="text-right font-mono-num text-muted-foreground">{it.seenCount}×</span>
+      <button onClick={onSeenClick} className="text-right font-mono-num text-muted-foreground hover:text-secondary hover:underline justify-self-end" title="See every video segment where this word appeared">
+        {it.seenCount}×
+      </button>
     </div>
+  );
+}
+
+function OccurrencesModal({ word, onOpenChange }: { word: string | null; onOpenChange: (o: boolean) => void }) {
+  const { api } = useApi();
+  const { go } = useNav();
+  const [matches, setMatches] = useState<SubtitleMatch[]>([]);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!word) return;
+    setBusy(true);
+    api.searchSubtitles(word).then(setMatches).catch(() => setMatches([])).finally(() => setBusy(false));
+  }, [word, api]);
+
+  const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+
+  return (
+    <Dialog open={!!word} onOpenChange={onOpenChange}>
+      <DialogContent className="paper max-w-md">
+        <DialogHeader>
+          <DialogTitle className="font-display text-xl flex items-center gap-2">
+            <span className="font-hans-serif text-2xl">{word}</span> seen in
+          </DialogTitle>
+        </DialogHeader>
+        {busy ? (
+          <p className="text-sm text-muted-foreground py-6 text-center">Searching…</p>
+        ) : matches.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-6 text-center">No video segments found for this word.</p>
+        ) : (
+          <ul className="space-y-1.5 max-h-80 overflow-y-auto">
+            {matches.map((m, i) => (
+              <li key={i}>
+                <button
+                  onClick={() => { onOpenChange(false); go("watch", { id: m.jobId, t: String(m.start) }); }}
+                  className="w-full text-left rounded-md border border-border hover:bg-muted/50 px-3 py-2 transition-colors"
+                >
+                  <div className="flex items-center justify-between gap-2 mb-0.5">
+                    <span className="text-xs font-medium text-muted-foreground truncate">{m.videoTitle}</span>
+                    <span className="pill bg-secondary/15 text-secondary text-[10px] shrink-0 gap-1"><Clock className="h-2.5 w-2.5" />{fmt(m.start)}</span>
+                  </div>
+                  <p className="font-hans text-sm leading-snug">{m.text}</p>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 

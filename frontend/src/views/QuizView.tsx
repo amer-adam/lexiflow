@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useApi, useQuery } from "@/app/useApi";
 import { useNav } from "@/app/nav";
+import { SpeakButton } from "@/components/SpeakButton";
 import type { LiveQuizQuestion, QuizGrade } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -206,7 +207,10 @@ export function QuizView() {
         <div className="flex items-center gap-2 mb-1 text-sm text-muted-foreground">
           <Sparkles className="h-4 w-4 text-secondary" /> Question {idx + 1}
         </div>
-        <p className="text-xl font-medium leading-relaxed mb-5">{q.questionText}</p>
+        <p className="text-xl font-medium leading-relaxed mb-5 flex items-start gap-2">
+          {q.questionText}
+          <SpeakButton text={q.questionText} size="md" className="mt-1 shrink-0" />
+        </p>
 
         {q.options?.length ? (
           <div className={cn("grid gap-2", q.type === "TRUE_FALSE" ? "grid-cols-2" : "sm:grid-cols-2")}>

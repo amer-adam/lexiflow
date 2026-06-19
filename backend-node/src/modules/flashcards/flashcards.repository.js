@@ -5,7 +5,10 @@ async function findDecksByUserId(userId) {
         where: { userId },
         include: {
             _count: { select: { flashcards: true } },
-            vocabularyList: true
+            vocabularyList: true,
+            // Needed so the deck-list view can compute due/new/in-review counts
+            // and render the full deck table without a second round-trip.
+            flashcards: { include: { vocabulary: true } }
         }
     });
 }

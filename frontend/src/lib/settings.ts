@@ -22,9 +22,12 @@ export interface Settings {
   showPinyin: boolean;
   showCharacters: boolean;
   showTranslation: boolean;
+  showHskColors: boolean;
   autoLoopLine: boolean;
   autoPauseAtLineEnd: boolean;
   subtitleScale: number; // 0.8 – 1.6
+  subtitleBgOpacity: number; // 0-100, theater mode background
+  subtitlePositionY: number; // 5-95%, theater mode vertical position
   // Study
   dailyGoal: number; // cards per day
 }
@@ -34,9 +37,12 @@ export const DEFAULT_SETTINGS: Settings = {
   showPinyin: true,
   showCharacters: true,
   showTranslation: true,
+  showHskColors: true,
   autoLoopLine: false,
   autoPauseAtLineEnd: false,
   subtitleScale: 1,
+  subtitleBgOpacity: 55,
+  subtitlePositionY: 82,
   dailyGoal: 20,
 };
 
