@@ -46,6 +46,7 @@ export interface VideoMeta {
   thumbHue: number; // fallback colour when no thumbnail
   dateAdded?: string;
   visibility: "private" | "public";
+  ownedByMe: boolean;
 }
 
 // ── HSK colour ramp ────────────────────────────────────────────────────────

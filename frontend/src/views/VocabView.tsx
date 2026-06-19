@@ -1,14 +1,15 @@
 import { useMemo, useState } from "react";
 import {
-  Search, Plus, Layers, BookOpen, Trash2, ArrowUpDown, MessageSquareQuote, Loader2,
+  Search, Plus, Layers, BookOpen, Trash2, ArrowUpDown, MessageSquareQuote, Loader2, Lock, UserPlus,
 } from "lucide-react";
-import { hskColor, type VList, type ListType, type ListItem } from "@/lib/data";
+import { hskColor, type VList, type ListType, type ListItem, type HskLevel } from "@/lib/data";
 import { HskBadge, FamiliarityBar, Loading, ErrorState, EmptyState } from "@/components/bits";
 import { InfoTip } from "@/components/InfoTip";
 import { VirtualList } from "@/components/VirtualList";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CardLayoutModal, type SideConfig } from "@/components/CardLayoutModal";
 import { useNav } from "@/app/nav";
 import { useApi, useQuery } from "@/app/useApi";
 import { cn } from "@/lib/utils";
@@ -19,6 +20,8 @@ const TYPE_STYLE: Record<ListType, string> = {
   SEEN: "bg-gold/15 text-gold",
   OFFICIAL: "bg-muted text-muted-foreground",
 };
+// Display order weight: user lists first, then saved, seen, official last (read-only).
+const ORDER_WEIGHT: Record<ListType, number> = { USER_CREATED: 0, SAVED: 1, SEEN: 2, OFFICIAL: 3 };
 const countOf = (l: VList) => l._count?.items ?? l.items.length;
 
 const GRID = "grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.8fr)_84px_132px_52px] items-center gap-2 px-5";
@@ -33,8 +36,18 @@ export function VocabView() {
   const [q, setQ] = useState("");
   const [sortFam, setSortFam] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [layoutOpen, setLayoutOpen] = useState(false);
+  const [quickAdd, setQuickAdd] = useState(false);
+  const [qaSimplified, setQaSimplified] = useState("");
+  const [qaPinyin, setQaPinyin] = useState("");
+  const [qaMeaning, setQaMeaning] = useState("");
+  const [qaBusy, setQaBusy] = useState(false);
 
-  const active = (lists ?? []).find((l) => l.id === activeId) ?? (lists ?? [])[0];
+  const sortedLists = useMemo(
+    () => [...(lists ?? [])].sort((a, b) => ORDER_WEIGHT[a.type] - ORDER_WEIGHT[b.type]),
+    [lists]
+  );
+  const active = sortedLists.find((l) => l.id === activeId) ?? sortedLists[0];
 
   const { data: words, loading: wordsLoading, error: wordsError, reload: reloadWords } =
     useQuery((a) => (active ? a.getListWords(active.id) : Promise.resolve([])), [active?.id]);
@@ -84,18 +97,41 @@ export function VocabView() {
     }
   }
 
-  async function createOrOpenDeck() {
+  function createOrOpenDeck() {
     if (!active) return;
     if (active.hasDeck) { go("flashcards"); return; }
+    setLayoutOpen(true);
+  }
+
+  async function confirmCreateDeck(front: SideConfig, back: SideConfig) {
+    if (!active) return;
     setBusy(true);
     try {
-      await api.syncDeck(active.id, active.name); // generate the deck from this list
+      await api.syncDeck(active.id, active.name, front, back); // generate the deck from this list
+      setLayoutOpen(false);
       reloadLists();
       go("flashcards");
     } catch (e: any) {
       alert("Could not create deck: " + (e?.message ?? "unknown error"));
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function addWord() {
+    if (!active || !qaSimplified.trim()) return;
+    setQaBusy(true);
+    try {
+      await api.addWord(active.id, {
+        simplified: qaSimplified.trim(), pinyin: qaPinyin.trim(), meaning: qaMeaning.trim(),
+        hskLevel: 0 as HskLevel,
+      });
+      setQaSimplified(""); setQaPinyin(""); setQaMeaning(""); setQuickAdd(false);
+      reloadWords();
+    } catch (e: any) {
+      alert("Could not add word: " + (e?.message ?? "unknown error"));
+    } finally {
+      setQaBusy(false);
     }
   }
 
@@ -116,7 +152,7 @@ export function VocabView() {
         ) : (
           <>
             <div className="space-y-1.5">
-              {(lists ?? []).map((l) => (
+              {sortedLists.map((l) => (
                 <ListChip key={l.id} list={l} active={l.id === active?.id} onClick={() => setActiveId(l.id)} />
               ))}
               {(lists?.length ?? 0) === 0 && (
@@ -182,6 +218,26 @@ export function VocabView() {
                   <span className="font-mono-num font-semibold text-foreground">{countOf(active)}</span> words
                 </span>
               </div>
+
+              {active.type === "OFFICIAL" ? (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-3 rounded-md bg-muted/50 px-3 py-2">
+                  <Lock className="h-3.5 w-3.5 shrink-0" /> Official list locked — you can't add or remove words here.
+                </div>
+              ) : !quickAdd ? (
+                <button onClick={() => setQuickAdd(true)} className="inline-flex items-center gap-1.5 text-sm text-secondary hover:underline mt-3">
+                  <UserPlus className="h-3.5 w-3.5" /> Quick-add a word
+                </button>
+              ) : (
+                <div className="flex items-center gap-2 mt-3 flex-wrap">
+                  <Input value={qaSimplified} onChange={(e) => setQaSimplified(e.target.value)} placeholder="汉字" className="w-24 h-9 bg-background font-hans-serif" />
+                  <Input value={qaPinyin} onChange={(e) => setQaPinyin(e.target.value)} placeholder="pinyin" className="w-28 h-9 bg-background" />
+                  <Input value={qaMeaning} onChange={(e) => setQaMeaning(e.target.value)} placeholder="meaning" className="flex-1 min-w-[8rem] h-9 bg-background" />
+                  <Button size="sm" onClick={addWord} disabled={qaBusy || !qaSimplified.trim()} className="gap-1.5">
+                    {qaBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Add
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setQuickAdd(false)}>Cancel</Button>
+                </div>
+              )}
             </div>
 
             {/* Header row */}
@@ -214,6 +270,15 @@ export function VocabView() {
           </>
         )}
       </div>
+
+      {active && (
+        <CardLayoutModal
+          open={layoutOpen}
+          onOpenChange={setLayoutOpen}
+          onSave={confirmCreateDeck}
+          busy={busy}
+        />
+      )}
     </div>
   );
 }

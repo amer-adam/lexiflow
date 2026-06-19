@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
-import { Layers, Play, RotateCcw, Check, Brain, Zap, Clock3, Settings2, Loader2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Layers, Play, RotateCcw, Check, Brain, Zap, Clock3, Settings2, Loader2, Trash2, Eraser } from "lucide-react";
 import { hskColor, FSRS_STATE_LABEL, type Deck, type Card, type FsrsState } from "@/lib/data";
 import { InfoTip } from "@/components/InfoTip";
 import { Button } from "@/components/ui/button";
 import { Stat, Loading, ErrorState, EmptyState } from "@/components/bits";
+import { CardLayoutModal, type SideConfig } from "@/components/CardLayoutModal";
 import { useApi, useQuery } from "@/app/useApi";
 import { useNav } from "@/app/nav";
 import { cn } from "@/lib/utils";
@@ -20,7 +21,21 @@ const RATINGS: { label: string; rating: 1 | 2 | 3 | 4; cls: string; next: string
   { label: "Good", rating: 3, cls: "bg-secondary/90 hover:bg-secondary text-secondary-foreground", next: "~4d" },
   { label: "Easy", rating: 4, cls: "bg-hsk-1/90 hover:bg-hsk-1 text-white", next: "~10d" },
 ];
+const SESSION_SIZES = [5, 10, 20] as const;
 const totalCards = (d: Deck) => d._count?.flashcards ?? d.cards.length;
+
+function CardFace({ c, side }: { c: Card; side: SideConfig }) {
+  return (
+    <div className="text-center space-y-2">
+      {side.character && (
+        <div className="font-hans-serif text-6xl leading-none" style={{ color: hskColor(c.vocab.hskLevel) }}>{c.vocab.simplified}</div>
+      )}
+      {side.pinyin && <div className="text-2xl text-muted-foreground">{c.vocab.pinyin}</div>}
+      {side.meaning && <div className="text-2xl font-medium">{c.vocab.meaning}</div>}
+      {!side.character && !side.pinyin && !side.meaning && <div className="text-muted-foreground text-sm">(nothing configured for this side)</div>}
+    </div>
+  );
+}
 
 export function FlashcardsView() {
   const { api } = useApi();
@@ -35,17 +50,23 @@ export function FlashcardsView() {
   const [flipped, setFlipped] = useState(false);
   const [done, setDone] = useState(false);
   const [loadingReview, setLoadingReview] = useState(false);
+  const [chooserOpen, setChooserOpen] = useState(false);
+  const [layoutOpen, setLayoutOpen] = useState(false);
+  const [layoutBusy, setLayoutBusy] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  const start = async () => {
+  const startWith = async (size: number | "due" | "all") => {
     if (!deck) return;
+    setChooserOpen(false);
     setLoadingReview(true);
     let cards: Card[] = [];
     try {
       cards = await api.getReview(deck.id);
     } catch { /* ignore, will show empty */ }
     finally { setLoadingReview(false); }
-    if (!cards.length) cards = due;
-    if (!cards.length) cards = deck.cards.slice(0, 20);
+    if (size === "all") cards = deck.cards;
+    else if (size === "due") cards = cards.length ? cards : due;
+    else cards = (cards.length ? cards : due.length ? due : deck.cards).slice(0, size);
     setSessionCards(cards);
     setIdx(0); setFlipped(false); setDone(false);
   };
@@ -56,6 +77,54 @@ export function FlashcardsView() {
     if (card.id) api.submitReview(card.id, rating).catch(() => {});
     if (idx + 1 >= sessionCards.length) { setDone(true); return; }
     setIdx((i) => i + 1); setFlipped(false);
+  };
+
+  // Keyboard shortcuts in the study arena: space/enter flips, 1-4 rate when flipped.
+  useEffect(() => {
+    if (!sessionCards || done) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.code === "Space" || e.code === "Enter") { e.preventDefault(); setFlipped((f) => !f); return; }
+      if (flipped && ["Digit1", "Digit2", "Digit3", "Digit4"].includes(e.code)) {
+        const rating = (Number(e.code.slice(-1)) as 1 | 2 | 3 | 4);
+        rate(rating);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionCards, done, flipped, idx]);
+
+  const saveLayout = async (front: SideConfig, back: SideConfig) => {
+    if (!deck) return;
+    setLayoutBusy(true);
+    try {
+      await api.updateDeckLayout(deck.id, front, back);
+      setLayoutOpen(false);
+      reload();
+    } catch (e: any) {
+      alert("Could not save layout: " + (e?.message ?? "unknown error"));
+    } finally {
+      setLayoutBusy(false);
+    }
+  };
+
+  const resetDeck = async () => {
+    if (!deck) return;
+    if (!window.confirm(`Reset all progress for "${deck.name}"? Every card returns to "New".`)) return;
+    setBusy(true);
+    try { await api.resetDeck(deck.id); reload(); }
+    catch (e: any) { alert("Could not reset deck: " + (e?.message ?? "unknown error")); }
+    finally { setBusy(false); }
+  };
+
+  const deleteDeck = async () => {
+    if (!deck) return;
+    if (!window.confirm(`Delete the deck "${deck.name}"? This cannot be undone.`)) return;
+    setBusy(true);
+    try { await api.deleteDeck(deck.id); setDeckId(null); reload(); }
+    catch (e: any) { alert("Could not delete deck: " + (e?.message ?? "unknown error")); }
+    finally { setBusy(false); }
   };
 
   // ── States ───────────────────────────────────────────────────
@@ -91,18 +160,9 @@ export function FlashcardsView() {
         <button onClick={() => setFlipped((f) => !f)} className="w-full paper aspect-[3/2] grid place-items-center relative group select-none">
           <span className="absolute top-3 left-4 text-[11px] uppercase tracking-wide text-muted-foreground">{flipped ? "Back" : "Front"}</span>
           <span className={cn("absolute top-3 right-3 pill", STATE_STYLE[c.state])}>{FSRS_STATE_LABEL[c.state]}</span>
-          <div className="text-center">
-            {!flipped ? (
-              <span className="font-hans-serif text-7xl" style={{ color: hskColor(c.vocab.hskLevel) }}>{c.vocab.simplified}</span>
-            ) : (
-              <div className="space-y-2">
-                <div className="text-2xl text-muted-foreground">{c.vocab.pinyin}</div>
-                <div className="text-3xl font-medium">{c.vocab.meaning}</div>
-              </div>
-            )}
-          </div>
+          <CardFace c={c} side={flipped ? c.back : c.front} />
           <span className="absolute bottom-3 text-xs text-muted-foreground opacity-60 group-hover:opacity-100">
-            {flipped ? "How well did you recall it?" : "Click to flip"}
+            {flipped ? "How well did you recall it? (1-4)" : "Click to flip (space)"}
           </span>
         </button>
 
@@ -140,7 +200,7 @@ export function FlashcardsView() {
         </p>
         <div className="flex gap-2 justify-center">
           <Button variant="outline" onClick={() => { setSessionCards(null); reload(); }}>Back to deck</Button>
-          <Button onClick={start} className="gap-1.5"><RotateCcw className="h-4 w-4" /> Review again</Button>
+          <Button onClick={() => setChooserOpen(true)} className="gap-1.5"><RotateCcw className="h-4 w-4" /> Review again</Button>
         </div>
       </div>
     );
@@ -168,10 +228,18 @@ export function FlashcardsView() {
             </div>
             <p className="text-muted-foreground mt-1">Spaced-repetition deck powered by the FSRS algorithm.</p>
           </div>
-          <Button size="lg" className="gap-2" onClick={start} disabled={loadingReview || totalCards(deck) === 0}>
-            {loadingReview ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-            {due.length ? `Review ${due.length} due` : "Practice"}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground" onClick={resetDeck} disabled={busy} title="Reset all FSRS progress for this deck">
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eraser className="h-4 w-4" />} Reset
+            </Button>
+            <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground" onClick={deleteDeck} disabled={busy}>
+              <Trash2 className="h-4 w-4" /> Delete
+            </Button>
+            <Button size="lg" className="gap-2" onClick={() => setChooserOpen(true)} disabled={loadingReview || totalCards(deck) === 0}>
+              {loadingReview ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+              {due.length ? `Review ${due.length} due` : "Practice"}
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -184,9 +252,9 @@ export function FlashcardsView() {
         <div className="paper overflow-hidden">
           <div className="flex items-center justify-between px-5 py-3 border-b border-border">
             <h3 className="font-display text-lg font-semibold">Full deck</h3>
-            <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
+            <button onClick={() => setLayoutOpen(true)} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
               <Settings2 className="h-4 w-4" /> Card layout <InfoTip id="cardLayout" />
-            </span>
+            </button>
           </div>
           <table className="w-full text-sm">
             <thead>
@@ -222,6 +290,32 @@ export function FlashcardsView() {
           </table>
         </div>
       </div>
+
+      {/* Session size chooser */}
+      {chooserOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 grid place-items-center px-4" onClick={() => setChooserOpen(false)}>
+          <div className="paper p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-display text-lg font-semibold mb-1">How many cards?</h3>
+            <p className="text-sm text-muted-foreground mb-4">{due.length ? `${due.length} due today` : "Nothing due — pick a practice size."}</p>
+            <div className="grid grid-cols-2 gap-2">
+              {SESSION_SIZES.map((n) => (
+                <Button key={n} variant="outline" onClick={() => startWith(n)}>{n} cards</Button>
+              ))}
+              <Button variant="outline" onClick={() => startWith("due")}>Due today</Button>
+              <Button onClick={() => startWith("all")}>All cards</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <CardLayoutModal
+        open={layoutOpen}
+        onOpenChange={setLayoutOpen}
+        initialFront={deck.cards[0]?.front}
+        initialBack={deck.cards[0]?.back}
+        onSave={saveLayout}
+        busy={layoutBusy}
+      />
     </div>
   );
 }

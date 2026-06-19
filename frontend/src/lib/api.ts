@@ -89,6 +89,7 @@ function mapVideo(v: any): VideoMeta {
     thumbHue: hashHue(id ?? v?.title ?? "x"),
     dateAdded: v?.dateAdded ?? undefined,
     visibility: v?.is_private ? "private" : "public",
+    ownedByMe: Boolean(v?.requested_by_user),
   };
 }
 function mapSegment(s: any): Segment {
@@ -117,7 +118,18 @@ export interface QuizGrade {
 
 export interface JobStatus {
   status?: string; progress?: number; title?: string; description?: string;
-  videoUrl?: string; segments: Segment[];
+  videoUrl?: string; segments: Segment[]; eta?: number; queueNumber?: number;
+}
+
+export interface DictionaryEntry {
+  word: string; pinyin: string; definitions: string[];
+}
+export interface SubtitleMatch {
+  jobId: string; videoTitle: string; start: number; end: number;
+  text: string; translatedText: string; pinyin?: string;
+}
+export interface VideoProgress {
+  videoId: string; currentTime: number; duration: number; lastSegmentIndexSeen: number;
 }
 
 // ── Client ──────────────────────────────────────────────────────────────────
@@ -188,6 +200,28 @@ export class Api {
     invalidate("listwords:");
     return r;
   }
+  /** Build a new named list from every word in a video. */
+  async listFromVideo(videoId: string): Promise<{ listId: string; listName: string; wordsAdded: number }> {
+    const r = await this.req<{ success: boolean; listId: string; listName: string; wordsAdded: number }>(
+      "/lists/from-video", { method: "POST", body: JSON.stringify({ videoId }) }
+    );
+    invalidate("lists");
+    return r;
+  }
+  /** Dictionary lookup for any word, independent of any particular video. */
+  dictionary(word: string): Promise<DictionaryEntry> {
+    return this.req<DictionaryEntry>(`/dictionary?word=${encodeURIComponent(word)}`);
+  }
+  /** Search every subtitle line (across the user's videos) containing a word. */
+  async searchSubtitles(word: string): Promise<SubtitleMatch[]> {
+    const r = await this.req<{ results: any[] }>(`/search?word=${encodeURIComponent(word)}`);
+    return (r.results ?? []).map((m) => ({
+      jobId: m.job_id, videoTitle: m.title ?? "Untitled video",
+      start: m.segment?.start ?? 0, end: m.segment?.end ?? 0,
+      text: m.segment?.text ?? "", translatedText: m.segment?.translated_text ?? "",
+      pinyin: m.segment?.pinyin,
+    }));
+  }
 
   // Videos --------------------------------------------------------------------
   getLibrary(): Promise<VideoMeta[]> {
@@ -207,6 +241,7 @@ export class Api {
       description: raw?.description ?? raw?.result?.description,
       videoUrl: raw?.videoUrl ?? raw?.url,
       segments: Array.isArray(segs) ? segs.map(mapSegment) : [],
+      eta: raw?.eta, queueNumber: raw?.queue_number ?? raw?.queue_position,
     };
   }
   getJob(jobId: string): Promise<JobStatus> {
@@ -220,6 +255,23 @@ export class Api {
     const r = await this.req<any>("/jobs", { method: "POST", body: JSON.stringify({ url, is_private: isPrivate }) });
     invalidate("library");
     return r;
+  }
+  /** Resume position for a video (cached; refresh after a save). */
+  getProgress(videoId: string): Promise<VideoProgress> {
+    return cachedFetch(`progress:${videoId}`, async () => {
+      const r = await this.req<any>(`/videos/${videoId}/progress`);
+      return {
+        videoId, currentTime: r?.currentTime ?? 0, duration: r?.duration ?? 0,
+        lastSegmentIndexSeen: r?.lastSegmentIndexSeen ?? -1,
+      };
+    });
+  }
+  /** Throttled progress save — call at most every ~15-30s while playing, and once on leave. */
+  async saveProgress(videoId: string, currentTime: number, duration: number): Promise<void> {
+    await this.req<void>(`/videos/${videoId}/progress`, {
+      method: "POST", body: JSON.stringify({ currentTime, duration }),
+    });
+    invalidate(`progress:${videoId}`);
   }
   async uploadJob(file: File, title: string, isPrivate: boolean): Promise<any> {
     const token = await this.getToken();
@@ -255,8 +307,15 @@ export class Api {
     invalidate("review:");
     invalidate("decks");
   }
-  async syncDeck(listId: string, name?: string): Promise<any> {
-    const r = await this.req<any>("/flashcards/sync", { method: "POST", body: JSON.stringify({ listId, name }) });
+  async syncDeck(
+    listId: string,
+    name?: string,
+    frontConfig?: { character: boolean; pinyin: boolean; meaning: boolean },
+    backConfig?: { character: boolean; pinyin: boolean; meaning: boolean }
+  ): Promise<any> {
+    const r = await this.req<any>("/flashcards/sync", {
+      method: "POST", body: JSON.stringify({ listId, name, frontConfig, backConfig }),
+    });
     invalidate("decks");
     invalidate("lists");
     return r;
@@ -264,6 +323,22 @@ export class Api {
   async deleteDeck(deckId: string): Promise<void> {
     await this.req<void>(`/flashcards/decks/${deckId}`, { method: "DELETE" });
     invalidate("decks");
+  }
+  async updateDeckLayout(
+    deckId: string,
+    frontConfig: { character: boolean; pinyin: boolean; meaning: boolean },
+    backConfig: { character: boolean; pinyin: boolean; meaning: boolean }
+  ): Promise<void> {
+    await this.req<void>(`/flashcards/decks/${deckId}/layout`, {
+      method: "PUT", body: JSON.stringify({ frontConfig, backConfig }),
+    });
+    invalidate("decks");
+    invalidate("review:");
+  }
+  async resetDeck(deckId: string): Promise<void> {
+    await this.req<void>(`/flashcards/decks/${deckId}/reset`, { method: "POST" });
+    invalidate("decks");
+    invalidate("review:");
   }
 
   // Quizzes -------------------------------------------------------------------

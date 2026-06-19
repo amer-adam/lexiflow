@@ -20,6 +20,7 @@ const STEPS: { icon: typeof Download; label: string; detail: string; info?: Para
   { icon: Palette, label: "Grade", detail: "Tagging every character with pinyin & HSK level", info: "hsk" },
 ];
 const POLL_MS = 60_000; // cap job-status polling to once a minute
+const fmtEta = (s: number) => (s >= 60 ? `${Math.round(s / 60)}m` : `${Math.round(s)}s`);
 
 export function RequestView() {
   const { go } = useNav();
@@ -32,9 +33,13 @@ export function RequestView() {
   const [running, setRunning] = useState(false);
   const [step, setStep] = useState(-1);
   const [queue, setQueue] = useState(0);
+  const [eta, setEta] = useState<number | null>(null);
+  const [progressPct, setProgressPct] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
   const [jobId, setJobId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const timer = useRef<number | undefined>(undefined);
+  const elapsedTimer = useRef<number | undefined>(undefined);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const start = async () => {
@@ -42,6 +47,9 @@ export function RequestView() {
     setRunning(true);
     setStep(-1);
     setQueue(0);
+    setEta(null);
+    setProgressPct(0);
+    setElapsed(0);
     setJobId(null);
     try {
       const res = tab === "youtube"
@@ -55,6 +63,7 @@ export function RequestView() {
       if (res?.job_id) {
         setJobId(res.job_id);
         setQueue(res.queue_position ?? res.queue_number ?? 0);
+        setEta(typeof res.eta === "number" ? res.eta : null);
       } else {
         throw new Error("The server didn't return a job id.");
       }
@@ -63,6 +72,13 @@ export function RequestView() {
       setRunning(false);
     }
   };
+
+  // Live elapsed-time counter while a job is in flight.
+  useEffect(() => {
+    if (!jobId || step >= STEPS.length) { clearInterval(elapsedTimer.current); return; }
+    elapsedTimer.current = window.setInterval(() => setElapsed((e) => e + 1), 1000);
+    return () => clearInterval(elapsedTimer.current);
+  }, [jobId, step]);
 
   // Poll the real job (≤ once per minute).
   useEffect(() => {
@@ -74,7 +90,9 @@ export function RequestView() {
         if (!active) return;
         if (job.status === "completed" || (job.segments?.length ?? 0) > 0) { setStep(STEPS.length); return; }
         if (job.status === "failed") { setError("Processing failed for this video."); setRunning(false); return; }
-        setQueue(0);
+        setQueue(job.queueNumber ?? 0);
+        setEta(typeof job.eta === "number" ? job.eta : null);
+        setProgressPct(job.progress ?? 0);
         setStep(Math.min(STEPS.length - 1, Math.floor(((job.progress ?? 0) / 100) * STEPS.length)));
         timer.current = window.setTimeout(poll, POLL_MS);
       } catch {
@@ -164,12 +182,19 @@ export function RequestView() {
             <h2 className="font-display text-xl font-semibold">{finished ? "Ready to watch!" : "Processing your video"}</h2>
             <InfoTip id="pipeline" />
           </div>
-          {!finished && step === -1 && (
-            <p className="text-sm text-muted-foreground mb-5 flex items-center gap-1.5">
-              {queue > 0 ? `In queue · ${queue} job${queue > 1 ? "s" : ""} ahead of you…` : "Starting…"} <InfoTip id="queueEta" />
-            </p>
+          {!finished && (
+            <div className="flex items-center gap-3 text-sm text-muted-foreground mb-1 flex-wrap">
+              <span className="flex items-center gap-1.5">
+                {step === -1
+                  ? (queue > 0 ? `In queue · ${queue} job${queue > 1 ? "s" : ""} ahead of you…` : "Starting…")
+                  : `Processing… ${progressPct}%`}
+                <InfoTip id="queueEta" />
+              </span>
+              {eta != null && eta > 0 && <span className="font-mono-num">ETA ~{fmtEta(eta)}</span>}
+              <span className="font-mono-num">Elapsed {fmtEta(elapsed)}</span>
+            </div>
           )}
-          {!finished && step >= 0 && (
+          {!finished && (
             <p className="text-sm text-muted-foreground mb-5">This can take a few minutes; status refreshes once a minute.</p>
           )}
 
