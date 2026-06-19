@@ -6,11 +6,22 @@ services:
         - VITE_API_BASE_URL=${VITE_API_BASE_URL}
         - VITE_AUTH0_DOMAIN=${VITE_AUTH0_DOMAIN}
         - VITE_AUTH0_CLIENT_ID=${VITE_AUTH0_CLIENT_ID}
+        - VITE_AUTH0_AUDIENCE=${VITE_AUTH0_AUDIENCE}
     ports:
       - "4555:80"
     restart: unless-stopped
     depends_on:
       - backend-node
+    # `docker compose up --watch frontend` rebuilds this image whenever a file
+    # under ./frontend changes (node_modules/dist are ignored).
+    develop:
+      watch:
+        - action: rebuild
+          path: ./frontend
+          ignore:
+            - node_modules/
+            - dist/
+            - .parcel-cache/
 
   backend-node:
     image: ghcr.io/amer-adam/backend-node:latest
@@ -20,6 +31,15 @@ services:
       - "4556:4556"
     env_file:
       - .env
+    # Reach the host's PostgreSQL from inside the container. This overrides the
+    # DATABASE_URL in .env (which uses "localhost" for host/native runs).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - DATABASE_URL=postgresql://lexiflow_user:lexiflow_password@host.docker.internal:5432/lexiflow_db?schema=public
+      # Reach the FastAPI worker by its compose service name, not localhost
+      # (inside this container "localhost" is backend-node itself).
+      - PYTHON_API=http://backend-fastapi:4557
     restart: unless-stopped
     depends_on:
       - backend-fastapi
@@ -53,17 +73,6 @@ services:
       - 8.8.4.4
     restart: unless-stopped
 
-  postgres:
-    image: postgres:15-alpine
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: lexiflow
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
-
-volumes:
-  postgres_data:
+  # NOTE: PostgreSQL is provided by the HOST machine (systemd `postgresql`),
+  # which already holds the lexiflow_db database. backend-node reaches it via
+  # host.docker.internal (see that service). No DB container is run here.

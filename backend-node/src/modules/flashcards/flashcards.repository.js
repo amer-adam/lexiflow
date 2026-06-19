@@ -23,17 +23,21 @@ async function createDeck({ userId, listId, name }) {
 }
 
 async function bulkSyncCards(deckId, listItems, frontConfig, backConfig) {
+    // frontConfig/backConfig are required Json columns — default them so a deck
+    // can be generated without the client having to specify a card layout.
+    const front = frontConfig ?? { character: true };
+    const back = backConfig ?? { pinyin: true, meaning: true };
     for (const item of listItems) {
         await prisma.flashcard.upsert({
             where: {
                 deckId_vocabularyId: { deckId, vocabularyId: item.vocabularyId }
             },
-            update: { frontConfig, backConfig },
+            update: { frontConfig: front, backConfig: back },
             create: {
                 deckId,
                 vocabularyId: item.vocabularyId,
-                frontConfig,
-                backConfig,
+                frontConfig: front,
+                backConfig: back,
                 nextReviewDate: new Date()
             }
         });

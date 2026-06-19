@@ -177,7 +177,30 @@ async function createJob({ url, user_id, is_private }) {
  */
 async function getJobStatus(jobId) {
     const job = await videosRepository.getJobById(jobId);
-    if (!job) return null;
+    if (!job) {
+        // Library videos are served from the completed-results store; their
+        // transient job record may have been cleaned up. Fall back to it so
+        // finished videos can still be opened by job_id or video_id.
+        const resultDoc = await videosRepository.getResultByJobOrVideoId(jobId);
+        if (resultDoc) {
+            const payload = resultDoc.result || resultDoc;
+            return {
+                job: resultDoc,
+                responseJSON: {
+                    job_id: resultDoc.job_id || jobId,
+                    status: 'completed',
+                    progress: 100,
+                    current_step: null,
+                    result: payload,
+                    url: resultDoc.url || null,
+                    duration: resultDoc.duration || payload?.duration || 0,
+                    title: resultDoc.title || payload?.title || 'Unknown Title',
+                    description: resultDoc.description || payload?.description || ''
+                }
+            };
+        }
+        return null;
+    }
 
     const responseJSON = {
         job_id: job.job_id,

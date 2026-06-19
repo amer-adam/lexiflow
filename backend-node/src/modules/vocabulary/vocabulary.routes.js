@@ -11,6 +11,7 @@ router.get('/dictionary', vocabularyController.getDictionaryDefinition);
 
 router.post('/lists', vocabularyController.createList);
 router.post('/lists/from-video', vocabularyController.createListFromVideo);
+router.post('/lists/seen-from-video', vocabularyController.markVideoSeen);
 router.get('/lists', vocabularyController.getUserLists);
 router.post('/lists/:listId/words', vocabularyController.addWordToList);
 router.get('/lists/:listId/words', vocabularyController.getListDetails);

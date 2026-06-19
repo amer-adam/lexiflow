@@ -244,6 +244,60 @@ async function createListFromVideo({ videoId, userId }) {
   };
 }
 
+/**
+ * Record every word in a video into the user's single "Seen" list (idempotent).
+ * Called when the learner leaves a video. Returns how many words were tracked.
+ */
+async function markVideoWordsSeen({ videoId, userId }) {
+  const videoResult = await videosRepository.getResultByJobOrVideoId(videoId);
+  if (!videoResult) {
+    const err = new Error('Video not found or processing not completed');
+    err.status = 404;
+    throw err;
+  }
+
+  // Find-or-create the one SEEN list for this user.
+  let list = await prisma.vocabularyList.findFirst({ where: { userId, type: 'SEEN' } });
+  if (!list) {
+    list = await vocabularyRepository.createList({
+      userId,
+      name: 'Seen while watching',
+      type: 'SEEN',
+      sourceMetadata: { description: 'Words LexiFlow has shown you in subtitles.' }
+    });
+  }
+
+  const wordsMap = new Map();
+  const segments = videoResult.result?.segments || [];
+  for (const segment of segments) {
+    const segmentCharacters = segment.characters || {};
+    const ctxSentence = segment.text || segment.sentence || '';
+    const ctxTranslation = segment.translation || segment.translated_text || '';
+    for (const [character, info] of Object.entries(segmentCharacters)) {
+      const cleanChar = character.replace('@', '');
+      const pinyin = info.pinyin || '';
+      const hskLevel = info.hsk_level !== undefined ? info.hsk_level : (info.hskLevel || null);
+      const translations = info.translations || [];
+      const meaning = Array.isArray(translations) ? translations.join(', ') : (info.meaning || info.translation || 'Seen word');
+      if (!cleanChar || !pinyin || !meaning) continue;
+      if (cleanChar === pinyin) continue;
+      if (!wordsMap.has(cleanChar)) {
+        wordsMap.set(cleanChar, {
+          simplified: cleanChar, pinyin, meaning, hskLevel,
+          sourceVideoId: videoId, contextSentence: ctxSentence, contextTranslation: ctxTranslation
+        });
+      }
+    }
+  }
+
+  let tracked = 0;
+  for (const word of wordsMap.values()) {
+    try { await vocabularyRepository.addWordToList(list.id, word); tracked++; }
+    catch (err) { console.error(`Failed to mark word ${word.simplified} seen:`, err.message); }
+  }
+  return { listId: list.id, listName: list.name, tracked };
+}
+
 async function deleteList(listId, userId) {
   const list = await prisma.vocabularyList.findUnique({
     where: { id: listId }
@@ -266,6 +320,7 @@ async function deleteList(listId, userId) {
 module.exports = {
   createList,
   createListFromVideo,
+  markVideoWordsSeen,
   getUserLists,
   addWordToList,
   getListDetails,

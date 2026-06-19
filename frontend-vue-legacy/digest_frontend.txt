@@ -1,0 +1,6218 @@
+Directory structure:
+└── frontend/
+    └── src/
+        └── views/
+            ├── FlashcardView.vue
+            ├── HomeView.vue
+            ├── LibraryView.vue
+            ├── ListView.vue
+            ├── ProfileView.vue
+            ├── QuizView.vue
+            ├── ReqView.vue
+            └── WatchView.vue
+
+================================================
+FILE: src/views/FlashcardView.vue
+================================================
+<template>
+    <div class="list-view-container">
+        <div class="sidebar glass-panel">
+            <div class="sidebar-header">
+                <h2 class="sidebar-title">SRS Decks</h2>
+                <p class="sidebar-subtitle">Review configured spaced repetition flashcards</p>
+
+                <button class="btn btn-secondary btn-block btn-sm" @click="router.push('/lists')"
+                    style="margin-top: 0.75rem;">
+                    ➕ Create a Deck (Vocab Lists)
+                </button>
+            </div>
+
+            <div class="lists-list-wrapper">
+                <h3 class="section-title">Available Flashcard Decks</h3>
+                <div class="lists-grid">
+                    <div v-for="deck in userDecks" :key="deck.id" class="list-card"
+                        :class="{ active: activeDeck?.id === deck.id }" @click="selectDeck(deck)">
+                        <div class="list-card-header">
+                            <h3>{{ deck.name }}</h3>
+                        </div>
+                        <div class="list-meta">
+                            <span class="count">
+                                🃏 {{ deck._count?.flashcards || 0 }} cards
+                            </span>
+                        </div>
+                    </div>
+
+                    <div v-if="userDecks.length === 0" class="empty-state-redirect-box">
+                        <p>No active flashcard decks found.</p>
+                        <button class="btn btn-primary btn-sm btn-block" @click="router.push('/lists')">
+                            Go to Vocab Lists to Sync a Deck
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content-area">
+            <div v-if="activeDeck" class="active-list-view glass-panel">
+
+                <div class="list-details-header">
+                    <div class="title-section">
+                        <div class="title-row">
+                            <h2 class="page-title">{{ activeDeck.name }}</h2>
+                        </div>
+                    </div>
+
+                    <div class="stats-badge-row">
+                        <div class="stats-badge">
+                            <span class="stats-num">{{ dueTodayCount }}</span>
+                            <span class="stats-label">Due Today</span>
+                        </div>
+                        <div class="stats-badge" v-if="studyActive">
+                            <span class="stats-num text-session">{{ activeSessionCards.length - currentCardIndex
+                                }}</span>
+                            <span class="stats-label">Left In Session</span>
+                        </div>
+
+                        <button class="stats-badge settings-badge-btn" @click="openSettingsModal"
+                            title="Deck Configuration Options">
+                            <span class="stats-num emoji">⚙️</span>
+                            <span class="stats-label">Settings</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div v-if="studyActive" class="study-arena">
+                    <div v-if="activeSessionCards.length > 0 && currentCardIndex < activeSessionCards.length"
+                        class="player-wrapper">
+
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill"
+                                :style="{ width: `${((currentCardIndex) / activeSessionCards.length) * 100}%` }"></div>
+                            <span class="progress-text">Card {{ currentCardIndex + 1 }} of {{ activeSessionCards.length
+                            }}</span>
+                        </div>
+
+                        <div class="flashcard-container" @click="isFlipped = !isFlipped">
+                            <div class="flashcard-card" :class="{ flipped: isFlipped }">
+
+                                <div class="card-face card-front">
+                                    <div class="card-side-label">FRONT</div>
+                                    <div class="card-content-wrapper">
+                                        <h1 v-if="activeSessionCards[currentCardIndex].frontConfig?.character"
+                                            class="srs-char">
+                                            {{ activeSessionCards[currentCardIndex].vocabulary?.simplified }}
+                                        </h1>
+                                        <p v-if="activeSessionCards[currentCardIndex].frontConfig?.pinyin"
+                                            class="srs-pinyin">
+                                            {{ activeSessionCards[currentCardIndex].vocabulary?.pinyin }}
+                                        </p>
+                                        <p v-if="activeSessionCards[currentCardIndex].frontConfig?.meaning"
+                                            class="srs-meaning">
+                                            {{ activeSessionCards[currentCardIndex].vocabulary?.meaning }}
+                                        </p>
+                                        <div v-if="!hasFrontElementsVisible(activeSessionCards[currentCardIndex])"
+                                            class="empty-config-warn">
+                                            No front elements configured.
+                                        </div>
+                                    </div>
+                                    <div class="tap-hint">Click anywhere on card canvas to Flip</div>
+                                </div>
+
+                                <div class="card-face card-back">
+                                    <div class="card-side-label">BACK</div>
+                                    <div class="card-content-wrapper">
+                                        <h1 v-if="activeSessionCards[currentCardIndex].backConfig?.character"
+                                            class="srs-char">
+                                            {{ activeSessionCards[currentCardIndex].vocabulary?.simplified }}
+                                        </h1>
+                                        <p v-if="activeSessionCards[currentCardIndex].backConfig?.pinyin"
+                                            class="srs-pinyin">
+                                            {{ activeSessionCards[currentCardIndex].vocabulary?.pinyin }}
+                                        </p>
+                                        <p v-if="activeSessionCards[currentCardIndex].backConfig?.meaning"
+                                            class="srs-meaning">
+                                            {{ activeSessionCards[currentCardIndex].vocabulary?.meaning }}
+                                        </p>
+                                        <div v-if="!hasBackElementsVisible(activeSessionCards[currentCardIndex])"
+                                            class="empty-config-warn">
+                                            No back elements configured.
+                                        </div>
+                                    </div>
+                                    <div class="tap-hint">Click card again to display face profile</div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <div class="scoring-actions-bar" v-if="isFlipped">
+                            <button class="btn btn-score rating-again" @click.stop="gradeCardReview(1)">
+                                <span class="score-num">1</span> Again <small>Reset</small>
+                            </button>
+                            <button class="btn btn-score rating-hard" @click.stop="gradeCardReview(2)">
+                                <span class="score-num">2</span> Hard <small>Slight</small>
+                            </button>
+                            <button class="btn btn-score rating-good" @click.stop="gradeCardReview(3)">
+                                <span class="score-num">3</span> Good <small>Normal</small>
+                            </button>
+                            <button class="btn btn-score rating-easy" @click.stop="gradeCardReview(4)">
+                                <span class="score-num">4</span> Easy <small>Bonus</small>
+                            </button>
+                        </div>
+                        <div class="scoring-actions-bar justify-center" v-else>
+                            <button class="btn btn-secondary reveal-btn" @click="isFlipped = true">Reveal Back Cover
+                                (Spacebar)</button>
+                        </div>
+
+                    </div>
+
+                    <div v-else class="empty-state review-complete-pane glass-panel-inner">
+                        <h2>Review Session Finished!</h2>
+                        <p>You have successfully reviewed all scheduled items for this session.</p>
+                        <button class="btn btn-primary" @click="exitStudyMode">Return to Workspace</button>
+                    </div>
+                </div>
+
+                <template v-else>
+                    <div class="dashboard-prep-arena glass-panel-inner">
+
+
+                        <div v-if="dueTodayCount === 0" class="clean-deck-notice">
+                            <p>✅ <strong>Inbox Zero!</strong> Excellent work. All matching structural items inside this
+                                deck remain balanced today.</p>
+                            <button class="btn btn-secondary btn-sm" @click="promptSessionSetup(true)">Force Practice
+                                Re-run</button>
+                        </div>
+
+                        <div v-else class="ready-cta-group">
+                            <p>There are currently <strong>{{ dueTodayCount }} items</strong> overdue and waiting for
+                                your excellence.</p>
+
+                            <div v-if="showSessionSelector" class="session-selector-card glass-panel-inner">
+                                <h4>How many cards for this session?</h4>
+                                <div class="session-btn-options">
+                                    <button class="btn btn-secondary btn-sm" @click="startStudySession(5)">5</button>
+                                    <button class="btn btn-secondary btn-sm" @click="startStudySession(10)">10</button>
+                                    <button class="btn btn-secondary btn-sm" @click="startStudySession(20)">20</button>
+                                    <button class="btn btn-primary btn-sm" @click="startStudySession(dueTodayCount)">All
+                                        ({{ dueTodayCount }})</button>
+                                </div>
+                                <button class="btn btn-link btn-xs" style="margin-top: 0.5rem;"
+                                    @click="showSessionSelector = false">Cancel</button>
+                            </div>
+
+                            <button v-else class="btn btn-primary btn-lg" @click="promptSessionSetup(false)">Start
+                                Active Review Now</button>
+                        </div>
+                    </div>
+
+                    <div class="deck-inventory-section">
+                        <h3 class="section-title-inventory">Card Deck Progress Registry (All Cards)</h3>
+                        <div class="table-scroll-container">
+                            <table class="inventory-table">
+                                <thead>
+                                    <tr>
+                                        <th>Vocabulary Item</th>
+                                        <th>Pinyin</th>
+                                        <th>FSRS State</th>
+                                        <th>Stability (Days)</th>
+                                        <th>Interval</th>
+                                        <th>Scheduled Due Date</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="card in allDeckCards" :key="card.id"
+                                        :class="{ 'row-due': isCardOverdue(card.nextReviewDate) }">
+                                        <td class="font-bold text-white">{{ card.vocabulary?.simplified }}</td>
+                                        <td class="text-secondary">{{ card.vocabulary?.pinyin }}</td>
+                                        <td>
+                                            <span class="state-chip" :class="'state-' + card.state">
+                                                {{ getStateLabel(card.state) }}
+                                            </span>
+                                        </td>
+                                        <td>{{ card.stability?.toFixed(2) || '0.00' }}d</td>
+                                        <td>{{ card.scheduledDays }}d</td>
+                                        <td class="text-sm">{{ formatReviewDate(card.nextReviewDate) }}</td>
+                                        <td>
+                                            <span v-if="isCardOverdue(card.nextReviewDate)"
+                                                class="badge-status badge-due">Due</span>
+                                            <span v-else class="badge-status badge-waiting">Waiting</span>
+                                        </td>
+                                    </tr>
+                                    <tr v-if="allDeckCards.length === 0">
+                                        <td colspan="7" class="text-center text-muted">No cards present inside this deck
+                                            profile.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </template>
+
+            </div>
+        </div>
+
+        <div v-if="showSettingsModal" class="modal-backdrop" @click.self="showSettingsModal = false">
+            <div class="modal-content glass-panel">
+                <div class="modal-header">
+                    <h3>Deck Configuration Options</h3>
+                    <button class="close-btn" @click="showSettingsModal = false">✕</button>
+                </div>
+
+                <p class="modal-desc">Configure active view fields layout parameters or manage database status records.
+                </p>
+
+                <div class="modal-section">
+                    <span class="config-label">Front Content View Mapping</span>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" v-model="settingsConfig.front.character" /> Simplified Characters
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" v-model="settingsConfig.front.pinyin" /> Hanyu Pinyin Phonetics
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" v-model="settingsConfig.front.meaning" /> English Meaning Definition
+                        </label>
+                    </div>
+                </div>
+
+                <div class="modal-section">
+                    <span class="config-label">Back Cover View Mapping</span>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" v-model="settingsConfig.back.character" /> Simplified Characters
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" v-model="settingsConfig.back.pinyin" /> Hanyu Pinyin Phonetics
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" v-model="settingsConfig.back.meaning" /> English Meaning Definition
+                        </label>
+                    </div>
+                </div>
+
+                <div class="modal-actions-wrapper">
+                    <button class="btn btn-primary btn-sm" @click="saveDeckLayoutSettings">Save Changes</button>
+                </div>
+
+                <hr class="modal-separator" />
+
+                <div class="modal-section danger-zone">
+                    <span class="config-label text-danger">Destructive Operations Matrix</span>
+                    <div class="danger-buttons-row">
+                        <button class="btn btn-score rating-hard btn-block" @click="resetDeckProgress">
+                            🔄 Reset Progress
+                        </button>
+                        <button class="btn btn-score rating-again btn-block" @click="deleteDeckProfile">
+                            🗑️ Delete Deck
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</template>
+
+<script setup>
+import { ref, onMounted, watch, onBeforeUnmount, computed } from 'vue';
+import { useAuth0 } from '@auth0/auth0-vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4556';
+const { isAuthenticated, getAccessTokenSilently } = useAuth0();
+
+// State Variables
+const userDecks = ref([]);
+const activeDeck = ref(null);
+const allDeckCards = ref([]);
+const activeSessionCards = ref([]);
+const currentCardIndex = ref(0);
+
+// Study Session UI States
+const studyActive = ref(false);
+const isFlipped = ref(false);
+const showSessionSelector = ref(false);
+const isForcedPractice = ref(false);
+
+// Settings Layout State Control Management
+const showSettingsModal = ref(false);
+const settingsConfig = ref({
+    front: { character: true, pinyin: false, meaning: false },
+    back: { character: false, pinyin: true, meaning: true }
+});
+
+// Computed Count of items genuinely due today
+const dueTodayCount = computed(() => {
+    const now = new Date();
+    return allDeckCards.value.filter(card => new Date(card.nextReviewDate) <= now).length;
+});
+
+const hasFrontElementsVisible = (card) => {
+    return card?.frontConfig?.character || card?.frontConfig?.pinyin || card?.frontConfig?.meaning;
+};
+
+const hasBackElementsVisible = (card) => {
+    return card?.backConfig?.character || card?.backConfig?.pinyin || card?.backConfig?.meaning;
+};
+
+const getStateLabel = (stateNum) => {
+    const states = { 0: 'New', 1: 'Learning', 2: 'Review', 3: 'Relearning' };
+    return states[stateNum] !== undefined ? states[stateNum] : 'New';
+};
+
+const formatReviewDate = (dateString) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+};
+
+const isCardOverdue = (dateString) => {
+    if (!dateString) return false;
+    return new Date(dateString) <= new Date();
+};
+
+// Keyboard Hotkey Navigation Interceptor Hook
+const handleKeyboardReviewNavigation = (event) => {
+    if (!studyActive.value || activeSessionCards.value.length === 0 || currentCardIndex.value >= activeSessionCards.value.length) return;
+
+    if (event.code === 'Space') {
+        event.preventDefault();
+        isFlipped.value = !isFlipped.value;
+    } else if (isFlipped.value && ['Digit1', 'Digit2', 'Digit3', 'Digit4'].includes(event.code)) {
+        const scoreRatingMap = { 'Digit1': 1, 'Digit2': 2, 'Digit3': 3, 'Digit4': 4 };
+        gradeCardReview(scoreRatingMap[event.code]);
+    }
+};
+
+const fetchUserFlashcardDecks = async () => {
+    try {
+        if (!isAuthenticated.value) return;
+        const token = await getAccessTokenSilently();
+        const headers = { 'Authorization': `Bearer ${token}` };
+
+        const response = await fetch(`${apiBase}/lexiflow/flashcards/decks`, { headers });
+        if (response.ok) {
+            userDecks.value = await response.json();
+
+            if (userDecks.value.length > 0 && !activeDeck.value) {
+                selectDeck(userDecks.value[0]);
+            }
+        }
+    } catch (error) {
+        console.error('Failed to load flashcard decks registry mapping:', error);
+    }
+};
+
+const selectDeck = async (deck) => {
+    activeDeck.value = deck;
+    studyActive.value = false;
+    showSessionSelector.value = false;
+    allDeckCards.value = [];
+    activeSessionCards.value = [];
+    currentCardIndex.value = 0;
+    isFlipped.value = false;
+
+    await loadFullDeckInventory();
+};
+
+const loadFullDeckInventory = async () => {
+    if (!activeDeck.value) return;
+    try {
+        const token = await getAccessTokenSilently();
+        const response = await fetch(`${apiBase}/lexiflow/flashcards/decks/${activeDeck.value.id}/review`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+            allDeckCards.value = await response.json();
+        }
+    } catch (error) {
+        console.error('Failed resolving deck inventory list:', error);
+    }
+};
+
+const promptSessionSetup = (forcePracticeAll = false) => {
+    isForcedPractice.value = forcePracticeAll;
+    if (forcePracticeAll) {
+        startStudySession(allDeckCards.value.length || 5);
+    } else {
+        showSessionSelector.value = true;
+    }
+};
+
+const startStudySession = (limitCount) => {
+    showSessionSelector.value = false;
+    currentCardIndex.value = 0;
+    isFlipped.value = false;
+
+    let referencePool = [...allDeckCards.value];
+    if (!isForcedPractice.value) {
+        const now = new Date();
+        referencePool = referencePool.filter(card => new Date(card.nextReviewDate) <= now);
+    }
+
+    activeSessionCards.value = referencePool.slice(0, limitCount);
+
+    if (activeSessionCards.value.length > 0 || isForcedPractice.value) {
+        studyActive.value = true;
+    }
+};
+
+const gradeCardReview = async (rating) => {
+    const currentCard = activeSessionCards.value[currentCardIndex.value];
+    if (!currentCard) return;
+
+    try {
+        const token = await getAccessTokenSilently();
+        isFlipped.value = false;
+
+        const response = await fetch(`${apiBase}/lexiflow/flashcards/cards/${currentCard.id}/review`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ rating })
+        });
+
+        if (response.ok) {
+            const updatedCardData = await response.json();
+
+            const inventoryIndex = allDeckCards.value.findIndex(c => c.id === currentCard.id);
+            if (inventoryIndex !== -1) {
+                if (updatedCardData && updatedCardData.nextReviewDate) {
+                    allDeckCards.value[inventoryIndex] = {
+                        ...allDeckCards.value[inventoryIndex],
+                        state: updatedCardData.state,
+                        stability: updatedCardData.stability,
+                        difficulty: updatedCardData.difficulty,
+                        scheduledDays: updatedCardData.scheduledDays,
+                        nextReviewDate: updatedCardData.nextReviewDate
+                    };
+                } else {
+                    allDeckCards.value[inventoryIndex].nextReviewDate = new Date(Date.now() + 86400000 * 2).toISOString();
+                }
+            }
+        }
+
+        currentCardIndex.value++;
+    } catch (error) {
+        console.error('Failed submitting card calibration metrics parameters score:', error);
+        currentCardIndex.value++;
+    }
+};
+
+const exitStudyMode = async () => {
+    studyActive.value = false;
+    isForcedPractice.value = false;
+    await fetchUserFlashcardDecks();
+    await loadFullDeckInventory();
+};
+
+/* Settings Overlay Operational Logic Methods */
+const openSettingsModal = () => {
+    if (!activeDeck.value) return;
+
+    if (allDeckCards.value.length > 0) {
+        const baselineSample = allDeckCards.value[0];
+        settingsConfig.value.front = {
+            character: baselineSample.frontConfig?.character ?? true,
+            pinyin: baselineSample.frontConfig?.pinyin ?? false,
+            meaning: baselineSample.frontConfig?.meaning ?? false
+        };
+        settingsConfig.value.back = {
+            character: baselineSample.backConfig?.character ?? false,
+            pinyin: baselineSample.backConfig?.pinyin ?? true,
+            meaning: baselineSample.backConfig?.meaning ?? true
+        };
+    }
+    showSettingsModal.value = true;
+};
+
+const saveDeckLayoutSettings = async () => {
+    try {
+        const token = await getAccessTokenSilently();
+        const response = await fetch(`${apiBase}/lexiflow/flashcards/decks/${activeDeck.value.id}/layout`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                frontConfig: settingsConfig.value.front,
+                backConfig: settingsConfig.value.back
+            })
+        });
+
+        if (response.ok) {
+            showSettingsModal.value = false;
+            await loadFullDeckInventory();
+        } else {
+            alert('Failed to update your deck card layout configurations template.');
+        }
+    } catch (error) {
+        console.error('Error saving flashcard layout modifications:', error);
+    }
+};
+
+const resetDeckProgress = async () => {
+    if (!confirm('Are you absolutely sure you want to reset all scheduling progress parameters for this entire deck profile back to ground zero state?')) return;
+
+    try {
+        const token = await getAccessTokenSilently();
+        const response = await fetch(`${apiBase}/lexiflow/flashcards/decks/${activeDeck.value.id}/reset`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+            showSettingsModal.value = false;
+            studyActive.value = false;
+            await loadFullDeckInventory();
+            alert('Deck scheduling state history initialized successfully!');
+        }
+    } catch (error) {
+        console.error('Failed to reset spaced repetition progress state:', error);
+    }
+};
+
+const deleteDeckProfile = async () => {
+    if (!confirm('Warning! Proceeding drops this spaced repetition deck framework layout entirely. Raw original list vocab records will remain unaffected. Proceed?')) return;
+
+    try {
+        const token = await getAccessTokenSilently();
+        const response = await fetch(`${apiBase}/lexiflow/flashcards/decks/${activeDeck.value.id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+            showSettingsModal.value = false;
+            activeDeck.value = null;
+            allDeckCards.value = [];
+            studyActive.value = false;
+            await fetchUserFlashcardDecks();
+        }
+    } catch (error) {
+        console.error('Failed to eliminate deck resource:', error);
+    }
+};
+
+watch(() => isAuthenticated.value, (newVal) => {
+    if (newVal) fetchUserFlashcardDecks();
+});
+
+onMounted(() => {
+    if (isAuthenticated.value) fetchUserFlashcardDecks();
+    window.addEventListener('keydown', handleKeyboardReviewNavigation);
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener('keydown', handleKeyboardReviewNavigation);
+});
+</script>
+
+<style scoped>
+/* Main Framework Flex Container */
+.list-view-container {
+    display: flex;
+    height: calc(100vh - 140px);
+    gap: 2rem;
+    padding: 1rem 0;
+    position: relative;
+    z-index: 1;
+    min-height: 800px;
+}
+
+.sidebar {
+    width: 340px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    height: 100%;
+    padding: 1.5rem;
+    overflow: hidden;
+}
+
+.sidebar-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 0.75rem;
+}
+
+.sidebar-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.25rem;
+}
+
+.sidebar-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.btn-block {
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+.lists-list-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.section-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+}
+
+.lists-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    overflow-y: auto;
+    flex: 1;
+    padding-right: 4px;
+}
+
+.list-card {
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: var(--transition);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.list-card:hover {
+    border-color: var(--accent-primary);
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-2px);
+}
+
+.list-card.active {
+    border-color: var(--accent-primary);
+    background: rgba(59, 130, 246, 0.12);
+    box-shadow: var(--shadow-glow);
+}
+
+.list-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.list-card h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.list-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+}
+
+.badge {
+    padding: 0.2rem 0.6rem;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.badge.user_created {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.count {
+    color: var(--text-muted);
+}
+
+.empty-state-redirect-box {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* Main Workspace View Panel */
+.main-content-area {
+    flex: 1;
+    overflow: hidden;
+    height: 100%;
+}
+
+.active-list-view {
+    height: 100%;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.list-details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.title-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.title-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.list-description {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.stats-badge-row {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+/* Main Stats & Button Box Container Framework */
+.stats-badge {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0.5rem 1.25rem;
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 95px;
+    height: 68px;
+    /* Strict height lock to ensure true sizing equivalence across elements */
+    box-sizing: border-box;
+}
+
+.stats-num {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent-primary);
+    line-height: 1.2;
+    text-align: center;
+}
+
+/* Specialized Settings Button Configuration */
+.settings-badge-btn {
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.settings-badge-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--accent-secondary);
+    box-shadow: var(--shadow-glow);
+}
+
+.settings-badge-btn:hover .emoji {
+    color: #ffffff;
+}
+
+.emoji {
+    color: rgba(255, 255, 255, 0.6);
+    transition: color 0.2s ease;
+}
+
+.text-session {
+    color: #a855f7 !important;
+}
+
+.stats-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-top: 2px;
+    letter-spacing: 0.02em;
+    text-align: center;
+}
+
+/* Session Selection Dialog Prompt */
+.session-selector-card {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    padding: 1.5rem;
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    box-shadow: 0 4px 20px rgba(168, 85, 247, 0.15);
+}
+
+.session-selector-card h4 {
+    margin: 0;
+    font-size: 1.05rem;
+    color: #e2e8f0;
+}
+
+.session-btn-options {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.btn-xs {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
+    background: transparent;
+    color: var(--text-muted);
+    border: none;
+    cursor: pointer;
+}
+
+.btn-xs:hover {
+    color: #ffffff;
+}
+
+.dashboard-prep-arena {
+    padding: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 1rem;
+    flex-shrink: 0;
+}
+
+.prep-graphics {
+    font-size: 3.5rem;
+    text-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+}
+
+.dashboard-prep-arena h3 {
+    font-size: 1.3rem;
+    color: var(--text-primary);
+}
+
+.dashboard-prep-arena p {
+    max-width: 500px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+}
+
+.ready-cta-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+}
+
+.btn-lg {
+    padding: 0.8rem 2.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-glow);
+}
+
+/* Active Study Arena Layout */
+.study-arena {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    align-items: center;
+}
+
+.player-wrapper {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 0;
+}
+
+.progress-bar-container {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    height: 6px;
+    border-radius: 10px;
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.progress-bar-fill {
+    background: var(--accent-gradient);
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    position: absolute;
+    right: 0;
+    top: -20px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.flashcard-container {
+    width: 100%;
+    height: 320px;
+    perspective: 1000px;
+    cursor: pointer;
+}
+
+.flashcard-card {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.flashcard-card.flipped {
+    transform: rotateY(180deg);
+}
+
+.card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.card-front {
+    background: linear-gradient(135deg, rgba(20, 30, 50, 0.8), rgba(10, 15, 30, 0.9));
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.card-back {
+    background: linear-gradient(135deg, rgba(15, 25, 45, 0.9), rgba(25, 40, 70, 0.8));
+    transform: rotateY(180deg);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.card-side-label {
+    position: absolute;
+    top: 1rem;
+    left: 1.5rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+}
+
+.card-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.srs-char {
+    font-size: 3.8rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.srs-pinyin {
+    font-size: 1.5rem;
+    color: var(--accent-secondary);
+    font-weight: 500;
+}
+
+.srs-meaning {
+    font-size: 1.15rem;
+    color: var(--text-secondary);
+    max-width: 480px;
+    line-height: 1.4;
+}
+
+.tap-hint {
+    position: absolute;
+    bottom: 1rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.scoring-actions-bar {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+    margin-top: 1.5rem;
+}
+
+.justify-center {
+    justify-content: center;
+}
+
+.reveal-btn {
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    width: 100%;
+}
+
+.btn-score {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.6rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    gap: 0.15rem;
+}
+
+.btn-score small {
+    font-size: 0.65rem;
+    font-weight: 400;
+    opacity: 0.7;
+    text-transform: uppercase;
+}
+
+.score-num {
+    font-size: 0.7rem;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+}
+
+.rating-again {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.rating-again:hover {
+    background: rgba(239, 68, 68, 0.3);
+}
+
+.rating-hard {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.rating-hard:hover {
+    background: rgba(245, 158, 11, 0.3);
+}
+
+.rating-good {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.4);
+}
+
+.rating-good:hover {
+    background: rgba(59, 130, 246, 0.3);
+}
+
+.rating-easy {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.rating-easy:hover {
+    background: rgba(16, 185, 129, 0.3);
+}
+
+.review-complete-pane {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    gap: 1.2rem;
+    width: 100%;
+    max-width: 600px;
+}
+
+/* Progress & Due Dates Registry Table */
+.deck-inventory-section {
+    margin-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.section-title-inventory {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin-bottom: 1rem;
+    flex-shrink: 0;
+}
+
+.table-scroll-container {
+    width: 100%;
+    overflow-y: auto;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(0, 0, 0, 0.15);
+    flex: 1;
+}
+
+.table-scroll-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.inventory-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    text-align: left;
+    font-size: 0.88rem;
+}
+
+.inventory-table th {
+    position: sticky;
+    top: 0;
+    background: #131d31;
+    z-index: 10;
+    padding: 1rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    white-space: nowrap;
+}
+
+.inventory-table td {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    color: var(--text-secondary);
+    vertical-align: middle;
+}
+
+.inventory-table tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.row-due {
+    background: rgba(239, 68, 68, 0.02);
+}
+
+.row-due:hover {
+    background: rgba(239, 68, 68, 0.04) !important;
+}
+
+.font-bold {
+    font-weight: 600;
+}
+
+.text-white {
+    color: #ffffff !important;
+}
+
+.text-center {
+    text-align: center;
+}
+
+/* Modals Overlay Configurations Styles */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    z-index: 999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    width: 440px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #ffffff;
+}
+
+.close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+}
+
+.close-btn:hover {
+    color: #ffffff;
+}
+
+.modal-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: -0.5rem;
+    line-height: 1.4;
+}
+
+.modal-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.config-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 0.75rem;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.checkbox-label input {
+    cursor: pointer;
+}
+
+.modal-actions-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.25rem;
+}
+
+.modal-separator {
+    border: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin: 0.25rem 0;
+}
+
+.danger-zone {
+    background: rgba(239, 68, 68, 0.03);
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    border: 1px dashed rgba(239, 68, 68, 0.2);
+}
+
+.text-danger {
+    color: #ef4444 !important;
+}
+
+.danger-buttons-row {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+.danger-buttons-row .btn {
+    margin-top: 0;
+    flex-direction: row;
+    justify-content: center;
+    padding: 0.5rem;
+    font-size: 0.82rem;
+}
+
+/* Table Inner Chip Assets */
+.state-chip {
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.state-0 {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.state-1 {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.state-2 {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.state-3 {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.badge-status {
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.badge-due {
+    background: #ef4444;
+    color: #ffffff;
+}
+
+.badge-waiting {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-muted);
+}
+
+/* No Selection State View */
+.no-selection {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    padding: 3rem;
+    text-align: center;
+}
+
+.no-selection-content {
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.no-selection-icon {
+    font-size: 4rem;
+    filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.3));
+}
+
+.no-selection h2 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.no-selection p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+@media (max-width: 950px) {
+    .list-view-container {
+        flex-direction: column;
+        height: auto;
+    }
+
+    .sidebar {
+        width: 100%;
+        height: auto;
+    }
+
+    .flashcard-container {
+        height: 280px;
+    }
+}
+</style>
+
+
+================================================
+FILE: src/views/HomeView.vue
+================================================
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuth0 } from '@auth0/auth0-vue'
+
+const router = useRouter()
+const { loginWithRedirect, isAuthenticated } = useAuth0()
+
+// Typewriter effect for the hero tagline
+const taglines = [
+  'Watch. Listen. Understand.',
+  'Chinese content. Your pace.',
+  'Every word. In context.',
+]
+const currentTagline = ref(taglines[0])
+const displayedTagline = ref('')
+const isTyping = ref(true)
+let taglineIndex = 0
+let charIndex = 0
+let typingTimer = null
+
+const typeWriter = () => {
+  const target = taglines[taglineIndex]
+  if (charIndex < target.length) {
+    displayedTagline.value += target[charIndex]
+    charIndex++
+    typingTimer = setTimeout(typeWriter, 60)
+  } else {
+    setTimeout(eraseWriter, 2200)
+  }
+}
+
+const eraseWriter = () => {
+  if (displayedTagline.value.length > 0) {
+    displayedTagline.value = displayedTagline.value.slice(0, -1)
+    typingTimer = setTimeout(eraseWriter, 30)
+  } else {
+    taglineIndex = (taglineIndex + 1) % taglines.length
+    charIndex = 0
+    typingTimer = setTimeout(typeWriter, 400)
+  }
+}
+
+onMounted(() => {
+  typingTimer = setTimeout(typeWriter, 800)
+})
+onUnmounted(() => clearTimeout(typingTimer))
+
+const handleCTA = () => {
+  if (isAuthenticated.value) {
+    router.push('/req')
+  } else {
+    loginWithRedirect()
+  }
+}
+
+const features = [
+  {
+    icon: '🎬',
+    title: 'Any Video, Instantly',
+    desc: 'Paste a YouTube link or upload a local file. Our AI transcribes, translates, and prepares it for deep learning — automatically.'
+  },
+  {
+    icon: '🔤',
+    title: 'Live Subtitle Overlay',
+    desc: 'Watch with synchronized bilingual subtitles. Every character color-coded by HSK level so you always know your blind spots.'
+  },
+  {
+    icon: '🔍',
+    title: 'Tap-to-Lookup',
+    desc: 'Click any character in the subtitle to instantly look it up. See pinyin, definitions, HSK level, and every place it appears across your library.'
+  },
+  {
+    icon: '📚',
+    title: 'Personal Library',
+    desc: 'All your content in one place — public or private. Filter by ownership, sort by date, and search across both titles and subtitles.'
+  },
+  {
+    icon: '🔒',
+    title: 'Privacy Control',
+    desc: 'Mark your videos private so only you can find them, or make them public to contribute to the shared community library.'
+  },
+  {
+    icon: '⏱',
+    title: 'Time-Jump Search',
+    desc: 'Search a word in the dictionary and jump directly to every occurrence across all your videos — exactly at the right timestamp.'
+  }
+]
+
+const stats = [
+  { value: '6+', label: 'Languages Detected' },
+  { value: '< 15min', label: 'Avg. Processing Time' },
+  { value: '100%', label: 'In-Context Learning' },
+]
+</script>
+
+<template>
+  <div class="home">
+
+    <!-- ── HERO ── -->
+    <section class="hero">
+      <div class="hero-eyebrow">
+        <span class="eyebrow-pill">AI-Powered Chinese Immersion</span>
+      </div>
+
+      <h1 class="hero-title">
+        Learn Chinese
+        <span class="gradient-word">the natural way</span>
+      </h1>
+
+      <p class="hero-tagline">
+        <span class="typewriter">{{ displayedTagline }}</span><span class="cursor">|</span>
+      </p>
+
+      <p class="hero-sub">
+        LexiFlow turns any Chinese video into an interactive lesson — with real-time subtitles,
+        tap-to-lookup dictionary, and HSK-aware character highlighting.
+      </p>
+
+      <div class="hero-cta">
+        <button class="btn btn-primary btn-hero" @click="handleCTA">
+          Start Learning Free
+          <svg class="btn-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+        </button>
+        <button class="btn btn-secondary" @click="router.push('/library')">Browse Library</button>
+      </div>
+
+      <!-- Stats row -->
+      <div class="stats-row">
+        <div v-for="stat in stats" :key="stat.label" class="stat-item">
+          <span class="stat-value">{{ stat.value }}</span>
+          <span class="stat-label">{{ stat.label }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── DEMO CARD ── -->
+    <section class="demo-section">
+      <div class="demo-card glass-panel">
+        <div class="demo-video-row">
+          <div class="demo-player">
+            <div class="demo-screen">
+              <div class="demo-play-ring">
+                <div class="demo-play-btn">▶</div>
+              </div>
+              <span class="demo-label">YouTube / Local Video</span>
+            </div>
+          </div>
+          <div class="demo-sidebar">
+            <div class="demo-dict glass-panel">
+              <div class="demo-dict-title">Dictionary Lookup</div>
+              <div class="demo-dict-word">
+                <span class="demo-hanzi">学习</span>
+                <span class="demo-pinyin">xué xí</span>
+              </div>
+              <div class="demo-dict-def">to study; to learn</div>
+              <div class="demo-occurrences">
+                <div class="demo-occ-item" v-for="i in 2" :key="i">
+                  <div class="demo-occ-bar"></div>
+                  <span class="demo-occ-time">{{ i === 1 ? '0:12' : '1:47' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="demo-subtitles">
+          <div class="demo-sub-line">
+            <span class="demo-char hsk1">我</span>
+            <span class="demo-char hsk1">在</span>
+            <span class="demo-char hsk2 hsk-hl">学习</span>
+            <span class="demo-char hsk3">中文</span>
+          </div>
+          <div class="demo-trans">I am studying Chinese</div>
+          <div class="demo-pinyin-row">wǒ zài <span class="hl-pinyin">xué xí</span> zhōng wén</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── FEATURES ── -->
+    <section class="features-section">
+      <div class="section-header">
+        <span class="section-tag">Features</span>
+        <h2>Everything you need to <span class="gradient-word">actually learn</span></h2>
+        <p class="section-sub">Not flashcards. Not grammar drills. Real content, real context, real progress.</p>
+      </div>
+
+      <div class="features-grid">
+        <div v-for="feat in features" :key="feat.title" class="feature-card glass-panel">
+          <div class="feat-icon">{{ feat.icon }}</div>
+          <h3>{{ feat.title }}</h3>
+          <p>{{ feat.desc }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── HOW IT WORKS ── -->
+    <section class="how-section">
+      <div class="section-header">
+        <span class="section-tag">How it works</span>
+        <h2>Three steps to <span class="gradient-word">immersion</span></h2>
+      </div>
+
+      <div class="steps-row">
+        <div class="step-card">
+          <div class="step-number">01</div>
+          <h3>Request a Video</h3>
+          <p>Paste any YouTube URL or upload a local video file. Set it public or keep it private.</p>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-card">
+          <div class="step-number">02</div>
+          <h3>AI Processes It</h3>
+          <p>Our pipeline automatically transcribes, translates, and annotates every character with pinyin and HSK level.</p>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-card">
+          <div class="step-number">03</div>
+          <h3>Watch & Learn</h3>
+          <p>Watch with your bilingual subtitles. Tap any character to look it up. Jump to any occurrence in your library.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── CTA BANNER ── -->
+    <section class="cta-banner glass-panel">
+      <div class="cta-glow"></div>
+      <h2>Ready to level up your Chinese?</h2>
+      <p>Join LexiFlow and start watching your way to fluency — for free.</p>
+      <button class="btn btn-primary btn-hero" @click="handleCTA">
+        Get Started Now
+        <svg class="btn-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+      </button>
+    </section>
+
+  </div>
+</template>
+
+<style scoped>
+/* ── Page base ── */
+.home {
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── HERO ── */
+.hero {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 5rem 1rem 3rem;
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.hero-eyebrow {
+  margin-bottom: 1.5rem;
+}
+
+.eyebrow-pill {
+  display: inline-block;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: var(--accent-primary);
+  padding: 0.4rem 1.2rem;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.hero-title {
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 1.25rem;
+  color: var(--text-primary);
+}
+
+.gradient-word {
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-tagline {
+  font-size: clamp(1.2rem, 3vw, 1.6rem);
+  font-weight: 600;
+  color: var(--text-secondary);
+  height: 2.2em;
+  margin-bottom: 1.25rem;
+}
+
+.typewriter { color: var(--text-primary); }
+
+.cursor {
+  animation: blink 1s step-end infinite;
+  color: var(--accent-primary);
+  margin-left: 1px;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+.hero-sub {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  max-width: 640px;
+  margin: 0 auto 2.5rem;
+}
+
+.hero-cta {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 3rem;
+}
+
+.btn-hero {
+  font-size: 1.05rem;
+  padding: 0.9rem 2rem;
+  gap: 0.5rem;
+}
+
+.btn-arrow {
+  width: 18px;
+  height: 18px;
+  transition: transform 0.25s ease;
+}
+
+.btn-hero:hover .btn-arrow {
+  transform: translateX(4px);
+}
+
+/* Stats */
+.stats-row {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.stat-value {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.75rem;
+  font-weight: 800;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ── DEMO CARD ── */
+.demo-section {
+  position: relative;
+  z-index: 1;
+  padding: 2rem 0 4rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.demo-card {
+  padding: 2rem;
+  overflow: hidden;
+}
+
+.demo-video-row {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.demo-player {
+  background: #000;
+  border-radius: 10px;
+  aspect-ratio: 16/9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.demo-player::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(14,165,233,0.1) 100%);
+}
+
+.demo-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 1;
+}
+.demo-play-ring {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.3);
+  display: flex; align-items: center; justify-content: center;
+  animation: pulse-ring 2s ease infinite;
+}
+@keyframes pulse-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59,130,246,0.4); }
+  50%       { box-shadow: 0 0 0 12px rgba(59,130,246,0); }
+}
+.demo-play-btn {
+  font-size: 1.5rem;
+  color: white;
+  padding-left: 4px;
+}
+.demo-label {
+  color: rgba(255,255,255,0.5);
+  font-size: 0.75rem;
+}
+
+.demo-sidebar {
+  display: flex;
+  flex-direction: column;
+}
+
+.demo-dict {
+  padding: 1rem;
+  height: 100%;
+}
+
+.demo-dict-title {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.demo-dict-word {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.demo-hanzi {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+}
+
+.demo-pinyin {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.demo-dict-def {
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.demo-occurrences {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.demo-occ-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.demo-occ-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(59,130,246,0.25);
+  border-radius: 3px;
+}
+
+.demo-occ-time {
+  background: rgba(59,130,246,0.2);
+  color: var(--accent-primary);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+/* Demo subtitles */
+.demo-subtitles {
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.demo-sub-line {
+  display: flex;
+  justify-content: center;
+  gap: 0.25rem;
+  font-size: 1.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.demo-char {
+  padding: 0 2px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.demo-char:hover { transform: scale(1.15); }
+
+.hsk1  { color: #4CAF50; }
+.hsk2  { color: #8BC34A; }
+.hsk3  { color: #FFC107; }
+
+.hsk-hl {
+  background: rgba(255,215,0,0.12);
+  outline: 1px solid rgba(255,215,0,0.3);
+}
+
+.demo-trans {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin-bottom: 0.25rem;
+}
+
+.demo-pinyin-row {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.hl-pinyin {
+  color: #ffd700;
+  font-weight: 700;
+}
+
+/* ── FEATURES ── */
+.features-section {
+  position: relative;
+  z-index: 1;
+  padding: 4rem 0;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.section-tag {
+  display: inline-block;
+  background: rgba(59,130,246,0.1);
+  color: var(--accent-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.3rem 1rem;
+  border-radius: 50px;
+  margin-bottom: 1rem;
+}
+
+.section-header h2 {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  margin-bottom: 0.75rem;
+}
+
+.section-sub {
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+  max-width: 540px;
+  margin: 0 auto;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.feature-card {
+  padding: 1.75rem;
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(59,130,246,0.35);
+  box-shadow: var(--shadow-glow);
+}
+
+.feat-icon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.feature-card h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.6rem;
+  color: var(--text-primary);
+}
+
+.feature-card p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+/* ── HOW IT WORKS ── */
+.how-section {
+  position: relative;
+  z-index: 1;
+  padding: 4rem 0;
+}
+
+.steps-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+}
+
+.step-card {
+  flex: 1;
+  min-width: 200px;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  transition: border-color 0.3s ease;
+}
+
+.step-card:hover {
+  border-color: rgba(59,130,246,0.3);
+}
+
+.step-number {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.75rem;
+  line-height: 1;
+}
+
+.step-card h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.6rem;
+}
+
+.step-card p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.step-connector {
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(59,130,246,0.4), rgba(14,165,233,0.2));
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .step-connector { width: 100%; height: 2px; }
+  .steps-row { flex-direction: column; gap: 1rem; }
+  .demo-video-row { grid-template-columns: 1fr; }
+}
+
+/* ── CTA BANNER ── */
+.cta-banner {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 4rem 2rem;
+  margin: 4rem 0;
+  overflow: hidden;
+}
+
+.cta-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 200px;
+  background: radial-gradient(ellipse, rgba(59,130,246,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.cta-banner h2 {
+  font-size: clamp(1.5rem, 4vw, 2.2rem);
+  margin-bottom: 0.75rem;
+}
+
+.cta-banner p {
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  font-size: 1.05rem;
+}
+</style>
+
+
+================================================
+FILE: src/views/LibraryView.vue
+================================================
+<script setup>
+import { ref, computed, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuth0 } from '@auth0/auth0-vue'
+
+const router = useRouter()
+const { user, isAuthenticated, getAccessTokenSilently } = useAuth0()
+
+const isLoading = ref(true)
+const videos = ref([])
+
+const searchQuery = ref('')
+const searchActive = ref(false)
+const searchMode = ref('split') // 'split', 'titles', 'subtitles'
+const subtitleResults = ref([])
+
+const filterMode = ref('All')
+const sortBy = ref('Date Added (Newest)')
+
+const fetchLibrary = async () => {
+  try {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4556';
+    let headers = {};
+    let token = null;
+
+    if (isAuthenticated.value) {
+      token = await getAccessTokenSilently();
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${baseUrl}/lexiflow/library`, { headers });
+    if (!response.ok) throw new Error('Network response was not ok');
+    const libraryVideos = await response.json();
+
+    // Fetch watch progress for each video
+    if (token) {
+      const progressPromises = libraryVideos.map(async (v) => {
+        try {
+          const progRes = await fetch(`${baseUrl}/lexiflow/videos/${v.id}/progress`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (progRes.ok) {
+            const progData = await progRes.json();
+            if (progData && progData.currentTime > 0 && progData.duration > 0) {
+              v.progressPercent = Math.min((progData.currentTime / progData.duration) * 100, 100);
+              v.currentTime = progData.currentTime;
+            }
+          }
+        } catch (err) {
+          console.error(`Error fetching progress for video ${v.id}:`, err);
+        }
+      });
+      await Promise.all(progressPromises);
+    }
+
+    videos.value = libraryVideos;
+  } catch (error) {
+    console.error('Error fetching library:', error);
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+// Watch user auth to refetch library when it resolves
+watch(() => isAuthenticated.value, (newVal) => {
+  if (newVal) fetchLibrary();
+});
+
+onMounted(() => {
+  // If useAuth0 takes a moment, we wait, or we just fetch immediately.
+  // The watcher will handle it if it changes.
+  fetchLibrary();
+})
+
+const filteredVideoList = computed(() => {
+  let list = videos.value;
+  
+  if (filterMode.value === 'My Videos') {
+    list = list.filter(v => v.requested_by_user);
+  } else if (filterMode.value === 'Private') {
+    list = list.filter(v => v.is_private && v.requested_by_user);
+  }
+
+  if (searchActive.value && searchQuery.value.trim() && searchMode.value !== 'subtitles') {
+    const q = searchQuery.value.toLowerCase()
+    list = list.filter(v => v.title && v.title.toLowerCase().includes(q))
+  }
+
+  return [...list].sort((a, b) => {
+    const getTime = d => (d && d !== 'Unknown') ? new Date(d).getTime() : 0;
+
+    if (sortBy.value === 'Date Added (Newest)') {
+      return getTime(b.dateAdded) - getTime(a.dateAdded);
+    } else if (sortBy.value === 'Date Added (Oldest)') {
+      return getTime(a.dateAdded) - getTime(b.dateAdded);
+    } else if (sortBy.value === 'Name (A-Z)') {
+      return (a.title || '').localeCompare(b.title || '');
+    }
+    return 0;
+  });
+});
+
+const displayedVideos = computed(() => {
+  if (!searchActive.value || !searchQuery.value.trim() || searchMode.value === 'subtitles') {
+    return searchMode.value === 'subtitles' ? [] : filteredVideoList.value;
+  }
+  if (searchMode.value === 'split') {
+    return filteredVideoList.value.slice(0, 4);
+  }
+  return filteredVideoList.value;
+})
+
+const displayedSubtitles = computed(() => {
+  if (!searchActive.value || !searchQuery.value.trim() || searchMode.value === 'titles') return [];
+  if (searchMode.value === 'split') {
+    return subtitleResults.value.slice(0, 4);
+  }
+  return subtitleResults.value;
+})
+
+const executeSearch = async () => {
+  if (!searchQuery.value.trim()) {
+    searchActive.value = false;
+    subtitleResults.value = [];
+    return;
+  }
+  
+  searchActive.value = true;
+  
+  if (searchMode.value !== 'titles') {
+    try {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4556';
+      let headers = {};
+      if (isAuthenticated.value) {
+        const token = await getAccessTokenSilently();
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const res = await fetch(`${baseUrl}/lexiflow/search?word=${encodeURIComponent(searchQuery.value)}`, { headers });
+      if (res.ok) {
+        const data = await res.json();
+        // Only show results for videos the user is allowed to see (present in videos.value)
+        const validJobIds = new Set(videos.value.map(v => v.id));
+        subtitleResults.value = data.results.filter(r => validJobIds.has(r.job_id));
+      }
+    } catch(e) {
+      console.error("Search API error", e)
+    }
+  }
+}
+
+watch(searchQuery, (newVal) => {
+  if (!newVal.trim()) {
+    searchActive.value = false;
+    searchMode.value = 'split';
+    subtitleResults.value = [];
+  }
+})
+
+const openVideo = (videoId, time = null) => {
+  const params = { name: 'watch', params: { videoId } };
+  if (time !== null) {
+    params.query = { t: time };
+  }
+  router.push(params)
+}
+
+const formatTime = (seconds) => {
+  if (isNaN(seconds)) return '0:00'
+  const m = Math.floor(seconds / 60)
+  const s = Math.floor(seconds % 60)
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+const highlightText = (text, queryStr) => {
+  if (!text || !queryStr) return text;
+  const safeQuery = queryStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`(${safeQuery})`, 'gi');
+  return text.replace(regex, '<span class="highlight">$1</span>');
+}
+
+</script>
+
+<template>
+  <div class="library-page">
+    <div class="library-header">
+      <h1 class="page-title">My Content Library</h1>
+      <div class="search-col">
+        <div class="search-bar">
+          <input type="text" class="input-base" v-model="searchQuery" @keyup.enter="executeSearch" placeholder="Search title or word in subtitle... (Enter)" />
+          <button class="btn btn-primary" @click="executeSearch">Search</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls Row -->
+    <div class="controls-row" v-if="!searchActive || searchMode === 'split' || searchMode === 'titles'">
+      <div class="filters">
+        <button class="filter-btn" :class="{ active: filterMode === 'All' }" @click="filterMode = 'All'">All Content</button>
+        <button class="filter-btn" :class="{ active: filterMode === 'My Videos' }" @click="filterMode = 'My Videos'">My Uploads</button>
+        <button class="filter-btn" :class="{ active: filterMode === 'Private' }" @click="filterMode = 'Private'">Private</button>
+      </div>
+      <div class="sort-box">
+        <select v-model="sortBy" class="input-base">
+          <option>Date Added (Newest)</option>
+          <option>Date Added (Oldest)</option>
+          <option>Name (A-Z)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Active Search Filter Banner -->
+    <div v-if="searchActive && searchMode !== 'split'" class="search-banner">
+      Showing <strong>{{ searchMode }}</strong> matches for "<span class="text-accent">{{ searchQuery }}</span>"
+      <button class="btn btn-secondary btn-sm" @click="searchMode = 'split'; executeSearch()">Back to Split View</button>
+    </div>
+
+    <!-- Loading State -->
+    <div v-if="isLoading" class="loading-grid">
+      <div class="skeleton-card" v-for="n in 6" :key="n"></div>
+    </div>
+
+    <!-- Library Content -->
+    <div v-else class="library-content">
+      
+      <!-- Video Titles Section -->
+      <div v-if="searchMode === 'split' || searchMode === 'titles'" class="section-container">
+        <div class="section-header" v-if="searchActive">
+          <h2>Video Matches ({{ filteredVideoList.length }})</h2>
+          <button v-if="searchMode === 'split' && filteredVideoList.length > 4" class="btn btn-outline btn-sm" @click="searchMode = 'titles'">See All Video Matches</button>
+        </div>
+
+        <div v-if="displayedVideos.length === 0 && !searchActive" class="empty-state">
+          No videos found for this filter.
+        </div>
+
+        <div class="video-grid">
+          <div class="video-card glass-panel" v-for="video in displayedVideos" :key="video.id" @click="openVideo(video.id)">
+            <div class="thumbnail-wrapper">
+              <img v-if="video.thumbnail" :src="video.thumbnail" :alt="video.title" />
+              <div v-else class="dummy-thumbnail">🎬 Local File</div>
+              
+              <div class="badges-top">
+                <span class="badge-private" v-if="video.is_private">Private</span>
+              </div>
+              <div class="duration-badge">{{ video.duration }}</div>
+              
+              <!-- Progress Bar -->
+              <div v-if="video.progressPercent > 0" class="progress-bar-wrapper">
+                <div class="progress-bar-fill" :style="{ width: video.progressPercent + '%' }"></div>
+              </div>
+              
+              <div class="play-overlay">
+                <span class="play-icon">▶</span>
+              </div>
+            </div>
+            <div class="card-info">
+              <h3>{{ video.title }}</h3>
+              <p class="description">{{ video.description }}</p>
+              <div class="card-meta">
+                <span>Added {{ video.dateAdded }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subtitles Matches Section -->
+      <div v-if="(searchActive && searchMode === 'split') || searchMode === 'subtitles'" class="section-container">
+        <div class="section-header">
+          <h2>Subtitle Matches ({{ subtitleResults.length }})</h2>
+          <button v-if="searchMode === 'split' && subtitleResults.length > 4" class="btn btn-outline btn-sm" @click="searchMode = 'subtitles'">See All Subtitle Matches</button>
+        </div>
+
+        <div v-if="subtitleResults.length === 0" class="empty-state">
+          No subtitle matches found for "{{ searchQuery }}".
+        </div>
+
+        <div class="subtitle-grid">
+          <div v-for="(res, idx) in displayedSubtitles" :key="idx" class="subtitle-card glass-panel" @click="openVideo(res.job_id, res.segment.start)">
+            <div class="sub-header">
+              <span class="sub-title"><strong>{{ res.title }}</strong></span>
+              <span class="timestamp">⏱ {{ formatTime(res.segment.start) }}</span>
+            </div>
+            <div class="sub-body">
+              <p v-html="highlightText(res.segment.text, searchQuery)"></p>
+              <p class="trans-text" v-html="highlightText(res.segment.translated_text, searchQuery)"></p>
+            </div>
+            <div class="play-overlay-sub">
+              <span>▶ Jump to Time</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.library-page {
+  padding: 1rem 0;
+}
+
+.library-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.search-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.search-bar {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 450px;
+}
+
+.search-bar input {
+  flex: 1;
+}
+
+.controls-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  background: rgba(0,0,0,0.2);
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.filters {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filter-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-secondary);
+  padding: 0.5rem 1.25rem;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.filter-btn.active, .filter-btn:hover {
+  background: var(--bg-surface-light);
+  color: var(--text-primary);
+  border-color: var(--accent-primary);
+}
+
+.search-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(59, 130, 246, 0.1);
+  border-left: 4px solid var(--accent-primary);
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 2rem;
+}
+
+.section-container {
+  margin-bottom: 3rem;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.btn-outline:hover {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 3rem;
+  background: rgba(0,0,0,0.1);
+  border-radius: var(--radius-md);
+  border: 1px dashed rgba(255,255,255,0.1);
+}
+
+/* Grids */
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+}
+
+.subtitle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Video Card */
+.video-card {
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.video-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-glow);
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
+.thumbnail-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+}
+
+.progress-bar-wrapper {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  z-index: 2;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--accent-primary);
+  transition: width 0.3s ease;
+}
+
+.thumbnail-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.video-card:hover .thumbnail-wrapper img {
+  transform: scale(1.05);
+}
+
+.dummy-thumbnail {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-surface-light);
+  color: var(--text-secondary);
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.badges-top {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 2;
+}
+
+.badge-private {
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.duration-badge {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  background: rgba(0,0,0,0.8);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  z-index: 2;
+}
+
+.play-overlay {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 3;
+}
+
+.video-card:hover .play-overlay {
+  opacity: 1;
+}
+
+.play-icon {
+  width: 60px; height: 60px;
+  background: var(--accent-gradient);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  transform: scale(0.8);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.video-card:hover .play-icon {
+  transform: scale(1);
+}
+
+.card-info {
+  padding: 1.25rem;
+}
+
+.card-info h3 {
+  font-size: 1.125rem;
+  margin-bottom: 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-info .description {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 1rem;
+  min-height: 2.6em;
+}
+
+.card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  border-top: 1px solid rgba(255,255,255,0.05);
+  padding-top: 1rem;
+}
+
+/* Subtitle Card */
+.subtitle-card {
+  padding: 1rem;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.subtitle-card:hover {
+  border-color: var(--accent-primary);
+  transform: translateY(-3px);
+}
+
+.sub-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding-bottom: 0.5rem;
+}
+
+.sub-title {
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80%;
+}
+
+.timestamp {
+  background: rgba(59, 130, 246, 0.2);
+  color: var(--accent-primary);
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-sm);
+  font-weight: bold;
+  font-size: 0.8em;
+}
+
+.sub-body p {
+  font-size: 1rem;
+  margin-bottom: 0.4rem;
+}
+
+.trans-text {
+  color: var(--text-secondary);
+  font-style: italic;
+  font-size: 0.9em !important;
+}
+
+.play-overlay-sub {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  font-weight: bold;
+  color: white;
+}
+
+.subtitle-card:hover .play-overlay-sub {
+  opacity: 1;
+}
+
+/* Highlighting */
+:deep(.highlight) {
+  background-color: rgba(255, 215, 0, 0.2);
+  color: #ffd700;
+  padding: 0 4px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+/* Skeleton Loading */
+.loading-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+}
+
+.skeleton-card {
+  height: 300px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 0.3; }
+  100% { opacity: 0.6; }
+}
+</style>
+
+
+
+================================================
+FILE: src/views/ListView.vue
+================================================
+<template>
+  <div>
+    <div class="list-view-container">
+      <div class="sidebar glass-panel">
+        <div class="sidebar-header">
+          <h2 class="sidebar-title">Vocab Lists</h2>
+          <p class="sidebar-subtitle">Manage your HSK and custom word lists</p>
+        </div>
+
+        <div class="create-list-box glass-panel-inner">
+          <h3 class="form-title">Create New List</h3>
+          <div class="create-list-form">
+            <input v-model="newListName" type="text" placeholder="List name..." class="input-base"
+              @keyup.enter="createList" />
+            <button class="btn btn-primary btn-block" @click="createList" :disabled="!newListName.trim()">
+              Create List
+            </button>
+          </div>
+        </div>
+
+        <div class="lists-list-wrapper">
+          <h3 class="section-title">Your Lists</h3>
+          <div class="lists-grid">
+            <div v-for="list in sortedLists" :key="list.id" class="list-card"
+              :class="{ active: activeList?.id === list.id }" @click="selectList(list)">
+              <div class="list-card-header">
+                <h3>{{ list.name }}</h3>
+                <span class="badge" :class="list.type.toLowerCase()">{{ list.type }}</span>
+              </div>
+              <div class="list-meta">
+                <span class="count">
+                  📚 {{ list._count?.items || 0 }} words
+                </span>
+              </div>
+            </div>
+            <div v-if="lists.length === 0" class="empty-state">
+              No lists found. Create one above!
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="main-content-area">
+        <div v-if="activeList" class="active-list-view glass-panel">
+          <div class="list-details-header">
+            <div class="title-section">
+              <div class="title-row">
+                <h2 class="page-title">{{ activeList.name }}</h2>
+                <span class="badge" :class="activeList.type.toLowerCase()">{{ activeList.type }}</span>
+              </div>
+              <p class="list-description">
+                {{ activeList.sourceMetadata?.description || 'Custom vocabulary list' }}
+              </p>
+            </div>
+
+            <div class="header-actions-group" style="display: flex; gap: 1rem; align-items: center;">
+              <div class="stats-badge">
+                <span class="stats-num">{{ words.length }}</span>
+                <span class="stats-label">Total Words</span>
+              </div>
+
+              <button class='stats-badge dynamic-action-badge' @click="handleFlashcardClick">
+                <template v-if="hasExistingDeck">
+                  <span class="stats-num emoji">🔍</span>
+                  <span class="stats-label">Go To Deck</span>
+                </template>
+                <template v-else>
+                  <span class="stats-num emoji">💠</span>
+                  <span class="stats-label">Create Deck</span>
+                </template>
+              </button>
+            </div>
+          </div>
+
+          <div class="controls-container">
+            <div class="search-box">
+              <input v-model="wordSearchQuery" type="text"
+                placeholder="Search words, pinyin, or meaning in this list..." class="input-base search-input" />
+            </div>
+
+            <div v-if="activeList.type !== 'OFFICIAL'" class="add-word-form glass-panel-inner">
+              <h3 class="form-title">Quick Add Word</h3>
+              <div class="form-inputs">
+                <input v-model="newWord.simplified" placeholder="Simplified (e.g. 你好)" class="input-base input-sm" />
+                <input v-model="newWord.pinyin" placeholder="Pinyin (e.g. nǐ hǎo)" class="input-base input-sm" />
+                <input v-model="newWord.meaning" placeholder="Meaning" class="input-base input-sm" />
+                <button class="btn btn-primary btn-sm" @click="addWord" :disabled="!newWord.simplified.trim()">
+                  Add
+                </button>
+              </div>
+            </div>
+
+            <div v-else class="add-word-disabled-notice glass-panel-inner">
+              <p>🔒 <strong>Official List Locked:</strong> You cannot manually append dictionary terms to structured
+                system or HSK lists.</p>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table v-if="filteredWords.length > 0" class="vocab-table">
+              <thead>
+                <tr>
+                  <th class="col-char">Character</th>
+                  <th class="col-pinyin">Pinyin</th>
+                  <th class="col-meaning">Meaning</th>
+                  <th class="col-count text-center">Seen Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="item in filteredWords" :key="item.id" class="table-row">
+                  <td class="character-cell">
+                    <span class="character-text">{{ item.vocabulary?.simplified || item.simplified }}</span>
+                  </td>
+                  <td class="pinyin-cell">
+                    <span>{{ item.vocabulary?.pinyin || item.pinyin || '' }}</span>
+                  </td>
+                  <td class="meaning-cell">
+                    <div class="meaning-text" :title="item.vocabulary?.meaning || item.meaning">
+                      {{ item.vocabulary?.meaning || item.meaning || '' }}
+                    </div>
+                  </td>
+                  <td class="count-cell text-center">
+                    <span class="count-badge">{{ item.seenCount }}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div v-else class="empty-state">
+              <p v-if="words.length === 0">This list is empty. Add some words to get started!</p>
+              <p v-else>No words match your search filter.</p>
+            </div>
+          </div>
+        </div>
+
+        <div v-else class="no-selection glass-panel">
+          <div class="no-selection-content">
+            <div class="no-selection-icon">📚</div>
+            <h2>No List Selected</h2>
+            <p>Choose a vocabulary list from the sidebar or create a new one to view and manage your characters.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="showFlashcardModal" class="modal-backdrop">
+      <div class="modal-content glass-panel">
+        <h3 class="form-title">Deck Card Configuration</h3>
+        <p class="modal-desc">Configure layout attributes for <strong>{{ activeList?.name }}</strong></p>
+
+        <div class="modal-section">
+          <span class="config-label">Front Elements Display:</span>
+          <div class="checkbox-group">
+            <label><input type="checkbox" v-model="deckFrontConfig.character" /> Character</label>
+            <label><input type="checkbox" v-model="deckFrontConfig.pinyin" /> Pinyin</label>
+            <label><input type="checkbox" v-model="deckFrontConfig.meaning" /> Meaning</label>
+          </div>
+        </div>
+
+        <div class="modal-section">
+          <span class="config-label">Back Elements Display:</span>
+          <div class="checkbox-group">
+            <label><input type="checkbox" v-model="deckBackConfig.character" /> Character</label>
+            <label><input type="checkbox" v-model="deckBackConfig.pinyin" /> Pinyin</label>
+            <label><input type="checkbox" v-model="deckBackConfig.meaning" /> Meaning</label>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-secondary btn-sm" @click="showFlashcardModal = false"
+            :disabled="isSyncingDeck">Cancel</button>
+          <button class="btn btn-primary btn-sm" @click="handleSyncAndNavigate" :disabled="isSyncingDeck">
+            {{ isSyncingDeck ? 'Syncing...' : 'Confirm & Go Revise' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted, watch, computed } from 'vue';
+import { useAuth0 } from '@auth0/auth0-vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+
+// Modal UI State tracking variables
+const showFlashcardModal = ref(false);
+const isSyncingDeck = ref(false);
+
+// Configuration options mapping to match your flashcard engine requirements
+const deckFrontConfig = ref({ character: true, pinyin: false, meaning: false });
+const deckBackConfig = ref({ character: false, pinyin: true, meaning: true });
+
+// Tracks existing user decks to verify flashcard status
+const flashcardDecks = ref([]);
+
+// API Configuration
+const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4556';
+const { isAuthenticated, getAccessTokenSilently } = useAuth0();
+
+// State
+const lists = ref([]);
+const activeList = ref(null);
+const words = ref([]);
+const wordSearchQuery = ref('');
+
+// Form State
+const newListName = ref('');
+const newWord = ref({
+  simplified: '',
+  pinyin: '',
+  meaning: ''
+});
+
+// Computed boolean property detecting flashcard deck presence matching the activeList
+const hasExistingDeck = computed(() => {
+  if (!activeList.value) return false;
+  return flashcardDecks.value.some(deck => deck.listId === activeList.value.id);
+});
+
+// Interceptor controlling logic actions based on flashcard presence
+const handleFlashcardClick = () => {
+  if (hasExistingDeck.value) {
+    router.push('/flashcards');
+  } else {
+    showFlashcardModal.value = true;
+  }
+};
+
+// Fetch user decks registry to cross-verify sync status mapping indexes
+const fetchUserDecksRegistry = async () => {
+  try {
+    if (!isAuthenticated.value) return;
+    const token = await getAccessTokenSilently();
+    const response = await fetch(`${apiBase}/lexiflow/flashcards/decks`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (response.ok) {
+      flashcardDecks.value = await response.json();
+    }
+  } catch (error) {
+    console.error('Failed to update referencing flashcards mapping alignment records:', error);
+  }
+};
+
+// Sync action handler that routes users to the flashcards page upon success
+const handleSyncAndNavigate = async () => {
+  if (!activeList.value) return;
+  isSyncingDeck.value = true;
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    if (isAuthenticated.value) {
+      const token = await getAccessTokenSilently();
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${apiBase}/lexiflow/flashcards/sync`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        listId: activeList.value.id,
+        name: `${activeList.value.name} Dynamic Deck`,
+        frontConfig: deckFrontConfig.value,
+        backConfig: deckBackConfig.value
+      })
+    });
+
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+    showFlashcardModal.value = false;
+    await fetchUserDecksRegistry(); // Re-fetch registry updates to log verification indexes changes
+    router.push('/flashcards');
+  } catch (error) {
+    console.error('Failed to quick-initialize flashcard deck:', error);
+  } finally {
+    isSyncingDeck.value = false;
+  }
+};
+
+// Computed property to enforce sidebar ordering rule
+const sortedLists = computed(() => {
+  return [...lists.value].sort((a, b) => {
+    const getOrderWeight = (type) => {
+      if (type === 'SEEN') return 1;
+      if (type === 'OFFICIAL') return 3;
+      return 2;
+    };
+    return getOrderWeight(a.type) - getOrderWeight(b.type);
+  });
+});
+
+// Computed list filtered by user search query
+const filteredWords = computed(() => {
+  if (!wordSearchQuery.value.trim()) return words.value;
+  const q = wordSearchQuery.value.toLowerCase().trim();
+  return words.value.filter(item => {
+    const vocab = item.vocabulary || item;
+    const simplified = vocab.simplified || '';
+    const pinyin = vocab.pinyin || '';
+    const meaning = vocab.meaning || '';
+    return simplified.includes(q) ||
+      pinyin.toLowerCase().includes(q) ||
+      meaning.toLowerCase().includes(q);
+  });
+});
+
+// Fetch all lists
+const fetchLists = async () => {
+  try {
+    const headers = {};
+    if (isAuthenticated.value) {
+      const token = await getAccessTokenSilently();
+      headers['Authorization'] = `Bearer ${token}`;
+    } else {
+      return;
+    }
+    const response = await fetch(`${apiBase}/lexiflow/lists`, { headers });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    lists.value = await response.json();
+
+    if (sortedLists.value.length > 0 && !activeList.value) {
+      selectList(sortedLists.value[0]);
+    }
+  } catch (error) {
+    console.error('Failed to fetch lists:', error);
+  }
+};
+
+// Create a new list
+const createList = async () => {
+  if (!newListName.value.trim()) return;
+
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    if (isAuthenticated.value) {
+      const token = await getAccessTokenSilently();
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    const response = await fetch(`${apiBase}/lexiflow/lists`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        name: newListName.value.trim(),
+        type: 'USER_CREATED'
+      })
+    });
+
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+    newListName.value = '';
+    await fetchLists();
+  } catch (error) {
+    console.error('Failed to create list:', error);
+  }
+};
+
+// Select a list and fetch its words
+const selectList = async (list) => {
+  activeList.value = list;
+  words.value = [];
+  wordSearchQuery.value = '';
+
+  try {
+    const headers = {};
+    if (isAuthenticated.value) {
+      const token = await getAccessTokenSilently();
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    const response = await fetch(`${apiBase}/lexiflow/lists/${list.id}/words`, { headers });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    words.value = await response.json();
+  } catch (error) {
+    console.error('Failed to fetch words:', error);
+  }
+};
+
+// Add a word to the active list
+const addWord = async () => {
+  if (!activeList.value || activeList.value.type === 'OFFICIAL' || !newWord.value.simplified.trim()) return;
+
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    if (isAuthenticated.value) {
+      const token = await getAccessTokenSilently();
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    const response = await fetch(`${apiBase}/lexiflow/lists/${activeList.value.id}/words`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        simplified: newWord.value.simplified.trim(),
+        pinyin: newWord.value.pinyin.trim(),
+        meaning: newWord.value.meaning.trim()
+      })
+    });
+
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+    newWord.value = { simplified: '', pinyin: '', meaning: '' };
+
+    await selectList(activeList.value);
+    await fetchLists();
+  } catch (error) {
+    console.error('Failed to add word:', error);
+  }
+};
+
+// Watch for authentication state changes
+watch(() => isAuthenticated.value, (newVal) => {
+  if (newVal) {
+    fetchLists();
+    fetchUserDecksRegistry();
+  }
+});
+
+onMounted(() => {
+  if (isAuthenticated.value) {
+    fetchLists();
+    fetchUserDecksRegistry();
+  }
+});
+</script>
+
+<style scoped>
+.list-view-container {
+  display: flex;
+  height: calc(100vh - 140px);
+  gap: 2rem;
+  padding: 1rem 0;
+  position: relative;
+  z-index: 1;
+  min-height: 800px;
+}
+
+/* Sidebar Styling */
+.sidebar {
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  height: 100%;
+  padding: 1.5rem;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 0.75rem;
+}
+
+.sidebar-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.25rem;
+}
+
+.sidebar-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.glass-panel-inner {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+}
+
+.form-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+}
+
+.create-list-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.select-custom {
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='rgba(255,255,255,0.6)' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1.25rem;
+  padding-right: 2.5rem;
+}
+
+.lists-list-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.section-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+  padding-left: 0.25rem;
+}
+
+.lists-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 4px;
+}
+
+.lists-grid::-webkit-scrollbar {
+  width: 4px;
+}
+
+.lists-grid::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.list-card {
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.list-card:hover {
+  border-color: var(--accent-primary);
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-2px);
+}
+
+.list-card.active {
+  border-color: var(--accent-primary);
+  background: rgba(59, 130, 246, 0.12);
+  box-shadow: var(--shadow-glow);
+}
+
+.list-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.list-card h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.list-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+}
+
+.badge {
+  padding: 0.2rem 0.6rem;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.badge.user_created {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.badge.seen {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.badge.saved {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.badge.official {
+  background: rgba(168, 85, 247, 0.15);
+  color: #a855f7;
+  border-color: rgba(168, 85, 247, 0.3);
+}
+
+.count {
+  color: var(--text-muted);
+}
+
+/* Main Content Area Styling */
+.main-content-area {
+  flex: 1;
+  overflow: hidden;
+  height: 100%;
+}
+
+.active-list-view {
+  height: 100%;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.list-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 1.5rem;
+}
+
+.title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.list-description {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.stats-badge {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 95px;
+  height: 68px;
+  /* Strict height lock to ensure true sizing equivalence across elements */
+  box-sizing: border-box;
+}
+
+
+
+/* Specific Style Overrides when Flashcard action is styled as badge component */
+.dynamic-action-badge {
+  cursor: pointer;
+  /* background: rgba(255, 255, 255, 0.02); */
+  /* border: 1px solid rgba(255, 255, 255, 0.08); */
+  transition: var(--transition);
+}
+
+.dynamic-action-badge:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--accent-secondary);
+  box-shadow: var(--shadow-glow);
+}
+
+.emoji {
+  color: rgba(255, 255, 255, 0.6);
+  transition: color 0.2s ease;
+}
+
+.stats-num {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+  line-height: 1.2;
+  text-align: center;
+}
+
+.stats-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 2px;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+/* Controls (Search & Quick Add) */
+.controls-container {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.search-box {
+  flex: 1;
+  min-width: 250px;
+  width: 100%;
+}
+
+.search-input {
+  background-image: url("data:image/svg+xml;utf8,<svg fill='rgba(255,255,255,0.4)' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+  background-repeat: no-repeat;
+  background-position: left 0.75rem center;
+  background-size: 1.1rem;
+  padding-left: 2.25rem;
+}
+
+.add-word-form {
+  flex: 1;
+  min-width: 400px;
+  width: 100%;
+}
+
+.add-word-form .form-title {
+  margin-bottom: 0.5rem;
+}
+
+.form-inputs {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.input-sm {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+/* Words Table Styling */
+.table-container {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.table-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.vocab-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: left;
+}
+
+.vocab-table th {
+  position: sticky;
+  top: 0;
+  background: #131d31;
+  z-index: 10;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 1rem;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.table-row {
+  transition: background-color 0.2s ease;
+}
+
+.table-row:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.vocab-table td {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  vertical-align: middle;
+}
+
+.character-cell {
+  width: 120px;
+}
+
+.character-text {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.pinyin-cell {
+  font-size: 1rem;
+  color: var(--accent-secondary);
+  font-weight: 500;
+  width: 160px;
+}
+
+.meaning-cell {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.meaning-text {
+  max-width: 450px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.count-cell {
+  width: 100px;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.count-badge {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  padding: 0.25rem 0.75rem;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+/* Empty States & Falls */
+.empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4rem 2rem;
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+  width: 100%;
+}
+
+.no-selection {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  padding: 3rem;
+  text-align: center;
+}
+
+.no-selection-content {
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.no-selection-icon {
+  font-size: 4rem;
+  margin-bottom: 0.5rem;
+  filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.3));
+}
+
+.no-selection h2 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.no-selection p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* Columns widths defaults */
+.col-char {
+  width: 120px;
+}
+
+.col-pinyin {
+  width: 160px;
+}
+
+.col-count {
+  width: 100px;
+}
+
+/* Pop-up Overlay Configuration styles */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  z-index: 999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  width: 400px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.modal-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: -0.5rem;
+}
+
+.modal-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.config-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.checkbox-group {
+  display: flex;
+  gap: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.6rem;
+  border-radius: var(--radius-sm);
+}
+
+.checkbox-group label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 950px) {
+  .list-view-container {
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+  }
+
+  .main-content {
+    height: 600px;
+  }
+}
+</style>
+
+
+================================================
+FILE: src/views/ProfileView.vue
+================================================
+<script setup>
+import { useAuth0 } from '@auth0/auth0-vue'
+import { ref, onMounted } from 'vue'
+
+const { user } = useAuth0()
+
+const nickname = ref('Guest')
+const languagePreference = ref('en')
+const autoplay = ref(true)
+
+onMounted(() => {
+  const profile = localStorage.getItem('lexiflow_profile')
+  if (profile) {
+    const data = JSON.parse(profile)
+    nickname.value = data.nickname || 'Guest'
+    languagePreference.value = data.languagePreference || 'en'
+    autoplay.value = data.autoplay !== undefined ? data.autoplay : true
+  }
+})
+
+const saveProfile = () => {
+  const data = {
+    nickname: nickname.value,
+    languagePreference: languagePreference.value,
+    autoplay: autoplay.value
+  }
+  localStorage.setItem('lexiflow_profile', JSON.stringify(data))
+  alert('Profile preferences saved!')
+}
+</script>
+
+<template>
+  <div class="profile-page">
+    <h1 class="page-title">My Profile</h1>
+    
+    <div class="profile-card glass-panel" v-if="user">
+      <div class="profile-header">
+        <div class="avatar-container">
+          <img :src="user.picture" :alt="user.name" class="avatar-lg" />
+          <div class="avatar-glow"></div>
+        </div>
+        <div class="user-info">
+          <h2>{{ nickname !== 'Guest' ? nickname : user.name }}</h2>
+          <p class="text-secondary">{{ user.email }}</p>
+        </div>
+      </div>
+      
+      <div class="profile-body">
+        <div class="info-group">
+          <label>Nickname</label>
+          <input type="text" v-model="nickname" class="input-base" placeholder="Enter your nickname" />
+        </div>
+        
+        <div class="info-group">
+          <label>Target Language Translation</label>
+          <select v-model="languagePreference" class="input-base">
+            <option value="en">English (en)</option>
+            <option value="es">Spanish (es)</option>
+            <option value="fr">French (fr)</option>
+            <option value="ar">Arabic (ar)</option>
+          </select>
+        </div>
+
+        <div class="info-group checkbox-group">
+          <label>
+            <input type="checkbox" v-model="autoplay" />
+            Autoplay next segment
+          </label>
+        </div>
+      </div>
+      
+      <div class="profile-actions">
+        <button class="btn btn-primary" @click="saveProfile">Save Profile</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.profile-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 0;
+}
+
+.profile-card {
+  width: 100%;
+  max-width: 600px;
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.avatar-container {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+
+.avatar-lg {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  position: relative;
+  z-index: 2;
+  border: 4px solid var(--bg-primary);
+}
+
+.avatar-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--accent-gradient);
+  filter: blur(20px);
+  opacity: 0.5;
+  z-index: 1;
+}
+
+.user-info h2 {
+  margin-bottom: 0.5rem;
+}
+
+.profile-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.info-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.info-group label {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.info-value {
+  font-size: 1.125rem;
+  color: var(--text-primary);
+  background: rgba(0,0,0,0.2);
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.profile-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.profile-actions button {
+  flex: 1;
+}
+
+.input-base {
+  padding: 0.75rem;
+  background: var(--bg-surface-light);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  text-transform: none;
+}
+</style>
+
+
+
+================================================
+FILE: src/views/QuizView.vue
+================================================
+<script setup>
+import { ref, onMounted, computed, markRaw } from 'vue';
+import { useAuth0 } from '@auth0/auth0-vue';
+
+// Import split modular sub-components
+import MultipleChoiceVariant from '../components/quiz/MultipleChoiceVariant.vue';
+import FillBlankVariant from '../components/quiz/FillBlankVariant.vue';
+import ShortAnswerVariant from '../components/quiz/ShortAnswerVariant.vue';
+import TrueFalseVariant from '../components/quiz/TrueFalseVariant.vue';
+
+// Configuration & UI States
+const vocabLists = ref([]);
+const selectedListId = ref('');
+const questionCount = ref(10);
+const selectedTypes = ref(['MULTIPLE_CHOICE', 'FILL_BLANK', 'TRUE_FALSE', 'SHORT_ANSWER']);
+
+const isLoading = ref(false);
+const isSubmitting = ref(false);
+const activeQuizQuestions = ref([]);
+const isQuizActive = ref(false);
+const currentQuestionIndex = ref(0);
+const quizCompleted = ref(false);
+
+// State binding for active answer collection
+const currentQuizId = ref('');
+const userAnswers = ref([]);
+const currentAnswer = ref('');
+const scoreRecords = ref([]);
+const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4556';
+const { isAuthenticated, getAccessTokenSilently } = useAuth0();
+
+onMounted(async () => {
+    try {
+        const headers = {};
+        if (isAuthenticated.value) {
+            const token = await getAccessTokenSilently();
+            headers['Authorization'] = `Bearer ${token}`;
+        } else {
+            return;
+        }
+        const response = await fetch(`${apiBase}/lexiflow/lists`, { headers });
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        vocabLists.value = await response.json();
+        if (vocabLists.value.length > 0) {
+            selectedListId.value = vocabLists.value[0].id;
+        }
+    } catch (err) {
+        console.error('Failed to parse system vocab lists:', err);
+    }
+});
+
+const currentQuestion = computed(() => {
+    if (!activeQuizQuestions.value || !activeQuizQuestions.value.length) return null;
+    return activeQuizQuestions.value[currentQuestionIndex.value];
+});
+
+// Defensive fallback lookup helper to prevent "undefined" layout text strings
+const computedQuestionText = computed(() => {
+    if (!currentQuestion.value) return '';
+    return currentQuestion.value.question_text || currentQuestion.value.questionText || '';
+});
+
+const variantComponentMap = {
+    'MULTIPLE_CHOICE': markRaw(MultipleChoiceVariant),
+    'FILL_BLANK': markRaw(FillBlankVariant),
+    'SHORT_ANSWER': markRaw(ShortAnswerVariant),
+    'TRUE_FALSE': markRaw(TrueFalseVariant)
+};
+
+async function handleGenerateQuiz() {
+    if (!selectedListId.value || !selectedTypes.value.length) {
+        alert('Please pick a list and at least one question format type.');
+        return;
+    }
+
+    isLoading.value = true;
+    quizCompleted.value = false;
+    isQuizActive.value = false;
+
+    try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (isAuthenticated.value) {
+            const token = await getAccessTokenSilently();
+            headers['Authorization'] = `Bearer ${token}`;
+        } else {
+            return;
+        }
+        const res = await fetch(`${apiBase}/lexiflow/quizzes/generate`, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+                vocabularyListId: selectedListId.value,
+                count: questionCount.value,
+                allowedTypes: selectedTypes.value
+            })
+        });
+
+        if (!res.ok) throw new Error('Quiz endpoint error context');
+        const data = await res.json();
+
+        currentQuizId.value = data.id || '';
+        activeQuizQuestions.value = data.questions || [];
+        if (activeQuizQuestions.value.length > 0) {
+            currentQuestionIndex.value = 0;
+            scoreRecords.value = [];
+            userAnswers.value = [];
+            currentAnswer.value = '';
+            isQuizActive.value = true;
+        } else {
+            alert('No questions could be compiled from the selected candidate list.');
+        }
+    } catch (err) {
+        console.error('Quiz Generation Failure:', err);
+        alert('Error running AI distractor matrix engine.');
+    } finally {
+        isLoading.value = false;
+    }
+}
+
+async function submitAnswer() {
+    if (!currentQuestion.value || isSubmitting.value) return;
+
+    const ans = String(currentAnswer.value || '');
+    if (ans.trim() === '' && (currentQuestion.value.type === 'MULTIPLE_CHOICE' || currentQuestion.value.type === 'TRUE_FALSE')) {
+        alert('Please select an option before checking.');
+        return;
+    }
+
+    userAnswers.value.push({
+        questionId: currentQuestion.value.id,
+        userAnswer: ans
+    });
+
+    if (currentQuestionIndex.value + 1 < activeQuizQuestions.value.length) {
+        currentQuestionIndex.value++;
+        currentAnswer.value = '';
+    } else {
+        isSubmitting.value = true;
+        try {
+            const headers = { 'Content-Type': 'application/json' };
+            if (isAuthenticated.value) {
+                const token = await getAccessTokenSilently();
+                headers['Authorization'] = `Bearer ${token}`;
+            } else {
+                return;
+            }
+            const res = await fetch(`${apiBase}/lexiflow/quizzes/${currentQuizId.value}/submit`, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({
+                    answers: userAnswers.value
+                })
+            });
+
+            if (!res.ok) throw new Error('Quiz endpoint error context');
+            const data = await res.json();
+
+            scoreRecords.value = data.breakdown || [];
+            isQuizActive.value = false;
+            quizCompleted.value = true;
+        } catch (err) {
+            console.error('Quiz Submission/Grading Failure:', err);
+            alert('Failed to submit and grade the quiz. Please try again.');
+        } finally {
+            isSubmitting.value = false;
+        }
+    }
+}
+
+const accurateCount = computed(() => scoreRecords.value.filter(r => r.isCorrect).length);
+</script>
+
+<template>
+    <div class="quiz-view-container">
+        <div class="sidebar glass-panel">
+            <div class="sidebar-header">
+                <h2 class="sidebar-title">Quiz Factory</h2>
+                <p class="sidebar-subtitle">Configure specialized review tests</p>
+            </div>
+
+            <div class="settings-form">
+                <div class="form-group">
+                    <label class="form-label">Target Lexicon Vocabulary List</label>
+                    <select v-model="selectedListId" class="form-input" :disabled="isQuizActive">
+                        <option v-for="list in vocabLists" :key="list.id" :value="list.id">
+                            {{ list.name }} ({{ list._count?.items || list.items?.length || 0 }} words)
+                        </option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Question Count Threshold: {{ questionCount }}</label>
+                    <input type="range" min="5" max="30" step="5" v-model.number="questionCount" class="range-slider"
+                        :disabled="isQuizActive" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Active Structural Variants</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" value="MULTIPLE_CHOICE" v-model="selectedTypes"
+                                :disabled="isQuizActive" />
+                            <span>Multiple Choice (MCQ Variant Matrix)</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" value="FILL_BLANK" v-model="selectedTypes"
+                                :disabled="isQuizActive" />
+                            <span>Fill in the Blank (Cloze / Pinyin Recall)</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" value="SHORT_ANSWER" v-model="selectedTypes"
+                                :disabled="isQuizActive" />
+                            <span>Short Answer (Translation Parsing)</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" value="TRUE_FALSE" v-model="selectedTypes"
+                                :disabled="isQuizActive" />
+                            <span>True / False (Smart Distractors Engine)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button @click="handleGenerateQuiz" class="btn btn-primary btn-block" :disabled="isLoading">
+                    <span v-if="isLoading">Compiling Variants...</span>
+                    <span v-else>⚡ Generate Smart Quiz</span>
+                </button>
+
+                <button v-if="isQuizActive" @click="isQuizActive = false; quizCompleted = false;"
+                    class="btn btn-secondary btn-block fallback-abort">
+                    Abort Session
+                </button>
+            </div>
+        </div>
+
+        <div class="main-workspace">
+            <div v-if="!isQuizActive && !quizCompleted" class="arena-card glass-panel center-align-fallback">
+                <div class="welcome-icon">🎯</div>
+                <h2>Ready to Validate Recall?</h2>
+                <p>Pick a source list from the configuration sidebar, customize your parameters, and initialize your
+                    quiz session.</p>
+            </div>
+
+            <div v-if="isQuizActive && currentQuestion" class="arena-card glass-panel">
+                <div class="arena-header">
+                    <span class="badge badge-info">{{ currentQuestion.type }}</span>
+                    <span class="progress-indicator">Question {{ currentQuestionIndex + 1 }} of {{
+                        activeQuizQuestions.length }}</span>
+                </div>
+
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill"
+                        :style="{ width: ((currentQuestionIndex) / activeQuizQuestions.length) * 100 + '%' }"></div>
+                </div>
+
+                <div class="question-body">
+                    <p class="question-text-rendering">{{ computedQuestionText }}</p>
+                </div>
+
+                <component :is="variantComponentMap[currentQuestion.type]" v-model="currentAnswer"
+                    :question="currentQuestion" @submit="submitAnswer" />
+
+                <div class="arena-footer">
+                    <button @click="submitAnswer" class="btn btn-success btn-wide align-right-action">
+                        {{ currentQuestionIndex + 1 === activeQuizQuestions.length ? 'Finish Quiz' : 'Next Question ➜'
+                        }}
+                    </button>
+                </div>
+            </div>
+
+            <div v-if="quizCompleted" class="arena-card glass-panel">
+                <div class="results-summary text-center">
+                    <div class="trophy-icon">🏆</div>
+                    <h2>Session Completed!</h2>
+                    <div class="score-callout">
+                        <span class="score-num">{{ accurateCount }}</span> / {{ scoreRecords.length }} Correct
+                    </div>
+                    <p class="score-percentage-text">Accuracy rating: {{ Math.round((accurateCount /
+                        scoreRecords.length) * 100) }}%</p>
+                </div>
+
+                <h3 class="breakdown-title">Itemized History Logs</h3>
+                <div class="history-scroll-list">
+                    <div v-for="(record, rIdx) in scoreRecords" :key="rIdx"
+                        :class="['history-item', record.isCorrect ? 'border-success' : 'border-danger']">
+                        <div class="history-item-header">
+                            <span :class="['result-pill', record.isCorrect ? 'bg-success' : 'bg-danger']">
+                                {{ record.isCorrect ? '✓ Correct' : '✗ Incorrect' }}
+                            </span>
+                        </div>
+                        <p class="history-question-context"><strong>Prompt:</strong> {{ record.questionText }}</p>
+                        <div class="comparison-row">
+                            <p><strong>Your Input:</strong> <span
+                                    :class="record.isCorrect ? 'text-success' : 'text-danger'">{{ record.userAnswer ||
+                                        '[No Entry]' }}</span></p>
+                            <p v-if="!record.isCorrect"><strong>Correct Answer:</strong> <span
+                                    class="text-success-bold">{{ record.correctAnswer }}</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <button @click="quizCompleted = false" class="btn btn-primary btn-wide margin-top-auto">
+                    Restart Configuration
+                </button>
+            </div>
+        </div>
+    </div>
+</template>
+
+<style scoped>
+.quiz-view-container {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 2rem;
+    width: 100%;
+    min-height: calc(100vh - 120px);
+    align-items: start;
+}
+
+@media (max-width: 992px) {
+    .quiz-view-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+.sidebar {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.sidebar-header {
+    border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    padding-bottom: 1rem;
+}
+
+.sidebar-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-bright, #ffffff);
+}
+
+.sidebar-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-muted, #aaaaaa);
+    margin-top: 0.25rem;
+}
+
+.settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-normal, #dddddd);
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.75rem;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border-radius: 6px;
+    color: white;
+    font-size: 0.95rem;
+}
+
+.range-slider {
+    width: 100%;
+    accent-color: var(--primary-color, #4f46e5);
+    cursor: pointer;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    background: rgba(0, 0, 0, 0.15);
+    padding: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-normal, #cccccc);
+    cursor: pointer;
+}
+
+.fallback-abort {
+    margin-top: 0.5rem;
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+}
+
+.fallback-abort:hover {
+    background: rgba(239, 68, 68, 0.4);
+}
+
+.main-workspace {
+    width: 100%;
+}
+
+.arena-card {
+    padding: 2.5rem;
+    min-height: 480px;
+    display: flex;
+    flex-direction: column;
+}
+
+.center-align-fallback {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.welcome-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.arena-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.progress-indicator {
+    font-size: 0.9rem;
+    color: var(--text-muted, #a3a3a3);
+}
+
+.progress-bar-container {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    margin-bottom: 2.5rem;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4f46e5, #06b6d4);
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.question-body {
+    margin-bottom: 2rem;
+    flex-grow: 1;
+}
+
+.question-text-rendering {
+    font-size: 1.4rem;
+    line-height: 1.6;
+    color: var(--text-bright, #ffffff);
+    white-space: pre-wrap;
+}
+
+.arena-footer {
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 1.5rem;
+}
+
+.results-summary {
+    padding-bottom: 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 2rem;
+}
+
+.trophy-icon {
+    font-size: 3.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.score-callout {
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin: 0.5rem 0;
+    color: var(--text-bright, #ffffff);
+}
+
+.score-num {
+    color: #10b981;
+}
+
+.score-percentage-text {
+    color: var(--text-muted, #a3a3a3);
+    font-size: 1rem;
+}
+
+.breakdown-title {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+}
+
+.history-scroll-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.history-item {
+    background: rgba(0, 0, 0, 0.2);
+    border-left: 4px solid transparent;
+    padding: 1.25rem;
+    border-radius: 0 6px 6px 0;
+}
+
+.border-success {
+    border-left-color: #10b981;
+}
+
+.border-danger {
+    border-left-color: #ef4444;
+}
+
+.history-item-header {
+    margin-bottom: 0.5rem;
+}
+
+.result-pill {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 700;
+}
+
+.bg-success {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+}
+
+.bg-danger {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+}
+
+.history-question-context {
+    font-size: 0.95rem;
+    color: #e5e5e5;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+}
+
+.comparison-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    font-size: 0.88rem;
+}
+
+.text-success {
+    color: #34d399;
+}
+
+.text-danger {
+    color: #f87171;
+}
+
+.text-success-bold {
+    color: #10b981;
+    font-weight: 600;
+}
+
+.margin-top-auto {
+    margin-top: auto;
+}
+</style>
+
+
+================================================
+FILE: src/views/ReqView.vue
+================================================
+<script>
+import { FingerprintSpinner, HollowDotsSpinner } from 'epic-spinners'
+import SvgIcon from '@jamescoyle/vue-icon'
+import { mdiCheckAll, mdiYoutube, mdiCloudUpload, mdiLock, mdiEarth } from '@mdi/js'
+import { useAuth0 } from '@auth0/auth0-vue'
+
+export default {
+  setup() {
+    const { user, isAuthenticated, getAccessTokenSilently } = useAuth0();
+    return { user, isAuthenticated, getAccessTokenSilently };
+  },
+  components: {
+    FingerprintSpinner,
+    HollowDotsSpinner,
+    SvgIcon
+  },
+  data() {
+    return {
+      activeTab: 'youtube', // 'youtube' or 'local'
+      url: '',
+      localTitle: '',
+      file: null,
+      jsonData: null,
+      error: null,
+      state: 'idle', // idle, requesting, processing, queued, completed
+      jobId: null,
+      jobStatusInterval: null,
+      progress: 0,
+      pathCheck: mdiCheckAll,
+      pathYoutube: mdiYoutube,
+      pathUpload: mdiCloudUpload,
+      pathLock: mdiLock,
+      pathEarth: mdiEarth,
+      isPrivate: false,
+      queue_number: 0,
+      eta: 0,
+      time_counter: 0,
+      time_counter_interval: null,
+    }
+  },
+  methods: {
+    onFileSelected(event) {
+      if(event.target.files.length > 0) {
+        this.file = event.target.files[0]
+      }
+    },
+    async submitRequest() {
+      // Reset statuses
+      this.error = null;
+      this.state = 'idle';
+      this.progress = 0;
+      this.queue_number = 0;
+      this.eta = 0;
+      this.time_counter = 0;
+      if (this.jobStatusInterval) clearInterval(this.jobStatusInterval);
+      if (this.time_counter_interval) clearInterval(this.time_counter_interval);
+
+      if (this.activeTab === 'youtube' && !this.url) {
+        this.error = 'Please enter a valid YouTube URL.'; return;
+      }
+      if (this.activeTab === 'local' && !this.file) {
+        this.error = 'Please select a file to upload.'; return;
+      }
+
+      this.state = 'requesting';
+
+      try {
+        if (this.activeTab === 'youtube') {
+          // Existing Process YouTube URL (UC04)
+          const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4556';
+          let headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+          if (this.isAuthenticated) {
+            const token = await this.getAccessTokenSilently();
+            headers['Authorization'] = `Bearer ${token}`;
+          }
+          const response = await fetch(`${baseUrl}/lexiflow/jobs`, {
+            method: 'POST', mode: 'cors',
+            headers,
+            body: JSON.stringify({ url: this.url, is_private: this.isPrivate })
+          });
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          this.handleJobResponse(response);
+        } else {
+          // Local File Upload calling new Node.js endpoint
+          if (!this.localTitle.trim()) {
+            this.error = 'Title is required for local uploads.';
+            return;
+          }
+          const formData = new FormData();
+          formData.append('file', this.file);
+          formData.append('title', this.localTitle);
+          formData.append('is_private', this.isPrivate);
+          
+          let headers = {};
+          if (this.isAuthenticated) {
+            const token = await this.getAccessTokenSilently();
+            headers['Authorization'] = `Bearer ${token}`;
+          }
+
+          const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4556';
+          const response = await fetch(`${baseUrl}/lexiflow/upload`, {
+            method: 'POST', mode: 'cors',
+            headers,
+            body: formData
+          });
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          this.handleJobResponse(response);
+        }
+      } catch (err) {
+        this.error = err.message;
+      }
+    },
+    async handleJobResponse(response) {
+      const data = await response.json();
+      if (response.status === 200) {
+        this.jsonData = data.result;
+        localStorage.setItem('subtitleJSON', JSON.stringify(this.jsonData));
+        this.state = 'completed';
+        this.progress = 100;
+        if (data.from_cache) {
+          alert("This video was found in the library and loaded immediately.");
+        }
+      } else if (response.status === 201) {
+        this.jobId = data.job_id;
+        if (data.queue_number > 0) {
+          this.state = 'queued';
+          this.queue_number = data.queue_number;
+        } else {
+          this.state = 'processing';
+        }
+        this.eta = parseInt(data.eta) || 0;
+        this.startJobStatusPolling();
+        this.startTimeUpdatePolling();
+      }
+    },
+    startJobStatusPolling() {
+      this.jobStatusInterval = setInterval(async () => {
+        try {
+          const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4556';
+          let headers = { 'Accept': 'application/json' };
+          if (this.isAuthenticated) {
+            const token = await this.getAccessTokenSilently();
+            headers['Authorization'] = `Bearer ${token}`;
+          }
+          const response = await fetch(`${baseUrl}/lexiflow/jobs/${this.jobId}`, {
+            mode: 'cors', headers
+          });
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          const responseData = await response.json();
+          this.progress = responseData.progress || 0;
+
+          if (responseData.status === 'completed') {
+            this.jsonData = responseData.result;
+            localStorage.setItem('subtitleJSON', JSON.stringify(this.jsonData));
+            this.state = 'completed'; this.progress = 100;
+            this.cleanupIntervals();
+          } else if (responseData.status === 'queued') {
+            this.state = 'queued'; this.queue_number = responseData.queue_number || 0;
+            this.eta = parseInt(responseData.eta) || 0;
+          } else if (responseData.status === 'processing') {
+            this.state = 'processing'; this.eta = parseInt(responseData.eta) || 0;
+          } else if (responseData.status === 'failed') {
+            this.error = responseData.error || 'Job failed';
+            this.state = 'idle'; this.cleanupIntervals();
+          }
+        } catch (err) { console.error('Polling error', err); }
+      }, 10000);
+    },
+    startMockJobStatusPolling() {
+      // Mock progress logic for UC05
+      this.jobStatusInterval = setInterval(() => {
+        if(this.state !== 'processing') return;
+        this.progress += Math.floor(Math.random() * 20);
+        if(this.progress >= 100) {
+          this.progress = 100;
+          this.state = 'completed';
+          this.jsonData = { dummy: true };
+          localStorage.setItem('subtitleJSON', JSON.stringify(this.jsonData));
+          this.cleanupIntervals(); 
+        }
+      }, 2000);
+    },
+    startTimeUpdatePolling() {
+      this.time_counter_interval = setInterval(() => { this.time_counter += 1; }, 1000);
+    },
+    cleanupIntervals() {
+      if (this.jobStatusInterval) clearInterval(this.jobStatusInterval);
+      if (this.time_counter_interval) clearInterval(this.time_counter_interval);
+    },
+    youtube_parser(url) {
+      if(!url) return 'mock-video-id';
+      let regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|shorts\/|watch\?v=|&v=)([^#&?]*).*/;
+      let match = url.match(regExp);
+      if (match && match[2].length === 11) return match[2];
+      let altRegExp = /^.*(youtube\.com\/shorts\/|youtube\.com\/watch\?v=)([^#&?\/]*).*/;
+      let altMatch = url.match(altRegExp);
+      if (altMatch && altMatch[2].length === 11) return altMatch[2];
+      return 'mock-video-id';
+    },
+    goToVideo() {
+      let videoId = 'mock-video-id';
+      if(this.activeTab === 'youtube') videoId = this.youtube_parser(this.url);
+      this.$router.push({ name: 'watch', params: { videoId: videoId } });
+    }
+  },
+  beforeUnmount() {
+    this.cleanupIntervals();
+  },
+  computed: {
+    formatETA() {
+      if (this.eta <= 0) return 'Calculating...';
+      let remainingTime = this.eta - this.time_counter;
+      if (remainingTime <= 0) remainingTime = 0;
+      const minutes = Math.floor(remainingTime / 60);
+      const seconds = remainingTime % 60;
+      return `${minutes} mins ${seconds} seconds`;
+    }
+  }
+}
+</script>
+
+<template>
+  <div class="request-page">
+    <div class="request-card glass-panel">
+      <h1 class="page-title">Request Content</h1>
+      <p class="subtitle">Process a YouTube video or upload a local file to generate subtitles.</p>
+
+      <div class="tabs">
+        <button class="tab-btn" :class="{ active: activeTab === 'youtube' }" @click="activeTab = 'youtube'">
+          <svg-icon type="mdi" :path="pathYoutube" class="tab-icon"></svg-icon> YouTube URL
+        </button>
+        <button class="tab-btn" :class="{ active: activeTab === 'local' }" @click="activeTab = 'local'">
+          <svg-icon type="mdi" :path="pathUpload" class="tab-icon"></svg-icon> Local File
+        </button>
+      </div>
+
+      <div class="input-section" v-if="state === 'idle' || state === 'requesting' || error">
+        <div v-if="activeTab === 'youtube'" class="youtube-mode">
+          <input v-model="url" placeholder="https://www.youtube.com/watch?v=..." class="input-base large-input" />
+        </div>
+        <div v-if="activeTab === 'local'" class="local-mode">
+          <input v-model="localTitle" placeholder="Title for local video" class="input-base large-input" style="margin-bottom: 1rem; width: 100%; box-sizing: border-box;" />
+          <label class="file-drop-zone">
+            <input type="file" @change="onFileSelected" accept="video/*,audio/*" class="file-input" />
+            <div class="drop-content">
+              <svg-icon type="mdi" :path="pathUpload" size="48" class="drop-icon"></svg-icon>
+              <div class="drop-text">{{ file ? file.name : 'Click to select a video or audio file' }}</div>
+            </div>
+          </label>
+        </div>
+
+        <div class="privacy-toggle" v-if="isAuthenticated">
+          <label class="toggle-label" :class="{ active: isPrivate }">
+            <input type="checkbox" v-model="isPrivate" class="hidden-checkbox" />
+            <div class="toggle-slider"></div>
+            <span class="toggle-text">
+              <svg-icon type="mdi" :path="pathLock" size="20" v-if="isPrivate"></svg-icon>
+              <svg-icon type="mdi" :path="pathEarth" size="20" v-else></svg-icon>
+              {{ isPrivate ? 'Private Video' : 'Public Video' }}
+            </span>
+          </label>
+          <p class="privacy-hint" v-if="isPrivate">Only you can see this video in the library.</p>
+          <p class="privacy-hint" v-else>Anyone can see this video in the public library.</p>
+        </div>
+
+        <div class="action-row">
+          <button @click="submitRequest" class="btn btn-primary btn-submit" :disabled="state === 'requesting'">
+            <span v-if="state === 'idle'">Process Content</span>
+            <span v-else class="spinner-inline"><hollow-dots-spinner :animation-duration="1000" :dot-size="8" :dots-num="3" color="#fff" /></span>
+          </button>
+        </div>
+        
+        <div v-if="error" class="error-msg">{{ error }}</div>
+      </div>
+
+      <!-- Progressive State UI -->
+      <div v-if="state === 'queued'" class="status-panel">
+        <div class="status-icon queued">🕒</div>
+        <h2>Queued</h2>
+        <p>Requests ahead: <strong>{{ queue_number }}</strong></p>
+        <p>Estimated Time: {{ formatETA }}</p>
+      </div>
+
+      <div v-if="state === 'processing' || state === 'completed'" class="status-panel">
+        <div class="progress-bar-container">
+          <div class="progress-fill" :style="{ width: progress + '%' }"></div>
+        </div>
+        <div class="progress-stages">
+          <div class="stage" :class="{ active: progress > 0, done: progress > 25 }">
+            <fingerprint-spinner v-if="progress <= 25 && state !== 'completed'" :size="32" color="var(--accent-primary)" />
+            <svg-icon v-else type="mdi" :path="pathCheck" size="32" class="check-icon"></svg-icon>
+            <span>Downloading</span>
+          </div>
+          <div class="stage" :class="{ active: progress > 25, done: progress > 50 }">
+            <fingerprint-spinner v-if="progress > 25 && progress <= 50" :size="32" color="var(--accent-primary)" />
+            <svg-icon v-else-if="progress > 50" type="mdi" :path="pathCheck" size="32" class="check-icon"></svg-icon>
+            <div v-else class="stage-placeholder"></div>
+            <span>Transcribing</span>
+          </div>
+          <div class="stage" :class="{ active: progress > 50, done: progress >= 100 }">
+            <fingerprint-spinner v-if="progress > 50 && progress < 100" :size="32" color="var(--accent-primary)" />
+            <svg-icon v-else-if="progress >= 100" type="mdi" :path="pathCheck" size="32" class="check-icon"></svg-icon>
+            <div v-else class="stage-placeholder"></div>
+            <span>Translating</span>
+          </div>
+        </div>
+
+        <p v-if="state === 'processing'" class="eta-text">ETA: {{ formatETA }}</p>
+
+        <div v-if="state === 'completed'" class="complete-action">
+          <button @click="goToVideo" class="btn btn-primary btn-large">Watch Video</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.request-page {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+.request-card {
+  width: 100%;
+  max-width: 800px;
+  padding: 3rem;
+  text-align: center;
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  margin-bottom: 2.5rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  background: rgba(0,0,0,0.2);
+  padding: 0.5rem;
+  border-radius: var(--radius-lg);
+}
+
+.tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.tab-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.05);
+}
+
+.tab-btn.active {
+  background: var(--bg-surface-light);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.large-input {
+  font-size: 1.25rem;
+  padding: 1.25rem;
+  text-align: center;
+}
+
+.file-drop-zone {
+  display: block;
+  width: 100%;
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 4rem 2rem;
+  cursor: pointer;
+  transition: var(--transition);
+  background: rgba(0,0,0,0.1);
+}
+
+.file-drop-zone:hover {
+  border-color: var(--accent-primary);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.file-input {
+  display: none;
+}
+
+.drop-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  color: var(--text-secondary);
+}
+
+.drop-text {
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.action-row {
+  margin-top: 2rem;
+}
+
+.btn-submit {
+  width: 100%;
+  font-size: 1.25rem;
+  padding: 1rem;
+}
+
+.error-msg {
+  color: var(--danger);
+  margin-top: 1rem;
+  font-weight: 500;
+}
+
+/* Status Panels */
+.status-panel {
+  margin-top: 2rem;
+  padding: 2rem;
+  background: rgba(0,0,0,0.3);
+  border-radius: var(--radius-lg);
+}
+
+.progress-bar-container {
+  height: 8px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent-gradient);
+  transition: width 0.3s ease;
+}
+
+.progress-stages {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  color: var(--text-muted);
+}
+
+.stage.active { color: var(--accent-primary); }
+.stage.done { color: var(--success); }
+.stage-placeholder { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--border-color); }
+.check-icon { color: var(--success); }
+
+.eta-text {
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+}
+
+.complete-action {
+  margin-top: 2rem;
+}
+
+.btn-large {
+  font-size: 1.5rem;
+  padding: 1rem 3rem;
+}
+
+/* Privacy Toggle */
+.privacy-toggle {
+  margin-top: 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  background: rgba(0,0,0,0.2);
+  padding: 0.5rem 1.5rem;
+  border-radius: 50px;
+  border: 1px solid rgba(255,255,255,0.1);
+  transition: all 0.3s ease;
+}
+
+.toggle-label.active {
+  background: rgba(239, 68, 68, 0.15); /* Subtle red/private indication */
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.hidden-checkbox {
+  display: none;
+}
+
+.toggle-slider {
+  width: 40px;
+  height: 20px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 10px;
+  position: relative;
+  transition: background 0.3s;
+}
+
+.toggle-slider::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+
+.hidden-checkbox:checked + .toggle-slider {
+  background: var(--danger);
+}
+
+.hidden-checkbox:checked + .toggle-slider::after {
+  transform: translateX(20px);
+}
+
+.toggle-text {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.privacy-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+</style>
+
+
+================================================
+FILE: src/views/WatchView.vue
+================================================
+<script setup>
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import VideoBox from '@/components/VideoBox.vue'
+import CharacterDisplay from '@/components/CharacterDisplay.vue'
+import DictionarySearch from '@/components/DictionarySearch.vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useAuth0 } from '@auth0/auth0-vue'
+
+// ─── Props & Auth ───────────────────────────────────────────────────────────
+const props = defineProps({
+  videoId: { type: String, default: '9FNRb71akL4' },
+})
+const { user, isAuthenticated, getAccessTokenSilently } = useAuth0()
+
+// ─── Core state ─────────────────────────────────────────────────────────────
+const currentTime   = ref(0.0)
+const duration      = ref(0.0)
+const subtitlesJson = ref({ segments: [] })
+const videoUrl      = ref(null)
+const seekTime      = ref(0)
+const activeVideoId = ref(props.videoId)
+const videoKey      = ref(0)
+const router        = useRouter()
+const route         = useRoute()
+const dictSearchRef = ref(null)
+const videoBoxRef   = ref(null)
+
+// ─── Subtitle settings ───────────────────────────────────────────────────────
+const showPinyin      = ref(true)
+const showCharacters  = ref(true)
+const showTranslation = ref(true)
+const settingsOpen    = ref(false)
+const subBgOpacity    = ref(50) // percentage, default to 50%
+
+// ─── Playback controls ───────────────────────────────────────────────────────
+const loopSegment   = ref(false)
+const pauseAtEnd    = ref(false)
+const hasHandledEnd = ref(false)  // prevent re-fire within same segment
+
+// ─── Theater mode ────────────────────────────────────────────────────────────
+const theaterMode     = ref(false)
+const theaterSubY     = ref(80)          // % from top of video container
+const isDragging      = ref(false)
+const dragStartY      = ref(0)
+const dragStartSubY   = ref(0)
+const theaterHoverUI  = ref(false)       // whether settings/controls UI is hovered
+let hideUITimer       = null
+
+// ─── Segment navigation ──────────────────────────────────────────────────────
+const segments = computed(() => subtitlesJson.value?.segments || [])
+
+const currentSegmentIndex = computed(() => {
+  if (!segments.value.length) return -1
+  return segments.value.findIndex(s =>
+    currentTime.value >= s.start && currentTime.value < s.end
+  )
+})
+
+const currentSegment = computed(() => {
+  const i = currentSegmentIndex.value
+  return i >= 0 ? segments.value[i] : null
+})
+
+const currentText = computed(() => currentSegment.value?.characters || {})
+const currentTranslation = computed(() => currentSegment.value?.translated_text || '')
+
+// ─── Time update handler ─────────────────────────────────────────────────────
+const handleTimeUpdate = (time) => {
+  currentTime.value = time
+  if (!currentSegment.value) return
+
+  const seg = currentSegment.value
+
+  // Pause-at-end: pause when we cross segment end
+  if (pauseAtEnd.value && !hasHandledEnd.value && time >= seg.end - 0.08) {
+    hasHandledEnd.value = true
+    videoBoxRef.value?.pause()
+  }
+
+  // Loop: seek back to start when we cross segment end
+  if (loopSegment.value && !pauseAtEnd.value && time >= seg.end - 0.08) {
+    videoBoxRef.value?.seekTo(seg.start)
+  }
+}
+
+watch(currentSegmentIndex, () => {
+  hasHandledEnd.value = false
+})
+
+const handleDurationUpdate = (val) => {
+  duration.value = val
+}
+
+// ─── Navigation arrows ───────────────────────────────────────────────────────
+const goPrevSegment = () => {
+  const i = currentSegmentIndex.value
+  const target = i > 0 ? i - 1 : 0
+  seekTime.value = segments.value[target].start + 0.05
+}
+
+const goNextSegment = () => {
+  const i = currentSegmentIndex.value
+  const next = i < segments.value.length - 1 ? i + 1 : i
+  seekTime.value = segments.value[next].start + 0.05
+}
+
+const replaySegment = () => {
+  if (currentSegment.value) {
+    seekTime.value = currentSegment.value.start + 0.05
+    hasHandledEnd.value = false
+  }
+}
+
+// ─── Load video ──────────────────────────────────────────────────────────────
+const loadVideo = async (jobId, jumpTime = null) => {
+  try {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4556'
+    let headers = {}
+    let finalJumpTime = jumpTime
+
+    if (isAuthenticated.value) {
+      try {
+        const token = await getAccessTokenSilently()
+        headers['Authorization'] = `Bearer ${token}`
+        if (finalJumpTime === null) {
+          const progRes = await fetch(`${baseUrl}/lexiflow/videos/${jobId}/progress`, { headers })
+          if (progRes.ok) {
+            const progData = await progRes.json()
+            if (progData && progData.currentTime > 0) {
+              finalJumpTime = progData.currentTime
+            }
+          }
+        }
+      } catch (progErr) {
+        console.error('Failed to fetch stored watch progress:', progErr)
+      }
+    }
+
+    const res = await fetch(`${baseUrl}/lexiflow/jobs/${jobId}`, { headers })
+    if (res.ok) {
+      const data = await res.json()
+      if (data.result) {
+        const oldUrl  = videoUrl.value
+        const newUrl  = data.url
+        subtitlesJson.value  = data.result
+        activeVideoId.value  = jobId
+        duration.value       = data.duration || data.result?.duration || 0
+
+        const isOldYt = oldUrl && !!oldUrl.match(/(?:youtube\.com|youtu\.be)/)
+        const isNewYt = newUrl && !!newUrl.match(/(?:youtube\.com|youtu\.be)/)
+
+        if (oldUrl && isOldYt !== isNewYt) {
+          videoUrl.value = null
+          await new Promise(r => setTimeout(r, 50))
+          videoUrl.value = newUrl
+          videoKey.value++
+        } else {
+          videoUrl.value = newUrl
+        }
+
+        if (finalJumpTime !== null && finalJumpTime !== undefined) {
+          setTimeout(() => { seekTime.value = finalJumpTime }, 800)
+        }
+
+        const newQuery = finalJumpTime !== null ? { t: finalJumpTime } : {}
+        router.replace({ name: 'watch', params: { videoId: jobId }, query: newQuery })
+        return
+      }
+    }
+  } catch (err) {
+    console.error('Failed to fetch job from backend', err)
+  }
+
+  // Fallback
+  const storedSubtitles = localStorage.getItem('subtitleJSON')
+  if (storedSubtitles) {
+    try { subtitlesJson.value = JSON.parse(storedSubtitles) } catch (e) { console.error(e) }
+  }
+}
+
+const onDictionaryJump = ({ time, videoId }) => {
+  if (videoId && videoId !== activeVideoId.value) {
+    loadVideo(videoId, time)
+  } else {
+    seekTime.value = time
+  }
+}
+
+// ─── Progress saving ─────────────────────────────────────────────────────────
+const saveWatchProgress = async (asyncMode = true) => {
+  if (!isAuthenticated.value || !user.value || !activeVideoId.value) return
+  const bodyData = { currentTime: currentTime.value, duration: duration.value }
+  const baseUrl  = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4556'
+  const url      = `${baseUrl}/lexiflow/videos/${activeVideoId.value}/progress`
+
+  try {
+    const token = await getAccessTokenSilently()
+    const opts = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(bodyData),
+    }
+    if (!asyncMode) opts.keepalive = true
+    const res = await fetch(url, opts)
+    if (!res.ok) console.warn('Failed to save watch progress:', res.statusText)
+  } catch (err) {
+    console.error('Error saving progress:', err)
+  }
+}
+
+const handleBeforeUnload = () => saveWatchProgress(false)
+
+onMounted(() => {
+  window.addEventListener('beforeunload', handleBeforeUnload)
+  const initialTime = route.query.t ? parseFloat(route.query.t) : null
+  loadVideo(props.videoId, initialTime)
+})
+
+const removeRouterGuard = router.beforeEach(async (to, from, next) => {
+  if (from.name === 'watch') await saveWatchProgress(true)
+  next()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('beforeunload', handleBeforeUnload)
+  removeRouterGuard()
+  saveWatchProgress(true)
+  if (hideUITimer) clearTimeout(hideUITimer)
+})
+
+// ─── Search word ─────────────────────────────────────────────────────────────
+const handleSearchWord = (word) => {
+  if (theaterMode.value) {
+    // Exit theater mode first, then show word in sidebar
+    theaterMode.value = false
+  }
+  if (dictSearchRef.value) {
+    dictSearchRef.value.setQueryAndSearch(word)
+  }
+}
+
+// ─── Theater mode ─────────────────────────────────────────────────────────────
+const enterTheater = () => {
+  theaterMode.value = true
+  theaterSubY.value = 80
+}
+
+const exitTheater = () => {
+  theaterMode.value = false
+}
+
+// Subtitle drag (vertical position inside theater video)
+const onDragStart = (e) => {
+  isDragging.value = true
+  dragStartY.value    = e.clientY || (e.touches && e.touches[0].clientY) || 0
+  dragStartSubY.value = theaterSubY.value
+  e.preventDefault()
+  document.addEventListener('mousemove', onDragMove)
+  document.addEventListener('mouseup',   onDragEnd)
+  document.addEventListener('touchmove', onDragMove, { passive: false })
+  document.addEventListener('touchend',  onDragEnd)
+}
+
+const onDragMove = (e) => {
+  if (!isDragging.value) return
+  const clientY   = e.clientY || (e.touches && e.touches[0].clientY) || 0
+  const delta     = clientY - dragStartY.value
+  const container = document.querySelector('.video-container')
+  if (!container) return
+  const containerH   = container.offsetHeight
+  const deltaPercent = (delta / containerH) * 100
+  theaterSubY.value  = Math.max(5, Math.min(95, dragStartSubY.value + deltaPercent))
+}
+
+const onDragEnd = () => {
+  isDragging.value = false
+  document.removeEventListener('mousemove', onDragMove)
+  document.removeEventListener('mouseup',   onDragEnd)
+  document.removeEventListener('touchmove', onDragMove)
+  document.removeEventListener('touchend',  onDragEnd)
+}
+
+// Auto-hide settings in theater mode
+const showTheaterUI = ref(true)
+
+const startHideTimer = () => {
+  if (hideUITimer) clearTimeout(hideUITimer)
+  hideUITimer = setTimeout(() => {
+    if (!theaterHoverUI.value) {
+      showTheaterUI.value = false
+    }
+  }, 2500)
+}
+
+const onTheaterMouseMove = () => {
+  showTheaterUI.value = true
+  startHideTimer()
+}
+
+watch(theaterMode, (val) => {
+  if (val) {
+    showTheaterUI.value = true
+    startHideTimer()
+  } else {
+    if (hideUITimer) clearTimeout(hideUITimer)
+    showTheaterUI.value = true
+  }
+})
+</script>
+
+<template>
+  <div class="watch-page" :class="{ 'theater-mode-active': theaterMode }" @mousemove="theaterMode && onTheaterMouseMove($event)">
+    <div class="watch-layout">
+      <!-- Player column -->
+      <div class="main-column">
+        <!-- Video Container -->
+        <div class="video-container glass-panel">
+          <VideoBox
+            v-if="videoUrl"
+            :key="videoKey"
+            ref="videoBoxRef"
+            :videoUrl="videoUrl"
+            :startTime="seekTime"
+            @time-update="handleTimeUpdate"
+            @duration-update="handleDurationUpdate"
+          />
+
+          <!-- Theater mode draggable subtitles overlay -->
+          <div
+            v-if="theaterMode"
+            class="theater-subtitle-overlay"
+            :style="{ top: theaterSubY + '%' }"
+          >
+            <!-- Clicking the subtitle itself will exit theater mode -->
+            <div class="theater-sub-clickable" @click="exitTheater">
+              <CharacterDisplay
+                v-if="currentSegment"
+                :characters="currentText"
+                :translated_text="currentTranslation"
+                :showPinyin="showPinyin"
+                :showCharacters="showCharacters"
+                :showTranslation="showTranslation"
+                :theaterMode="true"
+                :subBgOpacity="subBgOpacity"
+                @search-word="handleSearchWord"
+              />
+              <div v-else class="theater-no-sub"></div>
+            </div>
+
+            <!-- Drag handle -->
+            <div
+              class="theater-drag-handle"
+              @mousedown="onDragStart"
+              @touchstart.prevent="onDragStart"
+              title="Drag to reposition subtitles"
+            >
+              <svg width="24" height="12" viewBox="0 0 24 12" fill="none">
+                <rect y="0" width="24" height="2" rx="1" fill="currentColor"/>
+                <rect y="5" width="24" height="2" rx="1" fill="currentColor"/>
+                <rect y="10" width="24" height="2" rx="1" fill="currentColor"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Theater controls overlay (auto-hide) -->
+          <Transition name="fade-ui">
+            <div
+              v-show="theaterMode && showTheaterUI"
+              class="theater-controls-overlay"
+              @mouseenter="theaterHoverUI = true"
+              @mouseleave="theaterHoverUI = false; startHideTimer()"
+            >
+              <!-- Nav arrows + playback controls -->
+              <div class="theater-nav">
+                <button class="ctrl-btn" @click="goPrevSegment" title="Previous subtitle">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <button class="ctrl-btn" @click="replaySegment" title="Replay segment">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+                </button>
+                <button class="ctrl-btn" :class="{ active: loopSegment }" @click="loopSegment = !loopSegment" title="Loop segment">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                </button>
+                <button class="ctrl-btn" :class="{ active: pauseAtEnd }" @click="pauseAtEnd = !pauseAtEnd" title="Pause at segment end">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/><line x1="22" y1="19" x2="22" y2="5" stroke-width="3"/></svg>
+                </button>
+                <button class="ctrl-btn" @click="goNextSegment" title="Next subtitle">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+              </div>
+
+              <!-- Settings toggles -->
+              <div class="theater-settings">
+                <button class="toggle-chip" :class="{ on: showCharacters }" @click="showCharacters = !showCharacters">汉字</button>
+                <button class="toggle-chip" :class="{ on: showPinyin }"     @click="showPinyin     = !showPinyin">Pīnyīn</button>
+                <button class="toggle-chip" :class="{ on: showTranslation }" @click="showTranslation = !showTranslation">Translation</button>
+                
+                <!-- Background transparency control in theater mode -->
+                <div class="transparency-slider-wrap">
+                  <span class="slider-label">Sub BG:</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    v-model="subBgOpacity"
+                    class="transparency-slider"
+                  />
+                  <span class="slider-value">{{ subBgOpacity }}%</span>
+                </div>
+
+                <button class="exit-theater-btn" @click="exitTheater">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                  Exit Theater
+                </button>
+              </div>
+            </div>
+          </Transition>
+        </div>
+
+        <!-- Normal Subtitle bar (hidden in theater mode) -->
+        <div class="subtitle-bar" v-show="!theaterMode && subtitlesJson.segments && subtitlesJson.segments.length > 0">
+          <!-- Controls row -->
+          <div class="sub-controls">
+            <!-- Navigation -->
+            <div class="nav-group">
+              <button class="icon-btn" @click="goPrevSegment" title="Previous subtitle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <button class="icon-btn" @click="replaySegment" title="Replay segment">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+              </button>
+              <button class="icon-btn" :class="{ 'icon-btn--on': loopSegment }" @click="loopSegment = !loopSegment" title="Loop segment">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+              </button>
+              <button class="icon-btn" :class="{ 'icon-btn--on': pauseAtEnd }" @click="pauseAtEnd = !pauseAtEnd" title="Pause at segment end">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/><line x1="22" y1="19" x2="22" y2="5" stroke-width="3"/></svg>
+              </button>
+              <button class="icon-btn" @click="goNextSegment" title="Next subtitle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
+
+            <!-- Settings toggle -->
+            <div class="settings-group">
+              <div class="settings-popup-wrap" @mouseenter="settingsOpen = true" @mouseleave="settingsOpen = false">
+                <button class="icon-btn settings-btn" :class="{ 'icon-btn--on': settingsOpen }" title="Subtitle settings">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                </button>
+                <Transition name="popup">
+                  <div v-show="settingsOpen" class="settings-popup">
+                    <div class="settings-row">
+                      <span class="settings-label">Characters</span>
+                      <button class="toggle-switch" :class="{ on: showCharacters }" @click="showCharacters = !showCharacters">
+                        <span class="toggle-thumb"></span>
+                      </button>
+                    </div>
+                    <div class="settings-row">
+                      <span class="settings-label">Pinyin</span>
+                      <button class="toggle-switch" :class="{ on: showPinyin }" @click="showPinyin = !showPinyin">
+                        <span class="toggle-thumb"></span>
+                      </button>
+                    </div>
+                    <div class="settings-row">
+                      <span class="settings-label">Translation</span>
+                      <button class="toggle-switch" :class="{ on: showTranslation }" @click="showTranslation = !showTranslation">
+                        <span class="toggle-thumb"></span>
+                      </button>
+                    </div>
+                  </div>
+                </Transition>
+              </div>
+
+              <!-- Theater mode button -->
+              <button class="icon-btn theater-toggle" @click="enterTheater" title="Theater mode">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Subtitle display -->
+          <div class="sub-display">
+            <CharacterDisplay
+              v-if="currentSegment"
+              :characters="currentText"
+              :translated_text="currentTranslation"
+              :showPinyin="showPinyin"
+              :showCharacters="showCharacters"
+              :showTranslation="showTranslation"
+              :theaterMode="false"
+              @search-word="handleSearchWord"
+            />
+            <div v-else class="no-sub-placeholder">
+              <span>▶ No subtitle at this timestamp</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Sidebar -->
+      <div class="sidebar-column" v-show="!theaterMode">
+        <DictionarySearch ref="dictSearchRef" :videoId="activeVideoId" @jump-to-time="onDictionaryJump" />
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+/* ─── NORMAL MODE ─── */
+.watch-page {
+  padding: 1rem 0;
+  width: 100%;
+}
+
+.watch-layout {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .watch-layout { grid-template-columns: 1fr; }
+}
+
+.main-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.video-container {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  padding: 0;
+  position: relative;
+}
+
+/* ── Subtitle bar ── */
+.subtitle-bar {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius-xl);
+  padding: 0.75rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* ── Controls row ── */
+.sub-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.nav-group,
+.settings-group {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* ── Icon button ── */
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s ease;
+  padding: 0;
+}
+
+.icon-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.icon-btn:hover {
+  background: rgba(59,130,246,0.15);
+  border-color: rgba(59,130,246,0.4);
+  color: #93c5fd;
+  transform: translateY(-1px);
+}
+
+.icon-btn--on {
+  background: rgba(59,130,246,0.2) !important;
+  border-color: rgba(59,130,246,0.6) !important;
+  color: #60a5fa !important;
+  box-shadow: 0 0 8px rgba(59,130,246,0.3);
+}
+
+.theater-toggle {
+  margin-left: 0.25rem;
+}
+
+/* ── Settings popup ── */
+.settings-popup-wrap {
+  position: relative;
+}
+
+.settings-popup {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  background: rgba(15,23,42,0.95);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  min-width: 180px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.popup-enter-active, .popup-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.popup-enter-from, .popup-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.settings-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* Toggle switch */
+.toggle-switch {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(255,255,255,0.1);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s ease;
+}
+.toggle-switch.on {
+  background: var(--accent-primary);
+}
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s ease;
+}
+.toggle-switch.on .toggle-thumb {
+  transform: translateX(16px);
+}
+
+/* ── Sub display area ── */
+.sub-display {
+  display: flex;
+  justify-content: center;
+  min-height: 80px;
+  align-items: center;
+}
+
+.no-sub-placeholder {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0.5;
+}
+
+/* ─── THEATER MODE ACTIVE ─── */
+.theater-mode-active {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #000;
+  width: 100vw;
+  height: 100vh;
+  padding: 0;
+}
+
+.theater-mode-active .watch-layout {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.theater-mode-active .main-column {
+  width: 100%;
+  height: 100%;
+  gap: 0;
+}
+
+.theater-mode-active .video-container {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  aspect-ratio: auto;
+  border-radius: 0;
+  z-index: 9999;
+  background: #000;
+  box-shadow: none;
+}
+
+/* ── Subtitle overlay ── */
+.theater-subtitle-overlay {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+  pointer-events: none;
+  transition: top 0.08s ease;
+}
+
+/* Restore pointer events so clicking subtitle exits theater mode */
+.theater-sub-clickable {
+  pointer-events: all;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.theater-no-sub {
+  height: 40px;
+}
+
+/* Drag handle */
+.theater-drag-handle {
+  color: rgba(255,255,255,0.45);
+  cursor: ns-resize;
+  pointer-events: all;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(0,0,0,0.3);
+  backdrop-filter: blur(4px);
+  transition: color 0.2s, background 0.2s;
+}
+.theater-drag-handle:hover {
+  color: rgba(255,255,255,0.85);
+  background: rgba(0,0,0,0.5);
+}
+
+/* ── Theater controls overlay ── */
+.theater-controls-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  padding: 1.5rem 2rem;
+  background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 60%, transparent 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.fade-ui-enter-active, .fade-ui-leave-active {
+  transition: opacity 0.4s ease;
+}
+.fade-ui-enter-from, .fade-ui-leave-to {
+  opacity: 0;
+}
+
+.theater-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.theater-settings {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Theater control button */
+.ctrl-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.85);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s ease;
+  backdrop-filter: blur(8px);
+}
+.ctrl-btn svg {
+  width: 18px;
+  height: 18px;
+}
+.ctrl-btn:hover {
+  background: rgba(59,130,246,0.2);
+  border-color: rgba(59,130,246,0.5);
+  color: #93c5fd;
+  transform: scale(1.1);
+}
+.ctrl-btn.active {
+  background: rgba(59,130,246,0.3);
+  border-color: #3b82f6;
+  color: #60a5fa;
+  box-shadow: 0 0 12px rgba(59,130,246,0.4);
+}
+
+/* Toggle chips (theater) */
+.toggle-chip {
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.6);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  backdrop-filter: blur(8px);
+}
+.toggle-chip.on {
+  background: rgba(59,130,246,0.25);
+  border-color: rgba(59,130,246,0.6);
+  color: #93c5fd;
+}
+.toggle-chip:hover {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+}
+
+/* Exit theater button */
+.exit-theater-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(0,0,0,0.4);
+  color: rgba(255,255,255,0.8);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  backdrop-filter: blur(8px);
+}
+.exit-theater-btn svg {
+  width: 14px;
+  height: 14px;
+}
+.exit-theater-btn:hover {
+  background: rgba(239,68,68,0.25);
+  border-color: rgba(239,68,68,0.5);
+  color: #fca5a5;
+}
+
+/* Subtitle Background transparency slider */
+.transparency-slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+}
+
+.slider-label {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+.transparency-slider {
+  width: 80px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  accent-color: var(--accent-primary);
+}
+
+.slider-value {
+  font-size: 0.8rem;
+  color: #93c5fd;
+  font-weight: 600;
+  min-width: 2.2rem;
+  text-align: right;
+}
+
+/* Sidebar */
+.sidebar-column {
+  position: sticky;
+  top: 5rem;
+}
+</style>
+

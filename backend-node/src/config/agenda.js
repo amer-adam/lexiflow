@@ -11,6 +11,13 @@ const agenda = new Agenda({
     defaultConcurrency: 1,
 });
 
+// Agenda opens its Mongo connection at construction and emits 'error' on
+// failure. Without a listener that error is unhandled and crashes the process,
+// so handle it here — a missing Mongo just disables the job pipeline.
+agenda.on('error', (err) => {
+    console.warn('⚠️  Agenda/MongoDB unavailable — video job pipeline disabled:', err.message);
+});
+
 const workerRouter = require('../services/workerRouter');
 
 async function monitorJobProgress(jobId, url, workerUrl) {

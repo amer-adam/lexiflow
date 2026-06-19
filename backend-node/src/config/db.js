@@ -14,7 +14,10 @@ async function connectToMongoDB() {
             version: ServerApiVersion.v1,
             strict: true,
             deprecationErrors: true,
-        }
+        },
+        // Fail fast if Mongo is unreachable so the API can boot in degraded mode
+        // instead of hanging on the default 30s selection timeout.
+        serverSelectionTimeoutMS: 8000,
     });
 
     try {
@@ -38,8 +41,10 @@ async function connectToMongoDB() {
 
         return client;
     } catch (err) {
-        console.error('Error connecting to MongoDB:', err);
-        process.exit(1);
+        // Let the caller decide how to handle this instead of killing the whole
+        // process — the PostgreSQL-backed API can still serve without Mongo.
+        console.error('Error connecting to MongoDB:', err.message);
+        throw err;
     }
 }
 

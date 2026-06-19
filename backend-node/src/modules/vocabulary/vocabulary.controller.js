@@ -100,9 +100,23 @@ async function deleteList(req, res, next) {
   }
 }
 
+async function markVideoSeen(req, res, next) {
+  try {
+    const userId = req.userId;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    const { videoId } = req.body;
+    if (!videoId) return res.status(400).json({ error: 'videoId is required' });
+    const result = await vocabularyService.markVideoWordsSeen({ videoId, userId });
+    return res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   createList,
   createListFromVideo,
+  markVideoSeen,
   getUserLists,
   addWordToList,
   getListDetails,

@@ -20,3 +20,5 @@ torchaudio
 ctranslate2
 onnxruntime
 jieba
+transformers
+sentence-transformers
