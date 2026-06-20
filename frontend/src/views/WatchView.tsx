@@ -5,7 +5,7 @@ import {
   RotateCcw, ListPlus, Search, Clock, Palette,
 } from "lucide-react";
 import { hskColor, HSK_LABELS, type CharToken, type Segment } from "@/lib/data";
-import { HskLegend, HskBadge, EmptyState, ErrorState, Loading } from "@/components/bits";
+import { HskLegend, HskBadge, EmptyState, ErrorState, Skeleton } from "@/components/bits";
 import { InfoTip } from "@/components/InfoTip";
 import { VideoPlayer, type VideoHandle } from "@/components/VideoPlayer";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,16 @@ import { SpeakButton } from "@/components/SpeakButton";
 
 const PROGRESS_SAVE_MS = 20_000; // throttle progress writes
 
+/** Shows the post-watch toast only if something actually happened, and never
+ *  with a negative count (a session that produced nothing isn't worth a
+ *  "Nice session!" toast, and a count can never sensibly be negative). */
+function maybeShowSessionSummary(videoTitle: string | undefined, savedCount: number, trackedCount: number) {
+  const saved = Math.max(0, savedCount);
+  const tracked = Math.max(0, trackedCount);
+  if (saved === 0 && tracked === 0) return;
+  setSessionSummary({ videoTitle, saved, tracked, at: Date.now() });
+}
+
 export function WatchView() {
   const { params, go } = useNav();
   const { api } = useApi();
@@ -40,6 +50,30 @@ export function WatchView() {
     (a) => (videoId ? a.getProgress(videoId) : Promise.resolve(null)),
     [videoId]
   );
+
+  // No video open (e.g. just clicked the "Watch" nav item): resume whatever
+  // was most recently played, or — for an account that hasn't watched
+  // anything yet — open the most recently added library video.
+  const { data: fallbackId, loading: fallbackLoading } = useQuery(async (a) => {
+    if (videoId) return null;
+    const library = await a.getLibrary();
+    if (!library.length) return null;
+    const withProgress = await Promise.all(
+      library.map(async (v) => [v, await a.getProgress(v.id).catch(() => null)] as const)
+    );
+    const played = withProgress
+      .filter(([, p]) => p && p.currentTime > 0)
+      .sort(([, a], [, b]) => (b?.updatedAt ?? "").localeCompare(a?.updatedAt ?? ""));
+    if (played.length) return played[0][0].id;
+    const newest = [...library].sort((a, b) => (b.dateAdded ?? "").localeCompare(a.dateAdded ?? ""));
+    return newest[0]?.id ?? null;
+  }, [videoId]);
+
+  useEffect(() => {
+    if (!videoId && fallbackId) go("watch", { id: fallbackId });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoId, fallbackId]);
+
   const segments = useMemo(() => job?.segments ?? [], [job]);
   const TOTAL = segments.length ? segments[segments.length - 1].end : 1;
 
@@ -65,7 +99,11 @@ export function WatchView() {
   const [listResult, setListResult] = useState<{ name: string; words: number } | null>(null);
   const [portalNode, setPortalNode] = useState<HTMLElement | null>(null);
 
-  const segIndex = segments.findIndex((s) => t >= s.start && t < s.end);
+  // Only advances when the player's time actually lands inside a segment
+  // (driven from onTime below). Keeping the previous index during the small
+  // gap between two segments' end/start avoids flashing back to line 1 —
+  // findIndex() would return -1 there and fall back to segments[0].
+  const [segIndex, setSegIndex] = useState(0);
   const seg = segments[segIndex] ?? segments[0];
 
   // Refs keep the player's time-poll closure reading current values without
@@ -76,9 +114,19 @@ export function WatchView() {
   const lastSaveRef = useRef(0);
   const tRef = useRef(0);
 
+  // The backend syncs newly-watched words to the "Seen" list on *every*
+  // progress save, not just when leaving — so by the time you leave, the
+  // periodic saves during playback have usually already tracked
+  // everything and the final call reports 0 new words. Accumulate each
+  // call's count here so the post-watch toast reflects the whole session,
+  // not just whatever's left over since the last periodic save.
+  const sessionTrackedRef = useRef(0);
+
   const flushProgress = useCallback(() => {
-    if (!videoId || !tRef.current) return;
-    api.saveProgress(videoId, tRef.current, TOTAL).catch(() => { /* ignore */ });
+    if (!videoId || !tRef.current) return Promise.resolve();
+    return api.saveProgress(videoId, tRef.current, TOTAL)
+      .then((r) => { sessionTrackedRef.current += r.tracked; })
+      .catch(() => { /* ignore */ });
   }, [api, videoId, TOTAL]);
 
   // Drive loop / pause-at-end off the real player's time. Stable identity.
@@ -90,17 +138,16 @@ export function WatchView() {
       lastSaveRef.current = now;
       flushProgress();
     }
-    const cur = segmentsRef.current.find((s) => time >= s.start && time < s.end);
-    if (!cur) return;
+    const curIndex = segmentsRef.current.findIndex((s) => time >= s.start && time < s.end);
+    if (curIndex < 0) return;
+    setSegIndex(curIndex);
+    const cur = segmentsRef.current[curIndex];
     if (time >= cur.end - 0.15 && lastBoundary.current !== cur.end) {
       if (pauseRef.current) { player.current?.pause(); lastBoundary.current = cur.end; }
       else if (loopRef.current) { player.current?.seekTo(cur.start); lastBoundary.current = cur.end; }
     }
     if (time < cur.end - 0.3) lastBoundary.current = -1;
   }, [flushProgress]);
-
-  // Save once on unmount/leave.
-  useEffect(() => () => flushProgress(), [flushProgress]);
 
   const jumpSeg = (dir: number) => {
     const i = Math.max(0, Math.min(segments.length - 1, (segIndex < 0 ? 0 : segIndex) + dir));
@@ -163,16 +210,18 @@ export function WatchView() {
   };
 
   // Mark words seen, persist a session summary (survives navigation, refresh,
-  // and opening another video), then leave.
+  // and opening another video), then leave. Progress is saved *first* and
+  // awaited — the backend only tracks words from segments up to that saved
+  // position, so marking seen before the save lands would (and used to) mark
+  // every word in the whole video as seen regardless of how far we got.
   const finishWatching = async () => {
     finishedRef.current = true;
-    flushProgress();
+    await flushProgress(); // accumulates into sessionTrackedRef
     if (!videoId) { go("library"); return; }
     setLeaving(true);
-    let tracked = 0;
-    try { tracked = (await api.markVideoSeen(videoId)).tracked; } catch { /* ignore */ }
+    try { sessionTrackedRef.current += (await api.markVideoSeen(videoId)).tracked; } catch { /* ignore */ }
     setLeaving(false);
-    setSessionSummary({ videoTitle: job?.title, saved: saved.length, tracked, at: Date.now() });
+    maybeShowSessionSummary(job?.title, saved.length, sessionTrackedRef.current);
     go("library");
   };
 
@@ -181,36 +230,46 @@ export function WatchView() {
   // other route change skipped it entirely, so the toast just never showed.
   // Catch every other exit path here instead, reading refs so this always
   // sees the latest values without re-running the effect on every render.
+  // Same ordering requirement as above: save progress, then mark seen.
   const finishedRef = useRef(false);
   const jobRef = useRef(job); jobRef.current = job;
   const savedRef = useRef(saved); savedRef.current = saved;
   const apiRef = useRef(api); apiRef.current = api;
   const videoIdRef = useRef(videoId); videoIdRef.current = videoId;
+  const totalRef = useRef(TOTAL); totalRef.current = TOTAL;
   useEffect(() => {
     return () => {
       if (finishedRef.current) return;
       const vid = videoIdRef.current;
-      if (!vid || !tRef.current) return; // never actually watched anything
+      const time = tRef.current;
+      if (!vid || !time) return; // never actually watched anything
       finishedRef.current = true;
-      apiRef.current.markVideoSeen(vid).then(
-        (r) => setSessionSummary({ videoTitle: jobRef.current?.title, saved: savedRef.current.length, tracked: r.tracked, at: Date.now() }),
-        () => setSessionSummary({ videoTitle: jobRef.current?.title, saved: savedRef.current.length, tracked: 0, at: Date.now() })
-      );
+      apiRef.current.saveProgress(vid, time, totalRef.current)
+        .then((r) => { sessionTrackedRef.current += r.tracked; })
+        .catch(() => { /* ignore */ })
+        .then(() =>
+          apiRef.current.markVideoSeen(vid).then(
+            (r) => { sessionTrackedRef.current += r.tracked; },
+            () => { /* ignore */ }
+          )
+        )
+        .then(() => maybeShowSessionSummary(jobRef.current?.title, savedRef.current.length, sessionTrackedRef.current));
     };
   }, []);
 
   // ── States ───────────────────────────────────────────────────
   if (!videoId) {
+    if (fallbackLoading || fallbackId) return <WatchSkeleton />;
     return (
       <div className="paper">
         <EmptyState icon={<Film className="h-10 w-10" />} title="Nothing playing yet"
-          action={<Button onClick={() => go("library")}>Browse your library</Button>}>
-          Pick a video from your library to watch it with interactive subtitles.
+          action={<Button onClick={() => go("request")}>Add your first video</Button>}>
+          Add a video to your library to start watching with interactive subtitles.
         </EmptyState>
       </div>
     );
   }
-  if ((loading && !job) || !playerReady) return <Loading label="Loading subtitles…" />;
+  if ((loading && !job) || !playerReady) return <WatchSkeleton />;
   if (error) return <div className="paper"><ErrorState message={error} onRetry={reload} /></div>;
   if (!segments.length) {
     return (
@@ -309,7 +368,7 @@ export function WatchView() {
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
                   Line {Math.max(0, segIndex) + 1} of {segments.length} <InfoTip id="segment" />
-                  {videoId && segIndex >= 0 && <ReportFlagButton jobId={videoId} segmentIndex={segIndex} />}
+                  {videoId && segIndex >= 0 && <ReportFlagButton jobId={videoId} segmentIndex={segIndex} onCorrected={reload} />}
                 </span>
                 {settings.showHskColors && <HskLegend />}
               </div>
@@ -434,6 +493,9 @@ function TheaterOverlay({
             {[0, 1, 2].map((i) => <span key={i} className="h-0.5 w-1.5 rounded-full bg-white/70" />)}
           </div>
           <SubtitleLine seg={seg} settings={settings} onSelect={onSelect} saved={saved} dark />
+          {settings.showTranslation && seg.translated_text && (
+            <p className="text-white/80 border-l-2 border-primary/60 pl-3 italic mt-3 text-center">{seg.translated_text}</p>
+          )}
         </div>
       </div>
 
@@ -652,6 +714,48 @@ function SubtitleLine({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Ghost loading — mirrors the real layout (player + subtitle card + word
+// panel) instead of a bare spinner, matching the Library page's pattern.
+function WatchSkeleton() {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <Skeleton className="h-8 w-20" />
+        <Skeleton className="h-5 w-56" />
+        <Skeleton className="h-8 w-36 hidden sm:block" />
+      </div>
+      <div className="grid lg:grid-cols-[1fr_340px] gap-5 items-start">
+        <div className="space-y-4 min-w-0">
+          <div className="paper overflow-hidden">
+            <Skeleton className="aspect-video rounded-none" />
+            <div className="px-4 py-3 border-t border-border bg-card space-y-3">
+              <Skeleton className="h-1.5 w-full rounded-full" />
+              <div className="flex items-center gap-1.5">
+                {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-8 w-8 rounded-md" />)}
+                <Skeleton className="h-4 w-16 ml-1" />
+              </div>
+            </div>
+          </div>
+          <div className="paper p-5 space-y-4">
+            <Skeleton className="h-4 w-28" />
+            <div className="flex justify-center gap-2">
+              {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-12 w-10" />)}
+            </div>
+            <Skeleton className="h-4 w-2/3 mx-auto" />
+          </div>
+        </div>
+        <div className="paper p-4 space-y-3">
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-9 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-16 w-full" />
+        </div>
+      </div>
     </div>
   );
 }

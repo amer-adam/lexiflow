@@ -12,7 +12,9 @@ import {
   ArrowDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { HskDot, HskLegend } from "@/components/bits";
+import { HskLegend } from "@/components/bits";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { LandingPreviewPlayer } from "@/components/LandingPreviewPlayer";
 import { cn } from "@/lib/utils";
 
 const FEATURES = [
@@ -54,13 +56,6 @@ const STEPS = [
   { t: "Drill & quiz", d: "Turn saved words into flashcards and quizzes.", icon: Layers },
 ] as const;
 
-const DEMO_LINE = [
-  { hanzi: "我们", pinyin: "wǒmen", level: 1 as const },
-  { hanzi: "可以", pinyin: "kěyǐ", level: 2 as const },
-  { hanzi: "一起", pinyin: "yīqǐ", level: 2 as const },
-  { hanzi: "学习", pinyin: "xuéxí", level: 1 as const },
-];
-
 export function LandingPage({
   onSignIn,
   configured,
@@ -81,9 +76,12 @@ export function LandingPage({
             </div>
           </div>
         </div>
-        <Button className="gap-2" onClick={onSignIn} disabled={!configured}>
-          <LogIn className="h-4 w-4" /> Sign in
-        </Button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <Button className="gap-2" onClick={onSignIn} disabled={!configured}>
+            <LogIn className="h-4 w-4" /> Sign in
+          </Button>
+        </div>
       </header>
 
       <main className="relative z-[1]">
@@ -132,41 +130,8 @@ export function LandingPage({
               </p>
             </div>
 
-            {/* ── Live mock of the Watch experience ────────────────── */}
-            <div className="relative mx-auto w-full max-w-sm">
-              <div className="paper p-5 -rotate-1">
-                <div className="relative aspect-video rounded-md overflow-hidden mb-4 bg-gradient-to-br from-secondary/30 to-primary/20 grid place-items-center">
-                  <Play className="h-12 w-12 text-white/90" strokeWidth={1.5} />
-                  <div className="absolute bottom-2 left-2 right-2 rounded bg-black/55 px-2.5 py-1.5">
-                    <p className="font-hans-serif text-base text-white leading-snug flex gap-1 flex-wrap">
-                      {DEMO_LINE.map((w) => (
-                        <span
-                          key={w.hanzi}
-                          className="cursor-pointer hover:text-primary transition-colors underline decoration-dotted decoration-white/30 underline-offset-2"
-                        >
-                          {w.hanzi}
-                        </span>
-                      ))}
-                    </p>
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground mb-2">
-                  {DEMO_LINE.map((w) => w.pinyin).join(" ")}
-                </p>
-                <p className="text-sm font-medium mb-3">"We can learn together."</p>
-                <div className="flex items-center gap-3 flex-wrap">
-                  {DEMO_LINE.map((w) => (
-                    <span key={w.hanzi} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <HskDot level={w.level} />
-                      {w.hanzi}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div className="seal absolute -bottom-4 -right-4 grid h-14 w-14 place-items-center text-xl font-bold rotate-3 shadow-lg">
-                流
-              </div>
-            </div>
+            {/* ── Real, time-locked clip from the library ──────────── */}
+            <LandingPreviewPlayer onSignUp={onSignIn} />
           </div>
         </section>
 

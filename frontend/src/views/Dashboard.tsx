@@ -1,5 +1,6 @@
 import { PlayCircle, ArrowRight, Sparkles, BookOpenCheck, Layers, Film, Plus } from "lucide-react";
 import { Stat, HskLegend, Loading, Skeleton } from "@/components/bits";
+import { ActivityPanel } from "@/components/ActivityPanel";
 import { Button } from "@/components/ui/button";
 import { useNav } from "@/app/nav";
 import { useQuery } from "@/app/useApi";
@@ -11,14 +12,18 @@ export function Dashboard() {
   const lists = useQuery((a) => a.getLists(), []);
   const decks = useQuery((a) => a.getDecks(), []);
   const library = useQuery((a) => a.getLibrary(), []);
+  const activity = useQuery((a) => a.getActivitySummary(), []);
 
   const firstName = (session.name ?? "there").split(" ")[0];
   const loading = lists.loading && !lists.data;
 
-  const words = (lists.data ?? []).reduce((s, l) => s + (l._count?.items ?? l.items.length), 0);
+  // The official HSK reference lists ship with every account — exclude them
+  // from "your" counts so they reflect what the user actually built.
+  const ownLists = (lists.data ?? []).filter((l) => l.type !== "OFFICIAL");
+  const words = ownLists.reduce((s, l) => s + (l._count?.items ?? l.items.length), 0);
   const cards = (decks.data ?? []).reduce((s, d) => s + (d._count?.flashcards ?? d.cards.length), 0);
   const resume = (library.data ?? [])[0];
-  const isNew = !loading && (lists.data?.length ?? 0) === 0 && (library.data?.length ?? 0) === 0;
+  const isNew = !loading && ownLists.length === 0 && (library.data?.length ?? 0) === 0;
 
   return (
     <div className="space-y-7">
@@ -40,10 +45,12 @@ export function Dashboard() {
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <Stat value={words} label="Words in your lists" accent="secondary" />
-            <Stat value={lists.data?.length ?? 0} label="Vocabulary lists" />
+            <Stat value={ownLists.length} label="Vocabulary lists" />
             <Stat value={cards} label="Flashcards" conceptId="srs" accent="primary" />
             <Stat value={library.data?.length ?? 0} label="Videos" />
           </div>
+
+          <ActivityPanel loading={activity.loading && !activity.data} data={activity.data} />
 
           <div className="grid lg:grid-cols-5 gap-5">
             <div className="lg:col-span-3 paper p-5">

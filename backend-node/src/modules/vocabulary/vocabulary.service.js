@@ -110,18 +110,12 @@ async function syncWatchProgressToVocab(userId, videoId, currentTime, duration) 
           const meaning = Array.isArray(translations) ? translations.join(', ') : (info.meaning || info.translation || 'Seen word');
 
           if (!cleanChar || !pinyin || !meaning) {
-            console.warn(`[Watch Sync] Skipping token "${cleanChar}" due to missing attributes. Pinyin: "${pinyin}", Meaning: "${meaning}"`);
             continue;
           }
 
           if (cleanChar === pinyin) {
-            console.warn(`[Watch Sync] Skipping token "${cleanChar}" because it is the same as pinyin.`);
             continue;
           }
-
-          console.log("\n\n[Watch Sync] Adding word to sync:", cleanChar, pinyin, meaning);
-          console.log("[Watch Sync] Context sentence:", segmentContextSentence);
-          console.log("[Watch Sync] Context translation:\n\n", segmentContextTranslation);
 
           wordsToSync.push({
             simplified: cleanChar,
@@ -245,57 +239,27 @@ async function createListFromVideo({ videoId, userId }) {
 }
 
 /**
- * Record every word in a video into the user's single "Seen" list (idempotent).
- * Called when the learner leaves a video. Returns how many words were tracked.
+ * Finalize vocab tracking when the learner leaves a video. Delegates to the
+ * same incremental sync used during playback (syncWatchProgressToVocab),
+ * which only processes segments after lastSegmentIndexSeen — so leaving and
+ * coming back no longer re-adds the words already tracked from earlier in
+ * the video. `tracked` reflects only the words added by *this* call, e.g.
+ * watching 10 more lines after a prior 260-word session reports 10, not 270.
  */
 async function markVideoWordsSeen({ videoId, userId }) {
-  const videoResult = await videosRepository.getResultByJobOrVideoId(videoId);
-  if (!videoResult) {
-    const err = new Error('Video not found or processing not completed');
-    err.status = 404;
-    throw err;
+  // Find-or-create the one SEEN list for this user — same list the
+  // incremental sync below writes into, so it always exists to report back.
+  const list = await vocabularyRepository.findOrCreateList(
+    userId, 'Words Seen', 'SEEN', 'Words LexiFlow has shown you in subtitles.'
+  );
+
+  const progress = await videoProgressRepository.getProgress(userId, videoId);
+  if (!progress || !progress.currentTime) {
+    return { listId: list.id, listName: list.name, tracked: 0 };
   }
 
-  // Find-or-create the one SEEN list for this user.
-  let list = await prisma.vocabularyList.findFirst({ where: { userId, type: 'SEEN' } });
-  if (!list) {
-    list = await vocabularyRepository.createList({
-      userId,
-      name: 'Seen while watching',
-      type: 'SEEN',
-      sourceMetadata: { description: 'Words LexiFlow has shown you in subtitles.' }
-    });
-  }
-
-  const wordsMap = new Map();
-  const segments = videoResult.result?.segments || [];
-  for (const segment of segments) {
-    const segmentCharacters = segment.characters || {};
-    const ctxSentence = segment.text || segment.sentence || '';
-    const ctxTranslation = segment.translation || segment.translated_text || '';
-    for (const [character, info] of Object.entries(segmentCharacters)) {
-      const cleanChar = character.replace('@', '');
-      const pinyin = info.pinyin || '';
-      const hskLevel = info.hsk_level !== undefined ? info.hsk_level : (info.hskLevel || null);
-      const translations = info.translations || [];
-      const meaning = Array.isArray(translations) ? translations.join(', ') : (info.meaning || info.translation || 'Seen word');
-      if (!cleanChar || !pinyin || !meaning) continue;
-      if (cleanChar === pinyin) continue;
-      if (!wordsMap.has(cleanChar)) {
-        wordsMap.set(cleanChar, {
-          simplified: cleanChar, pinyin, meaning, hskLevel,
-          sourceVideoId: videoId, contextSentence: ctxSentence, contextTranslation: ctxTranslation
-        });
-      }
-    }
-  }
-
-  let tracked = 0;
-  for (const word of wordsMap.values()) {
-    try { await vocabularyRepository.addWordToList(list.id, word); tracked++; }
-    catch (err) { console.error(`Failed to mark word ${word.simplified} seen:`, err.message); }
-  }
-  return { listId: list.id, listName: list.name, tracked };
+  const result = await syncWatchProgressToVocab(userId, videoId, progress.currentTime, progress.duration);
+  return { listId: list.id, listName: list.name, tracked: Math.max(0, result.totalAdded ?? 0) };
 }
 
 async function deleteList(listId, userId) {

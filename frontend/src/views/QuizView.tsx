@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Sparkles, Check, X, ArrowRight, RotateCcw, Trophy, Wand2, Loader2 } from "lucide-react";
+import { Sparkles, Check, X, ArrowLeft, ArrowRight, RotateCcw, Trophy, Wand2, Loader2 } from "lucide-react";
 import { QUESTION_TYPE_LABEL, hskColor, type QuestionType } from "@/lib/data";
 import { PageHeader, Loading, ErrorState, EmptyState } from "@/components/bits";
 import { InfoTip } from "@/components/InfoTip";
@@ -54,11 +54,18 @@ export function QuizView() {
     }
   };
 
+  // Jump to another question, restoring whatever answer (if any) was already
+  // recorded for it — lets you go back and forth to change answers freely.
+  const goToQuestion = (newIdx: number, rec: Record<string, string>) => {
+    setIdx(newIdx);
+    setAnswer(rec[questions[newIdx].id] ?? "");
+  };
+
   const next = async () => {
     const rec = { ...recorded, [q.id]: answer };
     setRecorded(rec);
     if (idx + 1 < questions.length) {
-      setIdx((i) => i + 1); setAnswer("");
+      goToQuestion(idx + 1, rec);
       return;
     }
     setSubmitting(true);
@@ -71,6 +78,13 @@ export function QuizView() {
       setSubmitting(false);
       setStage("result");
     }
+  };
+
+  const prev = () => {
+    if (idx === 0) return;
+    const rec = { ...recorded, [q.id]: answer };
+    setRecorded(rec);
+    goToQuestion(idx - 1, rec);
   };
 
   // ── Config ───────────────────────────────────────────────────
@@ -234,7 +248,10 @@ export function QuizView() {
           />
         )}
 
-        <div className="mt-5 flex justify-end">
+        <div className="mt-5 flex justify-between">
+          <Button variant="outline" onClick={prev} disabled={idx === 0 || submitting} className="gap-1.5">
+            <ArrowLeft className="h-4 w-4" /> Back
+          </Button>
           <Button onClick={next} disabled={!answer.trim() || submitting} className="gap-1.5">
             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             {idx + 1 >= questions.length ? "Finish & see score" : "Next"}

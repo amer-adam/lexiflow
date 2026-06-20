@@ -3,6 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 const env = require('../../config/env');
 const { agenda } = require('../../config/agenda');
 const videosRepository = require('./videos.repository');
+const segmentCorrections = require('./segment-corrections');
 const workerRouter = require('../../services/workerRouter');
 const { checkJobInQueue, estimateWaitTime } = require('../../utils/queue');
 const { extractVideoId, resolveYouTubeMetadata, isActuallyPrivate } = require('../../utils/helpers');
@@ -183,7 +184,7 @@ async function getJobStatus(jobId) {
         // finished videos can still be opened by job_id or video_id.
         const resultDoc = await videosRepository.getResultByJobOrVideoId(jobId);
         if (resultDoc) {
-            const payload = resultDoc.result || resultDoc;
+            const payload = await segmentCorrections.withCorrections(resultDoc.video_id, resultDoc.result || resultDoc);
             return {
                 job: resultDoc,
                 responseJSON: {
@@ -202,12 +203,16 @@ async function getJobStatus(jobId) {
         return null;
     }
 
+    const correctedResult = job.status === 'completed' && job.result
+        ? await segmentCorrections.withCorrections(job.video_id, job.result)
+        : job.result || null;
+
     const responseJSON = {
         job_id: job.job_id,
         status: job.status,
         progress: job.progress || 0,
         current_step: job.current_step || null,
-        result: job.result || null,
+        result: correctedResult,
         url: job.url || null,
         duration: job.duration || 0,
         title: job.title || job.result?.title || 'Unknown Title',

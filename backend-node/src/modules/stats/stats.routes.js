@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const usersController = require('./users.controller');
+const statsController = require('./stats.controller');
 const authMiddleware = require('../../middlewares/auth.middleware');
 
 router.use(authMiddleware);
 
-router.delete('/me', usersController.deleteAccount);
+router.get('/summary', statsController.getSummary);
 
 module.exports = router;

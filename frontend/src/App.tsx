@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   PlusCircle,
@@ -18,8 +18,12 @@ import { SessionControl } from "@/components/SessionControl";
 import { SessionSummaryToast } from "@/components/SessionSummaryToast";
 import { GuideTour } from "@/components/GuideTour";
 import { LandingPage } from "@/components/LandingPage";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { JobStatusWidget } from "@/components/JobStatusWidget";
 import { hasSeenGuide, markGuideSeen } from "@/lib/guide";
+import { resumeTracking } from "@/lib/jobTracker";
 import { useSession } from "@/app/session";
+import { useApi } from "@/app/useApi";
 import { Button } from "@/components/ui/button";
 
 import { Dashboard } from "@/views/Dashboard";
@@ -46,12 +50,19 @@ export default function App() {
   const [params, setParams] = useState<Record<string, string>>({});
   const [guideOpen, setGuideOpen] = useState(false);
   const session = useSession();
+  const { api } = useApi();
 
   const go = (v: ViewId, p: Record<string, string> = {}) => {
     setParams(p);
     setView(v);
     document.getElementById("scroll-main")?.scrollTo({ top: 0 });
   };
+
+  // Resume polling a job that was already being tracked before this load
+  // (e.g. a page refresh while a video was still processing).
+  useEffect(() => {
+    if (session.isAuthenticated) resumeTracking(api);
+  }, [session.isAuthenticated, api]);
 
   // First sign-in on this browser/account → show the interactive guide once,
   // until the user dismisses it (which marks it seen) or opens it manually.
@@ -155,6 +166,7 @@ export default function App() {
               >
                 <HelpCircle className="h-4 w-4" /> Guide
               </Button>
+              <ThemeToggle />
               <SessionControl />
             </div>
           </header>
@@ -173,6 +185,7 @@ export default function App() {
           </main>
         </div>
         <SessionSummaryToast />
+        <JobStatusWidget />
         <GuideTour
           open={guideOpen || autoGuide}
           onOpenChange={setGuideOpen}

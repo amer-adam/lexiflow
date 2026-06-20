@@ -124,7 +124,7 @@ def process_single_segment(text):
             # 4. FALLBACK: No definitions found for the phrase, break it down character-by-character
             if len(token) > 1:
                 # Print debug log similar to yours to track fallback actions
-                print(f"[Watch Sync Fallback] Phrase '{token}' missing definitions. Splitting word-by-word.")
+                # print(f"[Watch Sync Fallback] Phrase '{token}' missing definitions. Splitting word-by-word.")
                 
                 for char in token:
                     char_data = lookup_token(char)

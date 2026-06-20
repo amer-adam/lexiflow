@@ -77,6 +77,19 @@ export function LibraryView() {
 
   const videoById = useMemo(() => new Map((data ?? []).map((v) => [v.id, v])), [data]);
 
+  // "Continue watching" only makes sense for the default, unfiltered browse —
+  // skip the split while actively searching so results stay a single list.
+  const isBrowsing = !q.trim();
+  const inProgress = useMemo(() => {
+    if (!isBrowsing || !progressById) return [];
+    return displayedVideos.filter((v) => {
+      const p = progressById.get(v.id);
+      return !!p && p.duration > 0 && p.currentTime > 0 && p.currentTime / p.duration < 0.97;
+    });
+  }, [isBrowsing, displayedVideos, progressById]);
+  const inProgressIds = useMemo(() => new Set(inProgress.map((v) => v.id)), [inProgress]);
+  const suggestions = isBrowsing ? displayedVideos.filter((v) => !inProgressIds.has(v.id)) : displayedVideos;
+
   return (
     <div>
       <PageHeader
@@ -158,25 +171,49 @@ export function LibraryView() {
       ) : (
         <div className="space-y-6">
           {searchMode !== "subtitles" && displayedVideos.length > 0 && (
-            <div>
-              {isSplit && <h3 className="font-display text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Video matches</h3>}
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {displayedVideos.map((v) => (
-                  <VideoCard
-                    key={v.id}
-                    v={v}
-                    progress={progressById?.get(v.id)}
-                    onOpen={() => go("watch", { id: v.id })}
-                    onDelete={v.ownedByMe ? () => handleDelete(v) : undefined}
-                    deleting={deletingId === v.id}
-                    showEnglish={settings.libraryTitlesEnglish}
-                  />
-                ))}
-              </div>
-              {isSplit && titleMatches.length > 4 && (
-                <button onClick={() => setSearchMode("titles")} className="text-sm text-secondary hover:underline mt-2">See all {titleMatches.length} video matches →</button>
+            <>
+              {isBrowsing && inProgress.length > 0 && (
+                <div>
+                  <h3 className="font-display text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Continue watching</h3>
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {inProgress.map((v) => (
+                      <VideoCard
+                        key={v.id}
+                        v={v}
+                        progress={progressById?.get(v.id)}
+                        onOpen={() => go("watch", { id: v.id })}
+                        onDelete={v.ownedByMe ? () => handleDelete(v) : undefined}
+                        deleting={deletingId === v.id}
+                        showEnglish={settings.libraryTitlesEnglish}
+                      />
+                    ))}
+                  </div>
+                </div>
               )}
-            </div>
+              <div>
+                {(isSplit || (isBrowsing && inProgress.length > 0)) && (
+                  <h3 className="font-display text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                    {isSplit ? "Video matches" : "Suggestions"}
+                  </h3>
+                )}
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {suggestions.map((v) => (
+                    <VideoCard
+                      key={v.id}
+                      v={v}
+                      progress={progressById?.get(v.id)}
+                      onOpen={() => go("watch", { id: v.id })}
+                      onDelete={v.ownedByMe ? () => handleDelete(v) : undefined}
+                      deleting={deletingId === v.id}
+                      showEnglish={settings.libraryTitlesEnglish}
+                    />
+                  ))}
+                </div>
+                {isSplit && titleMatches.length > 4 && (
+                  <button onClick={() => setSearchMode("titles")} className="text-sm text-secondary hover:underline mt-2">See all {titleMatches.length} video matches →</button>
+                )}
+              </div>
+            </>
           )}
 
           {searchMode !== "titles" && q.trim() && (

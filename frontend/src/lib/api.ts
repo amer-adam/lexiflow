@@ -131,7 +131,32 @@ export interface SubtitleMatch {
 }
 export interface VideoProgress {
   videoId: string; currentTime: number; duration: number; lastSegmentIndexSeen: number;
+  updatedAt?: string;
 }
+export interface ActivityCounts { wordsSeen: number; wordsReviewed: number; quizzesTaken: number; }
+export interface ActivitySummary { today: ActivityCounts; allTime: ActivityCounts; }
+
+export type ReportReason = "translation" | "pinyin" | "text" | "other";
+/** Raw subtitle segment shape as stored/edited server-side — distinct from
+ *  the parsed `Segment`/`CharToken` view-model used elsewhere in the app. */
+export interface RawSegment {
+  start: number;
+  end: number;
+  text: string;
+  translated_text: string;
+  characters: Record<string, { pinyin: string; hsk_level: number; translations: string[] }>;
+}
+export interface SegmentReviewResponse {
+  filed: boolean;
+  ai: { reviewId: string; before: RawSegment; after: RawSegment } | null;
+  aiError?: string;
+}
+
+export interface PreviewClipSegment {
+  start: number; end: number; text: string; translated_text: string; pinyin: string;
+  characters: Record<string, { pinyin: string; hsk_level: number; translations: string[] }>;
+}
+export interface PreviewClip { youtubeId: string; title: string; lockStart: number; lockEnd: number; segments: PreviewClipSegment[]; }
 
 // ── Client ──────────────────────────────────────────────────────────────────
 export class Api {
@@ -219,6 +244,11 @@ export class Api {
     invalidate("listwords:");
     return r;
   }
+  /** Locked landing-page preview clip — a single hardcoded, server-cached clip
+   *  that survives the source video being deleted from the main pipeline. */
+  getPreviewClip(): Promise<PreviewClip> {
+    return cachedFetch("landing:preview-clip", () => this.req("/landing/preview-clip"));
+  }
   /** Build a new named list from every word in a video. */
   async listFromVideo(videoId: string): Promise<{ listId: string; listName: string; wordsAdded: number }> {
     const r = await this.req<{ success: boolean; listId: string; listName: string; wordsAdded: number }>(
@@ -237,13 +267,30 @@ export class Api {
     return r.url.startsWith("http") ? r.url : `${ENV.apiBase}${r.url}`;
   }
   /** File a crowd-report that a subtitle line's translation/pinyin/text looks wrong. */
-  async reportSegment(jobId: string, segmentIndex: number, reason: "translation" | "pinyin" | "text" | "other", note?: string): Promise<void> {
+  async reportSegment(jobId: string, segmentIndex: number, reason: ReportReason, note?: string): Promise<void> {
     await this.req<void>("/reports", { method: "POST", body: JSON.stringify({ jobId, segmentIndex, reason, note }) });
     invalidate(`reports:${jobId}`);
   }
   /** Per-segment report counts + flagged status for a video. */
   getSegmentReports(jobId: string): Promise<{ jobId: string; viewerCount: number; threshold: { minReports: number; percent: number }; segments: { segmentIndex: number; count: number; percent: number; flagged: boolean }[] }> {
     return cachedFetch(`reports:${jobId}`, () => this.req(`/reports/${jobId}`));
+  }
+  /** Files the report and instantly asks an LLM to review + correct the segment.
+   *  `ai` is null if the AI review itself failed (e.g. no provider key configured) —
+   *  the report is still filed for ordinary crowd-threshold review either way. */
+  async reviewSegmentReport(jobId: string, segmentIndex: number, reason: ReportReason, note?: string): Promise<SegmentReviewResponse> {
+    const r = await this.req<SegmentReviewResponse>("/reports/review", {
+      method: "POST", body: JSON.stringify({ jobId, segmentIndex, reason, note }),
+    });
+    invalidate(`reports:${jobId}`);
+    invalidate(`job:${jobId}`);
+    return r;
+  }
+  /** Records the reporter's satisfaction + 1-5 rating of an AI correction — the data used to judge the LLM. */
+  async rateSegmentReview(reviewId: string, satisfied: boolean, rating: number): Promise<void> {
+    await this.req<void>(`/reports/review/${reviewId}/feedback`, {
+      method: "POST", body: JSON.stringify({ satisfied, rating }),
+    });
   }
   /** Export a vocabulary list as a downloadable file (csv | anki | pdf). */
   async exportList(listId: string, format: "csv" | "anki" | "pdf"): Promise<Blob> {
@@ -322,15 +369,20 @@ export class Api {
       return {
         videoId, currentTime: r?.currentTime ?? 0, duration: r?.duration ?? 0,
         lastSegmentIndexSeen: r?.lastSegmentIndexSeen ?? -1,
+        updatedAt: r?.updatedAt ?? undefined,
       };
     });
   }
-  /** Throttled progress save — call at most every ~15-30s while playing, and once on leave. */
-  async saveProgress(videoId: string, currentTime: number, duration: number): Promise<void> {
-    await this.req<void>(`/videos/${videoId}/progress`, {
+  /** Throttled progress save — call at most every ~15-30s while playing, and once on leave.
+   *  The backend syncs newly-watched words to the "Seen" list on every save (not just on
+   *  leave), so the response reports how many were tracked *this call* — callers that want
+   *  a whole-session total need to accumulate this across calls themselves. */
+  async saveProgress(videoId: string, currentTime: number, duration: number): Promise<{ tracked: number }> {
+    const r = await this.req<{ sync?: { totalAdded?: number } }>(`/videos/${videoId}/progress`, {
       method: "POST", body: JSON.stringify({ currentTime, duration }),
     });
     invalidate(`progress:${videoId}`);
+    return { tracked: Math.max(0, r?.sync?.totalAdded ?? 0) };
   }
   async uploadJob(file: File, title: string, isPrivate: boolean): Promise<any> {
     const token = await this.getToken();
@@ -409,5 +461,17 @@ export class Api {
   }
   submitQuiz(quizId: string, answers: { questionId: string; userAnswer: string }[]): Promise<QuizGrade> {
     return this.req<QuizGrade>(`/quizzes/${quizId}/submit`, { method: "POST", body: JSON.stringify({ answers }) });
+  }
+
+  // Stats -----------------------------------------------------------------
+  /** Daily-activity summary for the dashboard: words seen/reviewed, quizzes taken — today and all time. */
+  getActivitySummary(): Promise<ActivitySummary> {
+    return cachedFetch("activitySummary", () => this.req<ActivitySummary>("/stats/summary"), 60_000);
+  }
+
+  // Account -----------------------------------------------------------------
+  /** Permanently delete the current user and everything they own. */
+  async deleteAccount(): Promise<void> {
+    await this.req<void>("/users/me", { method: "DELETE" });
   }
 }

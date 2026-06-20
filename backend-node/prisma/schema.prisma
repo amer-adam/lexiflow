@@ -108,8 +108,8 @@ model FlashcardDeck {
   listId    String   @unique // Linked 1:1 with a VocabularyList
   createdAt DateTime @default(now())
 
-  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  vocabularyList VocabularyList? @relation(fields: [listId], references: [id], onDelete: SetNull)
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vocabularyList VocabularyList @relation(fields: [listId], references: [id], onDelete: Cascade)
   flashcards     Flashcard[]
 }
 
@@ -252,4 +252,27 @@ model UserWatchProgress {
   @@unique([userId, videoId]) // Prevent duplicate progress records per user-video pair
   @@index([userId]) // Fast lookup by user
   @@index([updatedAt]) // Query recent progress
+}
+
+// Active AI-applied correction for one subtitle segment. The original
+// segment in MongoDB is never modified — this table is a patch layer
+// consulted (and merged in) whenever a video's subtitles are fetched, so
+// the correction shows up immediately without touching the source-of-truth
+// transcription/translation data. Only the latest correction per segment
+// is kept; re-correcting the same line replaces the previous patch.
+model SegmentCorrection {
+  id             String   @id @default(uuid())
+  videoId        String // MongoDB video_id of the corrected video
+  segmentIndex   Int
+  text           String // corrected Chinese text
+  translatedText String // corrected English translation
+  characters     Json // corrected per-character pinyin/hsk_level/translations map
+  reason         String // report reason that triggered this correction
+  note           String?
+  reviewId       String? // links back to the segment_ai_reviews audit record in MongoDB
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([videoId, segmentIndex])
+  @@index([videoId])
 }

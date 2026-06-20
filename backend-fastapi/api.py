@@ -25,6 +25,7 @@ from pypinyin import pinyin
 from transcribe import api_transcribe
 from postprocces import api_postprocess
 from src.download import download_url, uri_validator, get_duration
+from src.captions import find_existing_captions, download_and_parse_captions
 
 from services.quiz.generator import QuizGenerator
 from services.quiz.judge import QuizJudge
@@ -212,34 +213,66 @@ async def start_processing(request: JobRequest) -> JobStatus:
 async def run_pipeline(job_id: str, url: str, is_local: bool = False):
     try:
         overall_start = time.time()
-        
-        # 1. Download (25%)
-        print("\n--- Step 1: Downloading Video ---")
-        step_start = time.time()
-        active_jobs[job_id].update({
-            "progress": 25,
-            "current_step": "download"
-        })
-        
-        if is_local:
-            file_path = url
-            download_time = 0
-        else:
-            file_path = await asyncio.to_thread(download_video, url, job_id)
-            download_time = time.time() - step_start
-        print(f"Download completed in {download_time:.2f}s")
 
-        # 2. Transcribe (50%)
-        print("\n--- Step 2: Transcribing Audio ---")
-        step_start = time.time()
-        active_jobs[job_id].update({
-            "progress": 50,
-            "current_step": "transcribe"
-        })
-        transcription = await asyncio.to_thread(api_transcribe, file_path)
-        transcribe_time = time.time() - step_start
-        num_segments = len(transcription.get('segments', []))
-        print(f"Transcription completed in {transcribe_time:.2f}s (Found {num_segments} segments)")
+        # 0. Check for existing captions first — if the video already has a
+        # manually-uploaded Chinese subtitle track, reuse it and skip both
+        # the download and transcription steps entirely.
+        used_existing_captions = False
+        existing_track = None
+        if not is_local:
+            print("\n--- Step 0: Checking for existing captions ---")
+            active_jobs[job_id].update({
+                "progress": 10,
+                "current_step": "captions_check"
+            })
+            try:
+                existing_track = await asyncio.to_thread(find_existing_captions, url)
+            except Exception as e:
+                print(f"Caption lookup failed, falling back to download + transcribe: {e}")
+                existing_track = None
+
+        if existing_track:
+            print(f"USED EXISTING CC instead of downloading + transcribing — "
+                  f"lang={existing_track['lang']}, url={url}")
+            step_start = time.time()
+            active_jobs[job_id].update({
+                "progress": 50,
+                "current_step": "captions"
+            })
+            transcription = await asyncio.to_thread(download_and_parse_captions, existing_track)
+            download_time = 0.0
+            transcribe_time = time.time() - step_start
+            num_segments = len(transcription.get('segments', []))
+            used_existing_captions = True
+            print(f"Reused existing captions in {transcribe_time:.2f}s (Found {num_segments} segments)")
+        else:
+            # 1. Download (25%)
+            print("\n--- Step 1: Downloading Video ---")
+            step_start = time.time()
+            active_jobs[job_id].update({
+                "progress": 25,
+                "current_step": "download"
+            })
+
+            if is_local:
+                file_path = url
+                download_time = 0
+            else:
+                file_path = await asyncio.to_thread(download_video, url, job_id)
+                download_time = time.time() - step_start
+            print(f"Download completed in {download_time:.2f}s")
+
+            # 2. Transcribe (50%)
+            print("\n--- Step 2: Transcribing Audio ---")
+            step_start = time.time()
+            active_jobs[job_id].update({
+                "progress": 50,
+                "current_step": "transcribe"
+            })
+            transcription = await asyncio.to_thread(api_transcribe, file_path)
+            transcribe_time = time.time() - step_start
+            num_segments = len(transcription.get('segments', []))
+            print(f"Transcription completed in {transcribe_time:.2f}s (Found {num_segments} segments)")
 
         # 3. Translate (75%)
         print("\n--- Step 3: Translating Segments ---")
@@ -260,9 +293,11 @@ async def run_pipeline(job_id: str, url: str, is_local: bool = False):
         print(f"Post-processing completed in {postprocess_time:.2f}s")
 
         total_duration = time.time() - overall_start
-        
+
         print("\n" + "="*50)
         print(f"DETAILED TIME LOGGING FOR JOB: {job_id}")
+        if used_existing_captions:
+            print(f"Used existing CC instead of download + transcribe (lang={existing_track['lang']})")
         print(f"1. Download:      {download_time:>8.2f}s")
         print(f"2. Transcribe:    {transcribe_time:>8.2f}s")
         print(f"3. Translate:     {translate_time:>8.2f}s")
@@ -270,6 +305,8 @@ async def run_pipeline(job_id: str, url: str, is_local: bool = False):
         print("-" * 50)
         print(f"TOTAL DURATION:   {total_duration:>8.2f}s")
         print("="*50 + "\n")
+
+        end_result["used_existing_captions"] = used_existing_captions
 
         # Success
         active_jobs[job_id].update({

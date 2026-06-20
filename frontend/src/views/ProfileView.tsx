@@ -1,20 +1,40 @@
-import { Globe, Subtitles, Target, RotateCcw, BookOpenCheck, Layers, Film } from "lucide-react";
+import { useState } from "react";
+import { Globe, Subtitles, Target, RotateCcw, BookOpenCheck, Layers, Film, Loader2, Trash2 } from "lucide-react";
 import { PageHeader, Stat } from "@/components/bits";
+import { ActivityPanel } from "@/components/ActivityPanel";
 import { InfoTip } from "@/components/InfoTip";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useSession } from "@/app/session";
-import { useQuery } from "@/app/useApi";
+import { useApi, useQuery } from "@/app/useApi";
 import { useSettings, updateSettings, resetSettings, LANGUAGES, type Lang } from "@/lib/settings";
 
 export function ProfileView() {
   const session = useSession();
+  const { api } = useApi();
   const s = useSettings();
   const lists = useQuery((a) => a.getLists(), []);
   const decks = useQuery((a) => a.getDecks(), []);
   const library = useQuery((a) => a.getLibrary(), []);
+  const activity = useQuery((a) => a.getActivitySummary(), []);
+  const [deleting, setDeleting] = useState(false);
 
   const words = (lists.data ?? []).reduce((acc, l) => acc + (l._count?.items ?? l.items.length), 0);
+
+  const deleteAccount = async () => {
+    const ok = window.confirm(
+      "Delete your account? This permanently removes your vocabulary lists, flashcard decks, review history and quiz history. This cannot be undone."
+    );
+    if (!ok) return;
+    setDeleting(true);
+    try {
+      await api.deleteAccount();
+      session.logout();
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : "Failed to delete account");
+      setDeleting(false);
+    }
+  };
 
   return (
     <div className="max-w-3xl">
@@ -43,6 +63,10 @@ export function ProfileView() {
           <Stat value={decks.data?.length ?? 0} label="Decks" accent="primary" />
           <Stat value={library.data?.length ?? 0} label="Videos" />
         </div>
+      </div>
+
+      <div className="mb-5">
+        <ActivityPanel loading={activity.loading && !activity.data} data={activity.data} />
       </div>
 
       {/* Translation language */}
@@ -115,6 +139,20 @@ export function ProfileView() {
         <span className="inline-flex items-center gap-1"><Layers className="h-3.5 w-3.5" /> Your lists & decks are saved to your account.</span>
         <span className="inline-flex items-center gap-1"><Film className="h-3.5 w-3.5" /> Changes apply immediately.</span>
       </p>
+
+      {/* Danger zone */}
+      <div className="paper p-5 mt-5 border-destructive/30">
+        <h3 className="font-display text-lg font-semibold flex items-center gap-2 mb-1 text-destructive">
+          <Trash2 className="h-4 w-4" /> Delete account
+        </h3>
+        <p className="text-sm text-muted-foreground mb-3">
+          Permanently deletes your vocabulary lists, flashcard decks, review history and quiz history. This cannot be undone.
+        </p>
+        <Button variant="destructive" size="sm" className="gap-1.5" onClick={deleteAccount} disabled={deleting}>
+          {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+          {deleting ? "Deleting…" : "Delete my account"}
+        </Button>
+      </div>
     </div>
   );
 }

@@ -55,7 +55,7 @@ function authMiddleware(req, res, next) {
           }
         });
 
-        console.debug(`JWT verified and user row synced in DB for: ${req.userId}`);
+        // console.debug(`JWT verified and user row synced in DB for: ${req.userId}`);
         return next();
       } catch (dbError) {
         console.error(`Database seeding failed for user ${userId} in auth middleware:`, dbError);

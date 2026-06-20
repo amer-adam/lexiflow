@@ -1,0 +1,5677 @@
+{
+  "youtubeId": "goeUtfe5wiU",
+  "title": "焦慮、壓力大、職業倦怠？前西點軍校教師：你該做的不是抗壓，而是⋯⋯｜【初日會客室】陳永儀博士",
+  "lockStart": 68,
+  "lockEnd": 180,
+  "segments": [
+    {
+      "start": 66.24,
+      "end": 68.24000000000001,
+      "text": "以及氣管系同時擔任教授",
+      "translated_text": "And the air-pipe system is also a professor",
+      "pinyin": "yǐ jí qì guǎn xì tóng shí dān rèn jiào shòu",
+      "characters": {
+        "以及": {
+          "pinyin": "yǐ jí",
+          "translations": [
+            "as well as",
+            "too",
+            "and"
+          ],
+          "hsk_level": 5,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "氣管": {
+          "pinyin": "qì guǎn",
+          "translations": [
+            "windpipe",
+            "trachea",
+            "respiratory tract",
+            "air duct",
+            "gas pipe"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "系": {
+          "pinyin": "xì",
+          "translations": [
+            "to connect",
+            "to arrest",
+            "to worry"
+          ],
+          "hsk_level": 5,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "同": {
+          "pinyin": "tóng",
+          "translations": [
+            "see 衚衕|胡同[hu2 tong4]"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "時": {
+          "pinyin": "shí",
+          "translations": [
+            "o'clock",
+            "time",
+            "when",
+            "hour",
+            "season",
+            "period"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "擔": {
+          "pinyin": "dān",
+          "translations": [
+            "picul (100 catties, 50 kg)",
+            "two buckets full",
+            "carrying pole and its load",
+            "classifier for loads carried on a shoulder pole"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "任": {
+          "pinyin": "rèn",
+          "translations": [
+            "to assign",
+            "to appoint",
+            "to take up a post",
+            "office",
+            "responsibility",
+            "to let",
+            "to allow",
+            "to give free rein to",
+            "no matter (how, what etc)",
+            "classifier for terms served in office, or for spouses, girlfriends etc (as in 前任男友)"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "教": {
+          "pinyin": "jiāo",
+          "translations": [
+            "to teach"
+          ],
+          "hsk_level": 3,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "授": {
+          "pinyin": "shòu",
+          "translations": [
+            "(bound form) to confer",
+            " to give",
+            "(bound form) to teach",
+            " to instruct",
+            "(literary) to appoint"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 68.24000000000001,
+      "end": 70.84,
+      "text": "我們歡迎的是陳永宜 陳教授",
+      "translated_text": "We welcome Chen Yongyee, Professor Chan",
+      "pinyin": "wǒ men huān yíng de shì chén yǒng yí   chén jiào shòu",
+      "characters": {
+        "我們": {
+          "pinyin": "wǒ men",
+          "translations": [
+            "we",
+            " us",
+            " ourselves",
+            " our"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "歡迎": {
+          "pinyin": "huān yíng",
+          "translations": [
+            "to welcome",
+            "welcome"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "的": {
+          "pinyin": "de",
+          "translations": [
+            "of",
+            "~'s (possessive particle)",
+            "(used after an attribute)",
+            "(used to form a nominal expression)",
+            "(used at the end of a declarative sentence for emphasis)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "是": {
+          "pinyin": "shì",
+          "translations": [
+            "is",
+            "are",
+            "am",
+            "yes",
+            "to be"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "陳": {
+          "pinyin": "chén",
+          "translations": [
+            "to lay out",
+            " to exhibit",
+            " to display",
+            "to narrate",
+            " to state",
+            " to explain",
+            " to tell",
+            "old",
+            " stale"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "永": {
+          "pinyin": "yǒng",
+          "translations": [
+            "forever",
+            "always",
+            "perpetual"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "宜": {
+          "pinyin": "yí",
+          "translations": [
+            "proper",
+            "should",
+            "suitable",
+            "appropriate"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "教授": {
+          "pinyin": "jiào shòu",
+          "translations": [
+            "professor",
+            "to instruct",
+            "to lecture on",
+            "CL:個|个",
+            "位[wèi]"
+          ],
+          "hsk_level": 4,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 70.84,
+      "end": 71.64,
+      "text": "陳教授你好",
+      "translated_text": "Hello, Professor Chan",
+      "pinyin": "chén jiào shòu nǐ hǎo",
+      "characters": {
+        "陳": {
+          "pinyin": "chén",
+          "translations": [
+            "to lay out",
+            " to exhibit",
+            " to display",
+            "to narrate",
+            " to state",
+            " to explain",
+            " to tell",
+            "old",
+            " stale"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "教授": {
+          "pinyin": "jiào shòu",
+          "translations": [
+            "professor",
+            "to instruct",
+            "to lecture on",
+            "CL:個|个",
+            "位[wèi]"
+          ],
+          "hsk_level": 4,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "你好": {
+          "pinyin": "nǐ hǎo",
+          "translations": [
+            "hello",
+            "hi"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 71.64,
+      "end": 72.84,
+      "text": "你好 宋醫師好",
+      "translated_text": "Hello, Dr. Song",
+      "pinyin": "nǐ hǎo   sòng yī shī hǎo",
+      "characters": {
+        "你好": {
+          "pinyin": "nǐ hǎo",
+          "translations": [
+            "hello",
+            "hi"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "宋": {
+          "pinyin": "sòng",
+          "translations": [
+            "surname Song",
+            "the Song dynasty (960-1279)",
+            "also Song of the Southern dynasties 南朝宋 (420-479)"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "醫": {
+          "pinyin": "yī",
+          "translations": [
+            "medical",
+            "medicine",
+            "doctor",
+            "to cure",
+            "to treat"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "師": {
+          "pinyin": "shī",
+          "translations": [
+            "teacher",
+            "master",
+            "expert",
+            "model",
+            "army division",
+            "(old) troops",
+            "to dispatch troops"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "好": {
+          "pinyin": "hǎo",
+          "translations": [
+            "good",
+            "well",
+            "proper",
+            "good to",
+            "easy to",
+            "very",
+            "so",
+            "(suffix indicating completion or readiness)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 72.84,
+      "end": 75.24000000000001,
+      "text": "各位聽眾朋友 觀眾朋友大家好",
+      "translated_text": "Ladies and gentlemen. Okay",
+      "pinyin": "gè wèi tīng zhòng péng yǒu   guān zhòng péng yǒu dà jiā hǎo",
+      "characters": {
+        "各位": {
+          "pinyin": "gè wèi",
+          "translations": [
+            "everybody",
+            "all (guests, colleagues etc)",
+            "all of you"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "聽眾": {
+          "pinyin": "tīng zhòng",
+          "translations": [
+            "audience",
+            "listeners"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "朋友": {
+          "pinyin": "péng you",
+          "translations": [
+            "friend",
+            "CL:個|个",
+            "位[wèi]"
+          ],
+          "hsk_level": 1,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "觀眾": {
+          "pinyin": "guān zhòng",
+          "translations": [
+            "spectators",
+            "audience",
+            "visitors (to an exhibition etc)"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "大家": {
+          "pinyin": "dà jiā",
+          "translations": [
+            "everyone",
+            "influential family",
+            "great expert"
+          ],
+          "hsk_level": 2,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "好": {
+          "pinyin": "hǎo",
+          "translations": [
+            "good",
+            "well",
+            "proper",
+            "good to",
+            "easy to",
+            "very",
+            "so",
+            "(suffix indicating completion or readiness)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 75.24000000000001,
+      "end": 77.84,
+      "text": "非常榮幸能夠來到宋醫師這邊",
+      "translated_text": "It's an honor to be here with Dr. Song",
+      "pinyin": "fēi cháng róng xìng néng gòu lái dào sòng yī shī zhè biān",
+      "characters": {
+        "非常": {
+          "pinyin": "fēi cháng",
+          "translations": [
+            "unusual",
+            "extraordinary",
+            "extreme",
+            "very",
+            "exceptional"
+          ],
+          "hsk_level": 2,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "榮": {
+          "pinyin": "róng",
+          "translations": [
+            "glory",
+            "honor",
+            "thriving"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "幸": {
+          "pinyin": "xìng",
+          "translations": [
+            "fortunate",
+            "lucky"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "能": {
+          "pinyin": "néng",
+          "translations": [
+            "to be able to",
+            "to be capable of",
+            "ability",
+            "capability",
+            "able",
+            "capable",
+            "can possibly",
+            "(usually used in the negative) to have the possibility of"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "夠": {
+          "pinyin": "gòu",
+          "translations": [
+            "enough (sufficient)",
+            "enough (too much)",
+            "(coll.) (before adj.) really",
+            "(coll.) to reach by stretching out"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "來": {
+          "pinyin": "lái",
+          "translations": [
+            "to come",
+            "(used as a substitute for a more specific verb)",
+            "hither (directional complement for motion toward the speaker, as in 回來|回来[hui2 lai5])",
+            "ever since (as in 自古以來|自古以来[zi4 gu3 yi3 lai2])",
+            "for the past (amount of time)",
+            "(prefix) the coming ...",
+            " the next ... (as in 來世|来世[lai2 shi4])",
+            "(between two verbs) in order to",
+            "(after a round number) approximately",
+            "(used after 得[de2] to indicate possibility, as in 談得來|谈得来[tan2 de5 lai2], or after 不[bu4] to indicate impossibility, as in 吃不來|吃不来[chi1 bu5 lai2])"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "到": {
+          "pinyin": "dào",
+          "translations": [
+            "to (a place)",
+            "until (a time)",
+            "up to",
+            "to go",
+            "to arrive"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "宋": {
+          "pinyin": "sòng",
+          "translations": [
+            "surname Song",
+            "the Song dynasty (960-1279)",
+            "also Song of the Southern dynasties 南朝宋 (420-479)"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "醫": {
+          "pinyin": "yī",
+          "translations": [
+            "medical",
+            "medicine",
+            "doctor",
+            "to cure",
+            "to treat"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "師": {
+          "pinyin": "shī",
+          "translations": [
+            "teacher",
+            "master",
+            "expert",
+            "model",
+            "army division",
+            "(old) troops",
+            "to dispatch troops"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "這邊": {
+          "pinyin": "zhè biān",
+          "translations": [
+            "this side",
+            "here"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 77.84,
+      "end": 79.64,
+      "text": "請您稍微自我介紹一下自己",
+      "translated_text": "Please introduce yourself",
+      "pinyin": "qǐng nín shāo wēi zì wǒ jiè shào yī xià zì jǐ",
+      "characters": {
+        "請": {
+          "pinyin": "qǐng",
+          "translations": [
+            "to ask",
+            "to invite",
+            "please (do sth)",
+            "to treat (to a meal etc)",
+            "to request"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "您": {
+          "pinyin": "nín",
+          "translations": [
+            "you (courteous, as opposed to informal 你)"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "稍微": {
+          "pinyin": "shāo wēi",
+          "translations": [
+            "a little bit"
+          ],
+          "hsk_level": 4,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "自我": {
+          "pinyin": "zì wǒ",
+          "translations": [
+            "self-",
+            "ego (psychology)"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "介紹": {
+          "pinyin": "jiè shào",
+          "translations": [
+            "to introduce (sb to sb)",
+            "to give a presentation",
+            "to present (sb for a job etc)",
+            "introduction"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "一下": {
+          "pinyin": "yī xià",
+          "translations": [
+            "(used after a verb) give it a go",
+            "to do (sth for a bit to give it a try)",
+            "one time",
+            "once",
+            "in a while",
+            "all of a sudden",
+            "all at once"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "自己": {
+          "pinyin": "zì jǐ",
+          "translations": [
+            "oneself",
+            "one's own"
+          ],
+          "hsk_level": 3,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 79.64,
+      "end": 82.03999999999999,
+      "text": "從大學開始主修就是念心理學",
+      "translated_text": "I've been studying psychology since college",
+      "pinyin": "cóng dà xué kāi shǐ zhǔ xiū jiù shì niàn xīn lǐ xué",
+      "characters": {
+        "從": {
+          "pinyin": "cóng",
+          "translations": [
+            "from",
+            "through",
+            "via",
+            "to follow",
+            "to obey",
+            "to engage in (an activity)",
+            "never (in negative sentence)",
+            "(Taiwan pr. [zong4]) retainer",
+            "assistant",
+            "auxiliary",
+            "subordinate",
+            "related by common paternal grandfather or earlier ancestor"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "大": {
+          "pinyin": "dà",
+          "translations": [
+            "big",
+            "huge",
+            "large",
+            "major",
+            "great",
+            "wide",
+            "deep",
+            "oldest",
+            "eldest"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "學": {
+          "pinyin": "xué",
+          "translations": [
+            "to learn",
+            "to study",
+            "to imitate",
+            "science",
+            "-ology"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "開始": {
+          "pinyin": "kāi shǐ",
+          "translations": [
+            "to begin",
+            "beginning",
+            "to start",
+            "initial",
+            "CL:個|个[ge4]"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "主修": {
+          "pinyin": "zhǔ xiū",
+          "translations": [
+            "(education) to major in",
+            "major"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "就是": {
+          "pinyin": "jiù shì",
+          "translations": [
+            "exactly",
+            " precisely",
+            "only",
+            " simply",
+            " just",
+            "(used correlatively with 也[ye3]) even",
+            " even if"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "念": {
+          "pinyin": "niàn",
+          "translations": [
+            "to read",
+            "to study (a degree course)",
+            "to read aloud",
+            "to miss (sb)",
+            "idea",
+            "remembrance",
+            "twenty (banker's anti-fraud numeral corresponding to 廿, 20)"
+          ],
+          "hsk_level": 5,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "心理": {
+          "pinyin": "xīn lǐ",
+          "translations": [
+            "mental",
+            "psychological"
+          ],
+          "hsk_level": 5,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 82.03999999999999,
+      "end": 84.44,
+      "text": "走到後來就是教書做研究",
+      "translated_text": "I'm going to teach and study",
+      "pinyin": "zǒu dào hòu lái jiù shì jiào shū zuò yán jiū",
+      "characters": {
+        "走": {
+          "pinyin": "zǒu",
+          "translations": [
+            "to walk",
+            "to go",
+            "to run",
+            "to move (of vehicle)",
+            "to visit",
+            "to leave",
+            "to go away",
+            "to die (euph.)",
+            "from",
+            "through",
+            "away (in compound verbs, such as 撤走)",
+            "to change (shape, form, meaning)"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "到": {
+          "pinyin": "dào",
+          "translations": [
+            "to (a place)",
+            "until (a time)",
+            "up to",
+            "to go",
+            "to arrive"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "後": {
+          "pinyin": "hòu",
+          "translations": [
+            "back",
+            "behind",
+            "rear",
+            "afterwards",
+            "after",
+            "later",
+            "post-"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "來": {
+          "pinyin": "lái",
+          "translations": [
+            "to come",
+            "(used as a substitute for a more specific verb)",
+            "hither (directional complement for motion toward the speaker, as in 回來|回来[hui2 lai5])",
+            "ever since (as in 自古以來|自古以来[zi4 gu3 yi3 lai2])",
+            "for the past (amount of time)",
+            "(prefix) the coming ...",
+            " the next ... (as in 來世|来世[lai2 shi4])",
+            "(between two verbs) in order to",
+            "(after a round number) approximately",
+            "(used after 得[de2] to indicate possibility, as in 談得來|谈得来[tan2 de5 lai2], or after 不[bu4] to indicate impossibility, as in 吃不來|吃不来[chi1 bu5 lai2])"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "就是": {
+          "pinyin": "jiù shì",
+          "translations": [
+            "exactly",
+            " precisely",
+            "only",
+            " simply",
+            " just",
+            "(used correlatively with 也[ye3]) even",
+            " even if"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "教書": {
+          "pinyin": "jiào shū",
+          "translations": [
+            "to teach (in a school)"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "做": {
+          "pinyin": "zuò",
+          "translations": [
+            "to do",
+            "to make",
+            "to produce",
+            "to write",
+            "to compose",
+            "to act as",
+            "to engage in",
+            "to hold (a party)",
+            "to be",
+            "to become",
+            "to function (in some capacity)",
+            "to serve as",
+            "to be used for",
+            "to form (a bond or relationship)",
+            "to pretend",
+            "to feign",
+            "to act a part",
+            "to put on appearance"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "研究": {
+          "pinyin": "yán jiū",
+          "translations": [
+            "research",
+            "a study",
+            "CL:項|项[xiang4]",
+            "to research",
+            "to look into"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 84.44,
+      "end": 87.64,
+      "text": "後來又轉去念了臨床 拿了證照",
+      "translated_text": "Then I went to bed and I got a license",
+      "pinyin": "hòu lái yòu zhuǎn qù niàn le lín chuáng   ná le zhèng zhào",
+      "characters": {
+        "後": {
+          "pinyin": "hòu",
+          "translations": [
+            "back",
+            "behind",
+            "rear",
+            "afterwards",
+            "after",
+            "later",
+            "post-"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "來": {
+          "pinyin": "lái",
+          "translations": [
+            "to come",
+            "(used as a substitute for a more specific verb)",
+            "hither (directional complement for motion toward the speaker, as in 回來|回来[hui2 lai5])",
+            "ever since (as in 自古以來|自古以来[zi4 gu3 yi3 lai2])",
+            "for the past (amount of time)",
+            "(prefix) the coming ...",
+            " the next ... (as in 來世|来世[lai2 shi4])",
+            "(between two verbs) in order to",
+            "(after a round number) approximately",
+            "(used after 得[de2] to indicate possibility, as in 談得來|谈得来[tan2 de5 lai2], or after 不[bu4] to indicate impossibility, as in 吃不來|吃不来[chi1 bu5 lai2])"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "又": {
+          "pinyin": "yòu",
+          "translations": [
+            "(once) again",
+            "also",
+            "both... and...",
+            "and yet",
+            "(used for emphasis) anyway"
+          ],
+          "hsk_level": 3,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "轉去": {
+          "pinyin": "zhuǎn qù",
+          "translations": [
+            "to return",
+            "to go back"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "念": {
+          "pinyin": "niàn",
+          "translations": [
+            "to read",
+            "to study (a degree course)",
+            "to read aloud",
+            "to miss (sb)",
+            "idea",
+            "remembrance",
+            "twenty (banker's anti-fraud numeral corresponding to 廿, 20)"
+          ],
+          "hsk_level": 5,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "了": {
+          "pinyin": "le",
+          "translations": [
+            "(modal particle intensifying preceding clause)",
+            "(completed action marker)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "臨床": {
+          "pinyin": "lín chuáng",
+          "translations": [
+            "clinical"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "拿": {
+          "pinyin": "ná",
+          "translations": [
+            "to hold",
+            "to seize",
+            "to catch",
+            "to apprehend",
+            "to take"
+          ],
+          "hsk_level": 3,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "證照": {
+          "pinyin": "zhèng zhào",
+          "translations": [
+            "license",
+            " permit",
+            "ID photo",
+            " passport photo"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 87.64,
+      "end": 89.64,
+      "text": "紐約的時候也有在開診所",
+      "translated_text": "There was a clinic in New York",
+      "pinyin": "niǔ yuē de shí hòu yě yǒu zài kāi zhěn suǒ",
+      "characters": {
+        "紐約": {
+          "pinyin": "niǔ yuē",
+          "translations": [
+            "New York"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "的": {
+          "pinyin": "de",
+          "translations": [
+            "of",
+            "~'s (possessive particle)",
+            "(used after an attribute)",
+            "(used to form a nominal expression)",
+            "(used at the end of a declarative sentence for emphasis)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "時候": {
+          "pinyin": "shí hòu",
+          "translations": [
+            "time",
+            "length of time",
+            "moment",
+            "period"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "也": {
+          "pinyin": "yě",
+          "translations": [
+            "also",
+            "too",
+            "(in Classical Chinese) final particle implying affirmation"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "有": {
+          "pinyin": "yǒu",
+          "translations": [
+            "to have",
+            "there is",
+            "there are",
+            "to exist",
+            "to be"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "在": {
+          "pinyin": "zài",
+          "translations": [
+            "(located) at",
+            "(to be) in",
+            "to exist",
+            "in the middle of doing sth",
+            "(indicating an action in progress)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "開": {
+          "pinyin": "kāi",
+          "translations": [
+            "to open (transitive or intransitive)",
+            "(of ships, vehicles, troops etc) to start",
+            "to turn on",
+            " to put in operation",
+            " to operate",
+            " to run",
+            "to boil",
+            "to write out (a prescription, check, invoice etc)",
+            "(directional complement) away",
+            " off",
+            "carat (gold)",
+            "abbr. for Kelvin, 開爾文|开尔文[Kai1 er3 wen2]",
+            "abbr. for 開本|开本[kai1 ben3], book format"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "診": {
+          "pinyin": "zhěn",
+          "translations": [
+            "to examine or treat medically"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "所": {
+          "pinyin": "suǒ",
+          "translations": [
+            "actually",
+            "place",
+            "classifier for houses",
+            "small buildings",
+            "institutions etc",
+            "that which",
+            "particle introducing a relative clause or passive",
+            "CL:個|个[gè]"
+          ],
+          "hsk_level": 5,
+          "is_phrase": false,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 89.64,
+      "end": 91.03999999999999,
+      "text": "興趣比較多一點而已",
+      "translated_text": "I'm just a little more interested",
+      "pinyin": "xìng qù bǐ jiào duō yī diǎn ér yǐ",
+      "characters": {
+        "興趣": {
+          "pinyin": "xìng qù",
+          "translations": [
+            "interest (desire to know about sth)",
+            "interest (thing in which one is interested)",
+            " hobby",
+            "CL:個|个[ge4]"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "比": {
+          "pinyin": "bǐ",
+          "translations": [
+            "(particle used for comparison and \"-er than\")",
+            "to compare",
+            "to contrast",
+            "to gesture (with hands)",
+            "ratio"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "較": {
+          "pinyin": "jiào",
+          "translations": [
+            "to compare",
+            "to dispute",
+            "compared to",
+            "(before adj.) relatively",
+            "comparatively",
+            "rather",
+            "also pr. [jiao3]"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "多": {
+          "pinyin": "duō",
+          "translations": [
+            "many",
+            "much",
+            "a lot of",
+            "numerous",
+            "more",
+            "in excess",
+            "how (to what extent)",
+            "multi-",
+            "Taiwan pr.  when it means \"how\""
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "一點": {
+          "pinyin": "yī diǎn",
+          "translations": [
+            "a bit",
+            "a little",
+            "one dot",
+            "one point"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "而已": {
+          "pinyin": "ér yǐ",
+          "translations": [
+            "that's all",
+            "nothing more"
+          ],
+          "hsk_level": 6,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 91.03999999999999,
+      "end": 94.03999999999999,
+      "text": "是什麼機緣會進到西點大學去擔任教授",
+      "translated_text": "What's the chance to get into West Point to be a professor",
+      "pinyin": "shì shén me jī yuán huì jìn dào xī diǎn dà xué qù dān rèn jiào shòu",
+      "characters": {
+        "是": {
+          "pinyin": "shì",
+          "translations": [
+            "is",
+            "are",
+            "am",
+            "yes",
+            "to be"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "什麼": {
+          "pinyin": "shén me",
+          "translations": [
+            "what?",
+            "something",
+            "anything"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "機": {
+          "pinyin": "jī",
+          "translations": [
+            "(bound form) machine",
+            " mechanism",
+            "(bound form) aircraft",
+            "(bound form) an opportunity",
+            "(bound form) crucial point",
+            " pivot",
+            "(bound form) quick-witted",
+            " flexible",
+            "(bound form) organic"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "緣": {
+          "pinyin": "yuán",
+          "translations": [
+            "cause",
+            "reason",
+            "karma",
+            "fate",
+            "predestined affinity",
+            "margin",
+            "hem",
+            "edge",
+            "along"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "會": {
+          "pinyin": "huì",
+          "translations": [
+            "to balance an account",
+            "accounting",
+            "accountant"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "進": {
+          "pinyin": "jìn",
+          "translations": [
+            "to go forward",
+            "to advance",
+            "to go in",
+            "to enter",
+            "to put in",
+            "to submit",
+            "to take in",
+            "to admit",
+            "(math.) base of a number system",
+            "classifier for sections in a building or residential compound"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "到": {
+          "pinyin": "dào",
+          "translations": [
+            "to (a place)",
+            "until (a time)",
+            "up to",
+            "to go",
+            "to arrive"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "西點": {
+          "pinyin": "xī diǎn",
+          "translations": [
+            "Western-style pastry"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "大學": {
+          "pinyin": "dà xué",
+          "translations": [
+            "university",
+            "college",
+            "CL:所[suo3]"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "去": {
+          "pinyin": "qù",
+          "translations": [
+            "to go",
+            "to go to (a place)",
+            "to cause to go or send (sb)",
+            "to remove",
+            "to get rid of",
+            "(when used either before or after a verb) to go in order to do sth",
+            "to be apart from in space or time",
+            "(after a verb of motion indicates movement away from the speaker)",
+            "(used after certain verbs to indicate detachment or separation)",
+            "(of a time or an event etc) just passed or elapsed"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "擔": {
+          "pinyin": "dān",
+          "translations": [
+            "picul (100 catties, 50 kg)",
+            "two buckets full",
+            "carrying pole and its load",
+            "classifier for loads carried on a shoulder pole"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "任": {
+          "pinyin": "rèn",
+          "translations": [
+            "to assign",
+            "to appoint",
+            "to take up a post",
+            "office",
+            "responsibility",
+            "to let",
+            "to allow",
+            "to give free rein to",
+            "no matter (how, what etc)",
+            "classifier for terms served in office, or for spouses, girlfriends etc (as in 前任男友)"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "教": {
+          "pinyin": "jiāo",
+          "translations": [
+            "to teach"
+          ],
+          "hsk_level": 3,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "授": {
+          "pinyin": "shòu",
+          "translations": [
+            "(bound form) to confer",
+            " to give",
+            "(bound form) to teach",
+            " to instruct",
+            "(literary) to appoint"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 94.03999999999999,
+      "end": 98.04,
+      "text": "我念博士的時候 我的主題就是在心理創傷",
+      "translated_text": "When I was a doctor, my main theme was trauma",
+      "pinyin": "wǒ niàn bó shì de shí hòu   wǒ de zhǔ tí jiù shì zài xīn lǐ chuàng shāng",
+      "characters": {
+        "我": {
+          "pinyin": "wǒ",
+          "translations": [
+            "I",
+            "me",
+            "my"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "念": {
+          "pinyin": "niàn",
+          "translations": [
+            "to read",
+            "to study (a degree course)",
+            "to read aloud",
+            "to miss (sb)",
+            "idea",
+            "remembrance",
+            "twenty (banker's anti-fraud numeral corresponding to 廿, 20)"
+          ],
+          "hsk_level": 5,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "博士": {
+          "pinyin": "bó shì",
+          "translations": [
+            "doctor",
+            "court academician (in feudal China)",
+            "Ph.D."
+          ],
+          "hsk_level": 4,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "的": {
+          "pinyin": "de",
+          "translations": [
+            "of",
+            "~'s (possessive particle)",
+            "(used after an attribute)",
+            "(used to form a nominal expression)",
+            "(used at the end of a declarative sentence for emphasis)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "時候": {
+          "pinyin": "shí hòu",
+          "translations": [
+            "time",
+            "length of time",
+            "moment",
+            "period"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "主題": {
+          "pinyin": "zhǔ tí",
+          "translations": [
+            "theme",
+            "subject"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "就是": {
+          "pinyin": "jiù shì",
+          "translations": [
+            "exactly",
+            " precisely",
+            "only",
+            " simply",
+            " just",
+            "(used correlatively with 也[ye3]) even",
+            " even if"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "在": {
+          "pinyin": "zài",
+          "translations": [
+            "(located) at",
+            "(to be) in",
+            "to exist",
+            "in the middle of doing sth",
+            "(indicating an action in progress)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "心理": {
+          "pinyin": "xīn lǐ",
+          "translations": [
+            "mental",
+            "psychological"
+          ],
+          "hsk_level": 5,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "創傷": {
+          "pinyin": "chuàng shāng",
+          "translations": [
+            "wound",
+            "injury",
+            "trauma"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 98.04,
+      "end": 101.04,
+      "text": "那他們就有看到了我的這個論文",
+      "translated_text": "Then they saw my paper",
+      "pinyin": "nà tā men jiù yǒu kàn dào le wǒ de zhè gè lùn wén",
+      "characters": {
+        "那": {
+          "pinyin": "nà",
+          "translations": [
+            "that",
+            "those",
+            "then (in that case)",
+            "commonly pr.  before a classifier",
+            "esp. in Beijing"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "他們": {
+          "pinyin": "tā men",
+          "translations": [
+            "they"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "就": {
+          "pinyin": "jiù",
+          "translations": [
+            "at once",
+            "right away",
+            "only",
+            "just (emphasis)",
+            "as early as",
+            "already",
+            "as soon as",
+            "then",
+            "in that case",
+            "as many as",
+            "even if",
+            "to approach",
+            "to move towards",
+            "to undertake",
+            "to engage in",
+            "to suffer",
+            "subjected to",
+            "to accomplish",
+            "to take advantage of",
+            "to go with (of foods)",
+            "with regard to",
+            "concerning"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "有": {
+          "pinyin": "yǒu",
+          "translations": [
+            "to have",
+            "there is",
+            "there are",
+            "to exist",
+            "to be"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "看到": {
+          "pinyin": "kàn dào",
+          "translations": [
+            "to see"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "了": {
+          "pinyin": "le",
+          "translations": [
+            "(modal particle intensifying preceding clause)",
+            "(completed action marker)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "我": {
+          "pinyin": "wǒ",
+          "translations": [
+            "I",
+            "me",
+            "my"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "的": {
+          "pinyin": "de",
+          "translations": [
+            "of",
+            "~'s (possessive particle)",
+            "(used after an attribute)",
+            "(used to form a nominal expression)",
+            "(used at the end of a declarative sentence for emphasis)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "這個": {
+          "pinyin": "zhè gè",
+          "translations": [
+            "(pronoun) this",
+            "(adjective) this"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "論文": {
+          "pinyin": "lùn wén",
+          "translations": [
+            "paper",
+            "treatise",
+            "thesis",
+            "CL:篇[pian1]",
+            "to discuss a paper or thesis (old)"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 101.04,
+      "end": 102.64,
+      "text": "就說希望我能夠去",
+      "translated_text": "Just say I wish I could go",
+      "pinyin": "jiù shuō xī wàng wǒ néng gòu qù",
+      "characters": {
+        "就": {
+          "pinyin": "jiù",
+          "translations": [
+            "at once",
+            "right away",
+            "only",
+            "just (emphasis)",
+            "as early as",
+            "already",
+            "as soon as",
+            "then",
+            "in that case",
+            "as many as",
+            "even if",
+            "to approach",
+            "to move towards",
+            "to undertake",
+            "to engage in",
+            "to suffer",
+            "subjected to",
+            "to accomplish",
+            "to take advantage of",
+            "to go with (of foods)",
+            "with regard to",
+            "concerning"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "說": {
+          "pinyin": "shuō",
+          "translations": [
+            "to speak",
+            " to talk",
+            " to say",
+            "to explain",
+            " to comment",
+            "to scold",
+            " to tell off",
+            "(bound form) theory",
+            " doctrine"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "希望": {
+          "pinyin": "xī wàng",
+          "translations": [
+            "to wish for",
+            "to desire",
+            "hope CL:個|个[gè]"
+          ],
+          "hsk_level": 2,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "我": {
+          "pinyin": "wǒ",
+          "translations": [
+            "I",
+            "me",
+            "my"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "能夠": {
+          "pinyin": "néng gòu",
+          "translations": [
+            "to be capable of",
+            "to be able to",
+            "can"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "去": {
+          "pinyin": "qù",
+          "translations": [
+            "to go",
+            "to go to (a place)",
+            "to cause to go or send (sb)",
+            "to remove",
+            "to get rid of",
+            "(when used either before or after a verb) to go in order to do sth",
+            "to be apart from in space or time",
+            "(after a verb of motion indicates movement away from the speaker)",
+            "(used after certain verbs to indicate detachment or separation)",
+            "(of a time or an event etc) just passed or elapsed"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 102.64,
+      "end": 105.64,
+      "text": "發現他們裡面真的是人才濟濟",
+      "translated_text": "It turns out they're really talented",
+      "pinyin": "fā xiàn tā men lǐ miàn zhēn de shì rén cái jì jì",
+      "characters": {
+        "發現": {
+          "pinyin": "fā xiàn",
+          "translations": [
+            "to notice",
+            " to become aware of",
+            "to discover",
+            " to find",
+            " to detect",
+            "a discovery"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "他們": {
+          "pinyin": "tā men",
+          "translations": [
+            "they"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "裡面": {
+          "pinyin": "lǐ miàn",
+          "translations": [
+            "inside",
+            "interior",
+            "also pr. [li3 mian5]"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "真的": {
+          "pinyin": "zhēn de",
+          "translations": [
+            "really",
+            " truly",
+            " indeed",
+            "real",
+            " true",
+            " genuine",
+            "(math.) proper"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "是": {
+          "pinyin": "shì",
+          "translations": [
+            "is",
+            "are",
+            "am",
+            "yes",
+            "to be"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "人才": {
+          "pinyin": "rén cái",
+          "translations": [
+            "a person's talent",
+            "talented person",
+            "distinguished person",
+            "a talent (worth head-hunting)",
+            "person's looks",
+            "an attractive woman",
+            "used interchangeably with 人材",
+            "CL:個|个[gè]"
+          ],
+          "hsk_level": 5,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "濟濟": {
+          "pinyin": "jì jì",
+          "translations": [
+            "large number of people"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 105.64,
+      "end": 108.04,
+      "text": "您自己也在臺灣有一個Podcast",
+      "translated_text": "You yourself have a Podcast in Taiwan",
+      "pinyin": "nín zì jǐ yě zài tái wān yǒu yī gè Podcast",
+      "characters": {
+        "您": {
+          "pinyin": "nín",
+          "translations": [
+            "you (courteous, as opposed to informal 你)"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "自己": {
+          "pinyin": "zì jǐ",
+          "translations": [
+            "oneself",
+            "one's own"
+          ],
+          "hsk_level": 3,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "也": {
+          "pinyin": "yě",
+          "translations": [
+            "also",
+            "too",
+            "(in Classical Chinese) final particle implying affirmation"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "在": {
+          "pinyin": "zài",
+          "translations": [
+            "(located) at",
+            "(to be) in",
+            "to exist",
+            "in the middle of doing sth",
+            "(indicating an action in progress)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "臺": {
+          "pinyin": "tái",
+          "translations": [
+            "platform",
+            "stage",
+            "terrace",
+            "stand",
+            "support",
+            "station",
+            "broadcasting station",
+            "classifier for vehicles or machines"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "灣": {
+          "pinyin": "wān",
+          "translations": [
+            "bay",
+            "gulf",
+            "to cast anchor",
+            "to moor (a boat)"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "有": {
+          "pinyin": "yǒu",
+          "translations": [
+            "to have",
+            "there is",
+            "there are",
+            "to exist",
+            "to be"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "一": {
+          "pinyin": "yī",
+          "translations": [
+            "one",
+            "1",
+            "single",
+            "a (article)",
+            "as soon as",
+            "entire",
+            "whole",
+            "all",
+            "throughout",
+            "\"one\" radical in Chinese characters (Kangxi radical 1)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "個": {
+          "pinyin": "gè",
+          "translations": [
+            "(classifier used before a noun that has no specific classifier)",
+            "(bound form) individual"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "Podcast": {
+          "pinyin": "Podcast",
+          "translations": [],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 108.04,
+      "end": 109.44,
+      "text": "叫做心理不用學",
+      "translated_text": "It's called psychosis",
+      "pinyin": "jiào zuò xīn lǐ bù yòng xué",
+      "characters": {
+        "叫做": {
+          "pinyin": "jiào zuò",
+          "translations": [
+            "to be called",
+            " to be known as"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "心理": {
+          "pinyin": "xīn lǐ",
+          "translations": [
+            "mental",
+            "psychological"
+          ],
+          "hsk_level": 5,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "不用": {
+          "pinyin": "bù yòng",
+          "translations": [
+            "need not"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "學": {
+          "pinyin": "xué",
+          "translations": [
+            "to learn",
+            "to study",
+            "to imitate",
+            "science",
+            "-ology"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 109.44,
+      "end": 110.44,
+      "text": "是 是 是",
+      "translated_text": "Yeah, yeah, yeah",
+      "pinyin": "shì   shì   shì",
+      "characters": {
+        "是": {
+          "pinyin": "shì",
+          "translations": [
+            "is",
+            "are",
+            "am",
+            "yes",
+            "to be"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 110.44,
+      "end": 112.84,
+      "text": "我覺得您在Podcast裡面其實常常提到一個",
+      "translated_text": "I think you often mention one in Podcast",
+      "pinyin": "wǒ jué dé nín zài Podcast lǐ miàn qí shí cháng cháng tí dào yī gè",
+      "characters": {
+        "我": {
+          "pinyin": "wǒ",
+          "translations": [
+            "I",
+            "me",
+            "my"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "覺": {
+          "pinyin": "jué",
+          "translations": [
+            "to feel",
+            "to find that",
+            "thinking",
+            "awake",
+            "aware"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "得": {
+          "pinyin": "de",
+          "translations": [
+            "structural particle: used after a verb (or adjective as main verb)",
+            "linking it to following phrase indicating effect",
+            "degree",
+            "possibility etc"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "您": {
+          "pinyin": "nín",
+          "translations": [
+            "you (courteous, as opposed to informal 你)"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "在": {
+          "pinyin": "zài",
+          "translations": [
+            "(located) at",
+            "(to be) in",
+            "to exist",
+            "in the middle of doing sth",
+            "(indicating an action in progress)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "Podcast": {
+          "pinyin": "Podcast",
+          "translations": [],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "裡面": {
+          "pinyin": "lǐ miàn",
+          "translations": [
+            "inside",
+            "interior",
+            "also pr. [li3 mian5]"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "其實": {
+          "pinyin": "qí shí",
+          "translations": [
+            "actually",
+            " in fact",
+            " really"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "常常": {
+          "pinyin": "cháng cháng",
+          "translations": [
+            "frequently",
+            "often"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "提到": {
+          "pinyin": "tí dào",
+          "translations": [
+            "to mention",
+            "to raise (a subject)",
+            "to refer to"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "一": {
+          "pinyin": "yī",
+          "translations": [
+            "one",
+            "1",
+            "single",
+            "a (article)",
+            "as soon as",
+            "entire",
+            "whole",
+            "all",
+            "throughout",
+            "\"one\" radical in Chinese characters (Kangxi radical 1)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "個": {
+          "pinyin": "gè",
+          "translations": [
+            "(classifier used before a noun that has no specific classifier)",
+            "(bound form) individual"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 112.84,
+      "end": 115.24000000000001,
+      "text": "對於負面情緒其實是可以用善用的態度",
+      "translated_text": "It's a good thing to be negative. degrees",
+      "pinyin": "duì yú fù miàn qíng xù qí shí shì kě yǐ yòng shàn yòng de tài dù",
+      "characters": {
+        "對": {
+          "pinyin": "duì",
+          "translations": [
+            "right",
+            " correct",
+            "towards",
+            " at",
+            " for",
+            "concerning",
+            " regarding",
+            "to treat (sb a certain way)",
+            "to face",
+            "(bound form) opposite",
+            " facing",
+            " matching",
+            "to match together",
+            " to adjust",
+            "to fit",
+            " to suit",
+            "to answer",
+            " to reply",
+            "to add",
+            " to pour in (a fluid)",
+            "to check",
+            " to compare",
+            "classifier: couple",
+            " pair"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "於": {
+          "pinyin": "yú",
+          "translations": [
+            "(literary) Oh!",
+            "Ah!"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "負面": {
+          "pinyin": "fù miàn",
+          "translations": [
+            "negative",
+            "the negative side"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "情緒": {
+          "pinyin": "qíng xù",
+          "translations": [
+            "mood",
+            "state of mind",
+            "moodiness",
+            "CL:種|种[zhong3]"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "其實": {
+          "pinyin": "qí shí",
+          "translations": [
+            "actually",
+            " in fact",
+            " really"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "是": {
+          "pinyin": "shì",
+          "translations": [
+            "is",
+            "are",
+            "am",
+            "yes",
+            "to be"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "可以": {
+          "pinyin": "kě yǐ",
+          "translations": [
+            "can",
+            "may",
+            "possible",
+            "able to"
+          ],
+          "hsk_level": 2,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "用": {
+          "pinyin": "yòng",
+          "translations": [
+            "to use",
+            "to employ",
+            "to have to",
+            "to eat or drink",
+            "expense or outlay",
+            "usefulness",
+            "hence",
+            "therefore"
+          ],
+          "hsk_level": 3,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "善用": {
+          "pinyin": "shàn yòng",
+          "translations": [
+            "to be good at using (sth)",
+            "to put (sth) to good use"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "的": {
+          "pinyin": "de",
+          "translations": [
+            "of",
+            "~'s (possessive particle)",
+            "(used after an attribute)",
+            "(used to form a nominal expression)",
+            "(used at the end of a declarative sentence for emphasis)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "態度": {
+          "pinyin": "tài dù",
+          "translations": [
+            "manner",
+            "bearing",
+            "attitude",
+            "approach",
+            "CL:個|个[ge4]"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 115.24000000000001,
+      "end": 119.04,
+      "text": "所以我們的情緒包括快樂 憤怒 悲傷 恐懼",
+      "translated_text": "So our emotions include happiness, anger, grief, fear",
+      "pinyin": "suǒ yǐ wǒ men de qíng xù bāo kuò kuài lè   fèn nù   bēi shāng   kǒng jù",
+      "characters": {
+        "所以": {
+          "pinyin": "suǒ yǐ",
+          "translations": [
+            "therefore",
+            "as a result",
+            "so"
+          ],
+          "hsk_level": 2,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "我們": {
+          "pinyin": "wǒ men",
+          "translations": [
+            "we",
+            " us",
+            " ourselves",
+            " our"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "的": {
+          "pinyin": "de",
+          "translations": [
+            "of",
+            "~'s (possessive particle)",
+            "(used after an attribute)",
+            "(used to form a nominal expression)",
+            "(used at the end of a declarative sentence for emphasis)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "情緒": {
+          "pinyin": "qíng xù",
+          "translations": [
+            "mood",
+            "state of mind",
+            "moodiness",
+            "CL:種|种[zhong3]"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "包括": {
+          "pinyin": "bāo kuò",
+          "translations": [
+            "to comprise",
+            "to include",
+            "to involve",
+            "to incorporate",
+            "to consist of"
+          ],
+          "hsk_level": 4,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "快樂": {
+          "pinyin": "kuài lè",
+          "translations": [
+            "happy",
+            " joyful"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "憤怒": {
+          "pinyin": "fèn nù",
+          "translations": [
+            "angry",
+            "indignant",
+            "wrath",
+            "ire"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "悲傷": {
+          "pinyin": "bēi shāng",
+          "translations": [
+            "sad",
+            " sorrowful"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "恐懼": {
+          "pinyin": "kǒng jù",
+          "translations": [
+            "to be frightened",
+            "fear",
+            "dread"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 119.04,
+      "end": 121.44000000000001,
+      "text": "厭惡 驚嚇等等都有",
+      "translated_text": "Disgusting, freaking out, everything",
+      "pinyin": "yàn è   jīng xià děng děng dōu yǒu",
+      "characters": {
+        "厭惡": {
+          "pinyin": "yàn è",
+          "translations": [
+            "to loathe",
+            "to hate",
+            "disgusted with sth"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "驚嚇": {
+          "pinyin": "jīng xià",
+          "translations": [
+            "to frighten",
+            "to horrify",
+            "to terrify"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "等等": {
+          "pinyin": "děng děng",
+          "translations": [
+            "et cetera",
+            "and so on ...",
+            "wait a minute!",
+            "hold on!"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "都": {
+          "pinyin": "dōu",
+          "translations": [
+            "all",
+            "both",
+            "entirely",
+            "(used for emphasis) even",
+            "already",
+            "(not) at all"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "有": {
+          "pinyin": "yǒu",
+          "translations": [
+            "to have",
+            "there is",
+            "there are",
+            "to exist",
+            "to be"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 121.44000000000001,
+      "end": 121.84,
+      "text": "是",
+      "translated_text": "Yes",
+      "pinyin": "shì",
+      "characters": {
+        "是": {
+          "pinyin": "shì",
+          "translations": [
+            "is",
+            "are",
+            "am",
+            "yes",
+            "to be"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 121.84,
+      "end": 122.80000000000001,
+      "text": "但是為什麼",
+      "translated_text": "But why",
+      "pinyin": "dàn shì wèi shén me",
+      "characters": {
+        "但是": {
+          "pinyin": "dàn shì",
+          "translations": [
+            "but",
+            "however"
+          ],
+          "hsk_level": 2,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "為": {
+          "pinyin": "wèi",
+          "translations": [
+            "because of",
+            "for",
+            "to"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "什麼": {
+          "pinyin": "shén me",
+          "translations": [
+            "what?",
+            "something",
+            "anything"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 122.80000000000001,
+      "end": 125.12,
+      "text": "聽起來我剛講的除了快樂之外",
+      "translated_text": "Sounds like I was just talking about happiness",
+      "pinyin": "tīng qǐ lái wǒ gāng jiǎng de chú le kuài lè zhī wài",
+      "characters": {
+        "聽": {
+          "pinyin": "tīng",
+          "translations": [
+            "to listen to",
+            " to hear",
+            "to heed",
+            " to obey",
+            "a can (loanword from English \"tin\")",
+            "classifier for canned beverages",
+            "to let be",
+            " to allow (Taiwan pr. [ting4])",
+            "(literary) to administer",
+            " to deal with (Taiwan pr. [ting4])"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "起": {
+          "pinyin": "qǐ",
+          "translations": [
+            "to rise",
+            "to raise",
+            "to get up",
+            "to set out",
+            "to start",
+            "to appear",
+            "to launch",
+            "to initiate (action)",
+            "to draft",
+            "to establish",
+            "to get (from a depot or counter)",
+            "verb suffix, to start",
+            "starting from (a time, place, price etc)",
+            "classifier for occurrences or unpredictable events: case, instance",
+            "classifier for groups: batch, group"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "來": {
+          "pinyin": "lái",
+          "translations": [
+            "to come",
+            "(used as a substitute for a more specific verb)",
+            "hither (directional complement for motion toward the speaker, as in 回來|回来[hui2 lai5])",
+            "ever since (as in 自古以來|自古以来[zi4 gu3 yi3 lai2])",
+            "for the past (amount of time)",
+            "(prefix) the coming ...",
+            " the next ... (as in 來世|来世[lai2 shi4])",
+            "(between two verbs) in order to",
+            "(after a round number) approximately",
+            "(used after 得[de2] to indicate possibility, as in 談得來|谈得来[tan2 de5 lai2], or after 不[bu4] to indicate impossibility, as in 吃不來|吃不来[chi1 bu5 lai2])"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "我": {
+          "pinyin": "wǒ",
+          "translations": [
+            "I",
+            "me",
+            "my"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "剛": {
+          "pinyin": "gāng",
+          "translations": [
+            "hard",
+            "firm",
+            "strong",
+            "just",
+            "barely",
+            "exactly"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "講": {
+          "pinyin": "jiǎng",
+          "translations": [
+            "to speak",
+            "to explain",
+            "to negotiate",
+            "to emphasize",
+            "to be particular about",
+            "as far as sth is concerned",
+            "speech",
+            "lecture"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "的": {
+          "pinyin": "de",
+          "translations": [
+            "of",
+            "~'s (possessive particle)",
+            "(used after an attribute)",
+            "(used to form a nominal expression)",
+            "(used at the end of a declarative sentence for emphasis)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "除了": {
+          "pinyin": "chú le",
+          "translations": [
+            "besides",
+            "apart from (... also...)",
+            "in addition to",
+            "except (for)"
+          ],
+          "hsk_level": 3,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "快樂": {
+          "pinyin": "kuài lè",
+          "translations": [
+            "happy",
+            " joyful"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "之外": {
+          "pinyin": "zhī wài",
+          "translations": [
+            "outside",
+            "excluding"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 125.13232425,
+      "end": 126.89232425,
+      "text": "部分都是負面情緒",
+      "translated_text": "Partly negative",
+      "pinyin": "bù fèn dōu shì fù miàn qíng xù",
+      "characters": {
+        "部分": {
+          "pinyin": "bù fèn",
+          "translations": [
+            "part",
+            "share",
+            "section",
+            "piece",
+            "CL:個|个[gè]"
+          ],
+          "hsk_level": 4,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "都": {
+          "pinyin": "dōu",
+          "translations": [
+            "all",
+            "both",
+            "entirely",
+            "(used for emphasis) even",
+            "already",
+            "(not) at all"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "是": {
+          "pinyin": "shì",
+          "translations": [
+            "is",
+            "are",
+            "am",
+            "yes",
+            "to be"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "負面": {
+          "pinyin": "fù miàn",
+          "translations": [
+            "negative",
+            "the negative side"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "情緒": {
+          "pinyin": "qíng xù",
+          "translations": [
+            "mood",
+            "state of mind",
+            "moodiness",
+            "CL:種|种[zhong3]"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 126.89232425,
+      "end": 129.37232425,
+      "text": "負面情緒來襲的時候 我們該怎麼做",
+      "translated_text": "What do we do when negative emotions come",
+      "pinyin": "fù miàn qíng xù lái xí de shí hòu   wǒ men gāi zěn me zuò",
+      "characters": {
+        "負面": {
+          "pinyin": "fù miàn",
+          "translations": [
+            "negative",
+            "the negative side"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "情緒": {
+          "pinyin": "qíng xù",
+          "translations": [
+            "mood",
+            "state of mind",
+            "moodiness",
+            "CL:種|种[zhong3]"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "來襲": {
+          "pinyin": "lái xí",
+          "translations": [
+            "to invade",
+            "(of a storm etc) to strike",
+            "to hit"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "的": {
+          "pinyin": "de",
+          "translations": [
+            "of",
+            "~'s (possessive particle)",
+            "(used after an attribute)",
+            "(used to form a nominal expression)",
+            "(used at the end of a declarative sentence for emphasis)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "時候": {
+          "pinyin": "shí hòu",
+          "translations": [
+            "time",
+            "length of time",
+            "moment",
+            "period"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "我們": {
+          "pinyin": "wǒ men",
+          "translations": [
+            "we",
+            " us",
+            " ourselves",
+            " our"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "該": {
+          "pinyin": "gāi",
+          "translations": [
+            "should",
+            "ought to",
+            "probably",
+            "must be",
+            "to deserve",
+            "to owe",
+            "to be sb's turn to do sth",
+            "that",
+            "the above-mentioned"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "怎麼": {
+          "pinyin": "zěn me",
+          "translations": [
+            "how?",
+            "what?",
+            "why?"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "做": {
+          "pinyin": "zuò",
+          "translations": [
+            "to do",
+            "to make",
+            "to produce",
+            "to write",
+            "to compose",
+            "to act as",
+            "to engage in",
+            "to hold (a party)",
+            "to be",
+            "to become",
+            "to function (in some capacity)",
+            "to serve as",
+            "to be used for",
+            "to form (a bond or relationship)",
+            "to pretend",
+            "to feign",
+            "to act a part",
+            "to put on appearance"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 129.37232425,
+      "end": 132.05232425,
+      "text": "需要把這些多餅氣來追求快樂",
+      "translated_text": "We need to make these cookies for happiness",
+      "pinyin": "xū yào bǎ zhè xiē duō bǐng qì lái zhuī qiú kuài lè",
+      "characters": {
+        "需要": {
+          "pinyin": "xū yào",
+          "translations": [
+            "to need",
+            "to want",
+            "to demand",
+            "to require",
+            "requirement",
+            "need"
+          ],
+          "hsk_level": 3,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "把": {
+          "pinyin": "bǎ",
+          "translations": [
+            "to hold",
+            "to contain",
+            "to grasp",
+            "to take hold of",
+            "handle",
+            "particle marking the following noun as a direct object",
+            "classifier for objects with handle",
+            "classifier for small objects: handful"
+          ],
+          "hsk_level": 3,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "這些": {
+          "pinyin": "zhè xiē",
+          "translations": [
+            "these"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "多": {
+          "pinyin": "duō",
+          "translations": [
+            "many",
+            "much",
+            "a lot of",
+            "numerous",
+            "more",
+            "in excess",
+            "how (to what extent)",
+            "multi-",
+            "Taiwan pr.  when it means \"how\""
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "餅": {
+          "pinyin": "bǐng",
+          "translations": [
+            "round flat cake",
+            "cookie",
+            "cake",
+            "pastry",
+            "CL:張|张[zhang1]"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "氣": {
+          "pinyin": "qì",
+          "translations": [
+            "gas",
+            " air",
+            "smell",
+            "weather",
+            "to make angry",
+            " to annoy",
+            " to get angry",
+            "vital energy",
+            " qi"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "來": {
+          "pinyin": "lái",
+          "translations": [
+            "to come",
+            "(used as a substitute for a more specific verb)",
+            "hither (directional complement for motion toward the speaker, as in 回來|回来[hui2 lai5])",
+            "ever since (as in 自古以來|自古以来[zi4 gu3 yi3 lai2])",
+            "for the past (amount of time)",
+            "(prefix) the coming ...",
+            " the next ... (as in 來世|来世[lai2 shi4])",
+            "(between two verbs) in order to",
+            "(after a round number) approximately",
+            "(used after 得[de2] to indicate possibility, as in 談得來|谈得来[tan2 de5 lai2], or after 不[bu4] to indicate impossibility, as in 吃不來|吃不来[chi1 bu5 lai2])"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "追求": {
+          "pinyin": "zhuī qiú",
+          "translations": [
+            "to pursue (a goal etc) stubbornly",
+            "to seek after",
+            "to woo"
+          ],
+          "hsk_level": 5,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "快樂": {
+          "pinyin": "kuài lè",
+          "translations": [
+            "happy",
+            " joyful"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 132.05232425,
+      "end": 135.17232425,
+      "text": "還是說我們怎麼樣去運用這個負面情緒",
+      "translated_text": "Or are we going to use this negative mood",
+      "pinyin": "hái shì shuō wǒ men zěn me yàng qù yùn yòng zhè gè fù miàn qíng xù",
+      "characters": {
+        "還是": {
+          "pinyin": "hái shì",
+          "translations": [
+            "still (as before)",
+            "had better",
+            "unexpectedly",
+            "or"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "說": {
+          "pinyin": "shuō",
+          "translations": [
+            "to speak",
+            " to talk",
+            " to say",
+            "to explain",
+            " to comment",
+            "to scold",
+            " to tell off",
+            "(bound form) theory",
+            " doctrine"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "我們": {
+          "pinyin": "wǒ men",
+          "translations": [
+            "we",
+            " us",
+            " ourselves",
+            " our"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "怎麼樣": {
+          "pinyin": "zěn me yàng",
+          "translations": [
+            "how?",
+            "how about?",
+            "how was it?",
+            "how are things?"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "去": {
+          "pinyin": "qù",
+          "translations": [
+            "to go",
+            "to go to (a place)",
+            "to cause to go or send (sb)",
+            "to remove",
+            "to get rid of",
+            "(when used either before or after a verb) to go in order to do sth",
+            "to be apart from in space or time",
+            "(after a verb of motion indicates movement away from the speaker)",
+            "(used after certain verbs to indicate detachment or separation)",
+            "(of a time or an event etc) just passed or elapsed"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "運用": {
+          "pinyin": "yùn yòng",
+          "translations": [
+            "to use",
+            "to put to use"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "這個": {
+          "pinyin": "zhè gè",
+          "translations": [
+            "(pronoun) this",
+            "(adjective) this"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "負面": {
+          "pinyin": "fù miàn",
+          "translations": [
+            "negative",
+            "the negative side"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "情緒": {
+          "pinyin": "qíng xù",
+          "translations": [
+            "mood",
+            "state of mind",
+            "moodiness",
+            "CL:種|种[zhong3]"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 135.17232425,
+      "end": 137.21232425,
+      "text": "從演化的角度來看",
+      "translated_text": "From an evolutionary perspective",
+      "pinyin": "cóng yǎn huà de jiǎo dù lái kàn",
+      "characters": {
+        "從": {
+          "pinyin": "cóng",
+          "translations": [
+            "from",
+            "through",
+            "via",
+            "to follow",
+            "to obey",
+            "to engage in (an activity)",
+            "never (in negative sentence)",
+            "(Taiwan pr. [zong4]) retainer",
+            "assistant",
+            "auxiliary",
+            "subordinate",
+            "related by common paternal grandfather or earlier ancestor"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "演化": {
+          "pinyin": "yǎn huà",
+          "translations": [
+            "to evolve",
+            "evolution"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "的": {
+          "pinyin": "de",
+          "translations": [
+            "of",
+            "~'s (possessive particle)",
+            "(used after an attribute)",
+            "(used to form a nominal expression)",
+            "(used at the end of a declarative sentence for emphasis)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "角度": {
+          "pinyin": "jiǎo dù",
+          "translations": [
+            "angle",
+            "point of view"
+          ],
+          "hsk_level": 5,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "來": {
+          "pinyin": "lái",
+          "translations": [
+            "to come",
+            "(used as a substitute for a more specific verb)",
+            "hither (directional complement for motion toward the speaker, as in 回來|回来[hui2 lai5])",
+            "ever since (as in 自古以來|自古以来[zi4 gu3 yi3 lai2])",
+            "for the past (amount of time)",
+            "(prefix) the coming ...",
+            " the next ... (as in 來世|来世[lai2 shi4])",
+            "(between two verbs) in order to",
+            "(after a round number) approximately",
+            "(used after 得[de2] to indicate possibility, as in 談得來|谈得来[tan2 de5 lai2], or after 不[bu4] to indicate impossibility, as in 吃不來|吃不来[chi1 bu5 lai2])"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "看": {
+          "pinyin": "kàn",
+          "translations": [
+            "to see",
+            "to look at",
+            "to read",
+            "to watch",
+            "to consider",
+            "to regard as",
+            "to view as",
+            "to treat as",
+            "to judge",
+            "(after repeated verb) to give it a try",
+            "depending on (how you're judging)",
+            "to visit",
+            "to call on",
+            "to treat (an illness)",
+            "to look after",
+            "Watch out! (for a danger)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 137.21232425,
+      "end": 139.53232425,
+      "text": "情緒的存在是有它的功能性",
+      "translated_text": "The existence of emotions is its function",
+      "pinyin": "qíng xù de cún zài shì yǒu tā de gōng néng xìng",
+      "characters": {
+        "情緒": {
+          "pinyin": "qíng xù",
+          "translations": [
+            "mood",
+            "state of mind",
+            "moodiness",
+            "CL:種|种[zhong3]"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "的": {
+          "pinyin": "de",
+          "translations": [
+            "of",
+            "~'s (possessive particle)",
+            "(used after an attribute)",
+            "(used to form a nominal expression)",
+            "(used at the end of a declarative sentence for emphasis)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "存在": {
+          "pinyin": "cún zài",
+          "translations": [
+            "to exist",
+            "to be",
+            "existence"
+          ],
+          "hsk_level": 5,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "是": {
+          "pinyin": "shì",
+          "translations": [
+            "is",
+            "are",
+            "am",
+            "yes",
+            "to be"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "有": {
+          "pinyin": "yǒu",
+          "translations": [
+            "to have",
+            "there is",
+            "there are",
+            "to exist",
+            "to be"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "它": {
+          "pinyin": "tā",
+          "translations": [
+            "it"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "功能性": {
+          "pinyin": "gōng néng xìng",
+          "translations": [
+            "functionality"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 139.53232425,
+      "end": 141.13232425,
+      "text": "Alert us to danger",
+      "translated_text": "Let's go",
+      "pinyin": "Alert us to danger",
+      "characters": {
+        "Alert": {
+          "pinyin": "Alert",
+          "translations": [],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "us": {
+          "pinyin": "us",
+          "translations": [],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "to": {
+          "pinyin": "to",
+          "translations": [],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "danger": {
+          "pinyin": "danger",
+          "translations": [],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 141.13232425,
+      "end": 144.01232425,
+      "text": "或者是Outward expression of our state",
+      "translated_text": "Or else it's called \"Outward exception of our state.\"",
+      "pinyin": "huò zhě shì Outward expression of our state",
+      "characters": {
+        "或者": {
+          "pinyin": "huò zhě",
+          "translations": [
+            "or",
+            "possibly",
+            "maybe",
+            "perhaps"
+          ],
+          "hsk_level": 3,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "是": {
+          "pinyin": "shì",
+          "translations": [
+            "is",
+            "are",
+            "am",
+            "yes",
+            "to be"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "Outward": {
+          "pinyin": "Outward",
+          "translations": [],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "expression": {
+          "pinyin": "expression",
+          "translations": [],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "of": {
+          "pinyin": "of",
+          "translations": [],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "our": {
+          "pinyin": "our",
+          "translations": [],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "state": {
+          "pinyin": "state",
+          "translations": [],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 144.01232425,
+      "end": 146.49232425,
+      "text": "讓我們知道接下來的行為該怎麼做",
+      "translated_text": "Let's see what happens next",
+      "pinyin": "ràng wǒ men zhī dào jiē xià lái de xíng wèi gāi zěn me zuò",
+      "characters": {
+        "讓": {
+          "pinyin": "ràng",
+          "translations": [
+            "to yield",
+            "to permit",
+            "to let sb do sth",
+            "to have sb do sth",
+            "to make sb (feel sad etc)",
+            "by (indicates the agent in a passive clause, like 被[bei4])"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "我們": {
+          "pinyin": "wǒ men",
+          "translations": [
+            "we",
+            " us",
+            " ourselves",
+            " our"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "知道": {
+          "pinyin": "zhī dào",
+          "translations": [
+            "to know",
+            "to be aware of",
+            "also pron. [zhī dao]"
+          ],
+          "hsk_level": 2,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "接下": {
+          "pinyin": "jiē xià",
+          "translations": [
+            "to take on (a responsibility)"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "來": {
+          "pinyin": "lái",
+          "translations": [
+            "to come",
+            "(used as a substitute for a more specific verb)",
+            "hither (directional complement for motion toward the speaker, as in 回來|回来[hui2 lai5])",
+            "ever since (as in 自古以來|自古以来[zi4 gu3 yi3 lai2])",
+            "for the past (amount of time)",
+            "(prefix) the coming ...",
+            " the next ... (as in 來世|来世[lai2 shi4])",
+            "(between two verbs) in order to",
+            "(after a round number) approximately",
+            "(used after 得[de2] to indicate possibility, as in 談得來|谈得来[tan2 de5 lai2], or after 不[bu4] to indicate impossibility, as in 吃不來|吃不来[chi1 bu5 lai2])"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "的": {
+          "pinyin": "de",
+          "translations": [
+            "of",
+            "~'s (possessive particle)",
+            "(used after an attribute)",
+            "(used to form a nominal expression)",
+            "(used at the end of a declarative sentence for emphasis)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "行為": {
+          "pinyin": "xíng wèi",
+          "translations": [
+            "action",
+            "conduct",
+            "behavior",
+            "activity"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "該": {
+          "pinyin": "gāi",
+          "translations": [
+            "should",
+            "ought to",
+            "probably",
+            "must be",
+            "to deserve",
+            "to owe",
+            "to be sb's turn to do sth",
+            "that",
+            "the above-mentioned"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "怎麼": {
+          "pinyin": "zěn me",
+          "translations": [
+            "how?",
+            "what?",
+            "why?"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "做": {
+          "pinyin": "zuò",
+          "translations": [
+            "to do",
+            "to make",
+            "to produce",
+            "to write",
+            "to compose",
+            "to act as",
+            "to engage in",
+            "to hold (a party)",
+            "to be",
+            "to become",
+            "to function (in some capacity)",
+            "to serve as",
+            "to be used for",
+            "to form (a bond or relationship)",
+            "to pretend",
+            "to feign",
+            "to act a part",
+            "to put on appearance"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 146.49232425,
+      "end": 147.81232425,
+      "text": "那你今天很憤怒",
+      "translated_text": "Then you're angry today",
+      "pinyin": "nà nǐ jīn tiān hěn fèn nù",
+      "characters": {
+        "那": {
+          "pinyin": "nà",
+          "translations": [
+            "that",
+            "those",
+            "then (in that case)",
+            "commonly pr.  before a classifier",
+            "esp. in Beijing"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "你": {
+          "pinyin": "nǐ",
+          "translations": [
+            "you (informal, as opposed to courteous 您)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "今天": {
+          "pinyin": "jīn tiān",
+          "translations": [
+            "today",
+            "at the present",
+            "now"
+          ],
+          "hsk_level": 1,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "很": {
+          "pinyin": "hěn",
+          "translations": [
+            "(adverb of degree)",
+            "quite",
+            "very",
+            "awfully"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "憤怒": {
+          "pinyin": "fèn nù",
+          "translations": [
+            "angry",
+            "indignant",
+            "wrath",
+            "ire"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 147.81232425,
+      "end": 150.61232425,
+      "text": "就表示有人侵犯你了 你可能要捍衛",
+      "translated_text": "You might have to defend yourself",
+      "pinyin": "jiù biǎo shì yǒu rén qīn fàn nǐ le   nǐ kě néng yào hàn wèi",
+      "characters": {
+        "就": {
+          "pinyin": "jiù",
+          "translations": [
+            "at once",
+            "right away",
+            "only",
+            "just (emphasis)",
+            "as early as",
+            "already",
+            "as soon as",
+            "then",
+            "in that case",
+            "as many as",
+            "even if",
+            "to approach",
+            "to move towards",
+            "to undertake",
+            "to engage in",
+            "to suffer",
+            "subjected to",
+            "to accomplish",
+            "to take advantage of",
+            "to go with (of foods)",
+            "with regard to",
+            "concerning"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "表示": {
+          "pinyin": "biǎo shì",
+          "translations": [
+            "to express",
+            "to show",
+            "to say",
+            "to state",
+            "to indicate",
+            "to mean"
+          ],
+          "hsk_level": 3,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "有人": {
+          "pinyin": "yǒu rén",
+          "translations": [
+            "someone",
+            "people",
+            "anyone",
+            "there is someone there",
+            "occupied (as in restroom)"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "侵犯": {
+          "pinyin": "qīn fàn",
+          "translations": [
+            "to infringe on",
+            "to encroach on",
+            "to violate"
+          ],
+          "hsk_level": 6,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "你": {
+          "pinyin": "nǐ",
+          "translations": [
+            "you (informal, as opposed to courteous 您)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "了": {
+          "pinyin": "le",
+          "translations": [
+            "(modal particle intensifying preceding clause)",
+            "(completed action marker)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "可能": {
+          "pinyin": "kě néng",
+          "translations": [
+            "might (happen)",
+            "possible",
+            "probable",
+            "possibility",
+            "probability",
+            "maybe",
+            "perhaps",
+            "CL:個|个[gè]"
+          ],
+          "hsk_level": 2,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "要": {
+          "pinyin": "yào",
+          "translations": [
+            "important",
+            "vital",
+            "to want",
+            "will",
+            "going to (as future auxiliary)",
+            "may",
+            "must",
+            "(used in a comparison) must be",
+            "probably"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "捍衛": {
+          "pinyin": "hàn wèi",
+          "translations": [
+            "to defend",
+            "to uphold",
+            "to safeguard"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 150.61232425,
+      "end": 151.77232425,
+      "text": "那如果今天是悲傷",
+      "translated_text": "If it's sad today..",
+      "pinyin": "nà rú guǒ jīn tiān shì bēi shāng",
+      "characters": {
+        "那": {
+          "pinyin": "nà",
+          "translations": [
+            "that",
+            "those",
+            "then (in that case)",
+            "commonly pr.  before a classifier",
+            "esp. in Beijing"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "如果": {
+          "pinyin": "rú guǒ",
+          "translations": [
+            "if",
+            "in case",
+            "in the event that"
+          ],
+          "hsk_level": 3,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "今天": {
+          "pinyin": "jīn tiān",
+          "translations": [
+            "today",
+            "at the present",
+            "now"
+          ],
+          "hsk_level": 1,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "是": {
+          "pinyin": "shì",
+          "translations": [
+            "is",
+            "are",
+            "am",
+            "yes",
+            "to be"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "悲傷": {
+          "pinyin": "bēi shāng",
+          "translations": [
+            "sad",
+            " sorrowful"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 151.77232425,
+      "end": 154.37232425,
+      "text": "你失去了一些你覺得重要的東西",
+      "translated_text": "You lost something you thought was important. West",
+      "pinyin": "nǐ shī qù le yī xiē nǐ jué dé zhòng yào de dōng xī",
+      "characters": {
+        "你": {
+          "pinyin": "nǐ",
+          "translations": [
+            "you (informal, as opposed to courteous 您)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "失去": {
+          "pinyin": "shī qù",
+          "translations": [
+            "to lose"
+          ],
+          "hsk_level": 5,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "了": {
+          "pinyin": "le",
+          "translations": [
+            "(modal particle intensifying preceding clause)",
+            "(completed action marker)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "一些": {
+          "pinyin": "yī xiē",
+          "translations": [
+            "some",
+            "a few",
+            "a little",
+            "(following an adjective) slightly ...er"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "覺得": {
+          "pinyin": "jué dé",
+          "translations": [
+            "to think that ...",
+            " to feel that ...",
+            "to feel (uncomfortable etc)"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "重要": {
+          "pinyin": "zhòng yào",
+          "translations": [
+            "important",
+            "significant",
+            "major"
+          ],
+          "hsk_level": 3,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "的": {
+          "pinyin": "de",
+          "translations": [
+            "of",
+            "~'s (possessive particle)",
+            "(used after an attribute)",
+            "(used to form a nominal expression)",
+            "(used at the end of a declarative sentence for emphasis)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "東西": {
+          "pinyin": "dōng xī",
+          "translations": [
+            "thing",
+            "stuff",
+            "person",
+            "CL:個|个[ge4],件[jian4]"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 154.37232425,
+      "end": 156.05232425,
+      "text": "那這個時候你需要的支持",
+      "translated_text": "That's when you need support",
+      "pinyin": "nà zhè gè shí hòu nǐ xū yào de zhī chí",
+      "characters": {
+        "那": {
+          "pinyin": "nà",
+          "translations": [
+            "that",
+            "those",
+            "then (in that case)",
+            "commonly pr.  before a classifier",
+            "esp. in Beijing"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "這個": {
+          "pinyin": "zhè gè",
+          "translations": [
+            "(pronoun) this",
+            "(adjective) this"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "時候": {
+          "pinyin": "shí hòu",
+          "translations": [
+            "time",
+            "length of time",
+            "moment",
+            "period"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "你": {
+          "pinyin": "nǐ",
+          "translations": [
+            "you (informal, as opposed to courteous 您)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "需要": {
+          "pinyin": "xū yào",
+          "translations": [
+            "to need",
+            "to want",
+            "to demand",
+            "to require",
+            "requirement",
+            "need"
+          ],
+          "hsk_level": 3,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "的": {
+          "pinyin": "de",
+          "translations": [
+            "of",
+            "~'s (possessive particle)",
+            "(used after an attribute)",
+            "(used to form a nominal expression)",
+            "(used at the end of a declarative sentence for emphasis)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "支持": {
+          "pinyin": "zhī chí",
+          "translations": [
+            "to be in favor of",
+            "to support",
+            "to back",
+            "support",
+            "backing",
+            "to stand by",
+            "CL:個|个[gè]"
+          ],
+          "hsk_level": 4,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 156.05232425,
+      "end": 157.49232425,
+      "text": "這些你的狀態",
+      "translated_text": "This is your state",
+      "pinyin": "zhè xiē nǐ de zhuàng tài",
+      "characters": {
+        "這些": {
+          "pinyin": "zhè xiē",
+          "translations": [
+            "these"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "你": {
+          "pinyin": "nǐ",
+          "translations": [
+            "you (informal, as opposed to courteous 您)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "的": {
+          "pinyin": "de",
+          "translations": [
+            "of",
+            "~'s (possessive particle)",
+            "(used after an attribute)",
+            "(used to form a nominal expression)",
+            "(used at the end of a declarative sentence for emphasis)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "狀態": {
+          "pinyin": "zhuàng tài",
+          "translations": [
+            "condition",
+            " state",
+            " state of affairs",
+            "CL:個|个[ge4]"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 157.49232425,
+      "end": 159.57232425,
+      "text": "可能就從你的情緒表達出來",
+      "translated_text": "Maybe it's from your mood",
+      "pinyin": "kě néng jiù cóng nǐ de qíng xù biǎo dá chū lái",
+      "characters": {
+        "可能": {
+          "pinyin": "kě néng",
+          "translations": [
+            "might (happen)",
+            "possible",
+            "probable",
+            "possibility",
+            "probability",
+            "maybe",
+            "perhaps",
+            "CL:個|个[gè]"
+          ],
+          "hsk_level": 2,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "就": {
+          "pinyin": "jiù",
+          "translations": [
+            "at once",
+            "right away",
+            "only",
+            "just (emphasis)",
+            "as early as",
+            "already",
+            "as soon as",
+            "then",
+            "in that case",
+            "as many as",
+            "even if",
+            "to approach",
+            "to move towards",
+            "to undertake",
+            "to engage in",
+            "to suffer",
+            "subjected to",
+            "to accomplish",
+            "to take advantage of",
+            "to go with (of foods)",
+            "with regard to",
+            "concerning"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "從": {
+          "pinyin": "cóng",
+          "translations": [
+            "from",
+            "through",
+            "via",
+            "to follow",
+            "to obey",
+            "to engage in (an activity)",
+            "never (in negative sentence)",
+            "(Taiwan pr. [zong4]) retainer",
+            "assistant",
+            "auxiliary",
+            "subordinate",
+            "related by common paternal grandfather or earlier ancestor"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "你": {
+          "pinyin": "nǐ",
+          "translations": [
+            "you (informal, as opposed to courteous 您)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "的": {
+          "pinyin": "de",
+          "translations": [
+            "of",
+            "~'s (possessive particle)",
+            "(used after an attribute)",
+            "(used to form a nominal expression)",
+            "(used at the end of a declarative sentence for emphasis)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "情": {
+          "pinyin": "qíng",
+          "translations": [
+            "(bound form) feelings",
+            " emotion",
+            " sentiment",
+            " passion",
+            "(bound form) situation",
+            " condition"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "緒": {
+          "pinyin": "xù",
+          "translations": [
+            "beginnings",
+            "clues",
+            "mental state",
+            "thread"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "表": {
+          "pinyin": "biǎo",
+          "translations": [
+            "watch (timepiece)",
+            "meter",
+            " gauge"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "達": {
+          "pinyin": "dá",
+          "translations": [
+            "to attain",
+            "to reach",
+            "to amount to",
+            "to communicate",
+            "eminent"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "出來": {
+          "pinyin": "chū lái",
+          "translations": [
+            "(after a verb, indicates coming out, completion of an action, or ability to discern or detect)"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 159.57232425,
+      "end": 161.37232425,
+      "text": "情緒本身就有點像說",
+      "translated_text": "It's kind of like..",
+      "pinyin": "qíng xù běn shēn jiù yǒu diǎn xiàng shuō",
+      "characters": {
+        "情緒": {
+          "pinyin": "qíng xù",
+          "translations": [
+            "mood",
+            "state of mind",
+            "moodiness",
+            "CL:種|种[zhong3]"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "本身": {
+          "pinyin": "běn shēn",
+          "translations": [
+            "itself",
+            "in itself",
+            "per se"
+          ],
+          "hsk_level": 6,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "就": {
+          "pinyin": "jiù",
+          "translations": [
+            "at once",
+            "right away",
+            "only",
+            "just (emphasis)",
+            "as early as",
+            "already",
+            "as soon as",
+            "then",
+            "in that case",
+            "as many as",
+            "even if",
+            "to approach",
+            "to move towards",
+            "to undertake",
+            "to engage in",
+            "to suffer",
+            "subjected to",
+            "to accomplish",
+            "to take advantage of",
+            "to go with (of foods)",
+            "with regard to",
+            "concerning"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "有點": {
+          "pinyin": "yǒu diǎn",
+          "translations": [
+            "a little"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "像": {
+          "pinyin": "xiàng",
+          "translations": [
+            "to resemble",
+            "to be like",
+            "to look as if",
+            "such as",
+            "appearance",
+            "image",
+            "portrait",
+            "image under a mapping (math.)"
+          ],
+          "hsk_level": 3,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "說": {
+          "pinyin": "shuō",
+          "translations": [
+            "to speak",
+            " to talk",
+            " to say",
+            "to explain",
+            " to comment",
+            "to scold",
+            " to tell off",
+            "(bound form) theory",
+            " doctrine"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 161.37232425,
+      "end": 163.25232425000002,
+      "text": "你今天冷你會怎麼辦",
+      "translated_text": "What will you do with your cold today",
+      "pinyin": "nǐ jīn tiān lěng nǐ huì zěn me bàn",
+      "characters": {
+        "你": {
+          "pinyin": "nǐ",
+          "translations": [
+            "you (informal, as opposed to courteous 您)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "今天": {
+          "pinyin": "jīn tiān",
+          "translations": [
+            "today",
+            "at the present",
+            "now"
+          ],
+          "hsk_level": 1,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "冷": {
+          "pinyin": "lěng",
+          "translations": [
+            "cold"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "會": {
+          "pinyin": "huì",
+          "translations": [
+            "to balance an account",
+            "accounting",
+            "accountant"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "怎麼": {
+          "pinyin": "zěn me",
+          "translations": [
+            "how?",
+            "what?",
+            "why?"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "辦": {
+          "pinyin": "bàn",
+          "translations": [
+            "to do",
+            "to manage",
+            "to handle",
+            "to go about",
+            "to run",
+            "to set up",
+            "to deal with"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 163.25232425000002,
+      "end": 164.77232425,
+      "text": "你說冷我就加衣服",
+      "translated_text": "If you say cold, I'll put my clothes on",
+      "pinyin": "nǐ shuō lěng wǒ jiù jiā yī fú",
+      "characters": {
+        "你": {
+          "pinyin": "nǐ",
+          "translations": [
+            "you (informal, as opposed to courteous 您)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "說": {
+          "pinyin": "shuō",
+          "translations": [
+            "to speak",
+            " to talk",
+            " to say",
+            "to explain",
+            " to comment",
+            "to scold",
+            " to tell off",
+            "(bound form) theory",
+            " doctrine"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "冷": {
+          "pinyin": "lěng",
+          "translations": [
+            "cold"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "我": {
+          "pinyin": "wǒ",
+          "translations": [
+            "I",
+            "me",
+            "my"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "就": {
+          "pinyin": "jiù",
+          "translations": [
+            "at once",
+            "right away",
+            "only",
+            "just (emphasis)",
+            "as early as",
+            "already",
+            "as soon as",
+            "then",
+            "in that case",
+            "as many as",
+            "even if",
+            "to approach",
+            "to move towards",
+            "to undertake",
+            "to engage in",
+            "to suffer",
+            "subjected to",
+            "to accomplish",
+            "to take advantage of",
+            "to go with (of foods)",
+            "with regard to",
+            "concerning"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "加": {
+          "pinyin": "jiā",
+          "translations": [
+            "to add",
+            "plus",
+            "(used after an adverb such as 不, 大, 稍 etc, and before a disyllabic verb, to indicate that the action of the verb is applied to sth or sb previously mentioned)",
+            "to apply (restrictions etc) to (sb)",
+            "to give (support, consideration etc) to (sth)"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "衣服": {
+          "pinyin": "yī fu",
+          "translations": [
+            "clothes",
+            "CL:件",
+            "套[tào]"
+          ],
+          "hsk_level": 1,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 164.77232425,
+      "end": 166.01232425,
+      "text": "熱我就脫衣服",
+      "translated_text": "I take off my clothes when it's hot",
+      "pinyin": "rè wǒ jiù tuō yī fú",
+      "characters": {
+        "熱": {
+          "pinyin": "rè",
+          "translations": [
+            "to warm up",
+            "to heat up",
+            "hot (of weather)",
+            "heat",
+            "fervent"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "我": {
+          "pinyin": "wǒ",
+          "translations": [
+            "I",
+            "me",
+            "my"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "就": {
+          "pinyin": "jiù",
+          "translations": [
+            "at once",
+            "right away",
+            "only",
+            "just (emphasis)",
+            "as early as",
+            "already",
+            "as soon as",
+            "then",
+            "in that case",
+            "as many as",
+            "even if",
+            "to approach",
+            "to move towards",
+            "to undertake",
+            "to engage in",
+            "to suffer",
+            "subjected to",
+            "to accomplish",
+            "to take advantage of",
+            "to go with (of foods)",
+            "with regard to",
+            "concerning"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "脫": {
+          "pinyin": "tuō",
+          "translations": [
+            "to shed",
+            "to take off",
+            "to escape",
+            "to get away from"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "衣服": {
+          "pinyin": "yī fu",
+          "translations": [
+            "clothes",
+            "CL:件",
+            "套[tào]"
+          ],
+          "hsk_level": 1,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 166.01232425,
+      "end": 168.13232425,
+      "text": "它就是一個反映出你的狀態",
+      "translated_text": "It's a reflection of your state",
+      "pinyin": "tā jiù shì yī gè fǎn yìng chū nǐ de zhuàng tài",
+      "characters": {
+        "它": {
+          "pinyin": "tā",
+          "translations": [
+            "it"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "就是": {
+          "pinyin": "jiù shì",
+          "translations": [
+            "exactly",
+            " precisely",
+            "only",
+            " simply",
+            " just",
+            "(used correlatively with 也[ye3]) even",
+            " even if"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "一": {
+          "pinyin": "yī",
+          "translations": [
+            "one",
+            "1",
+            "single",
+            "a (article)",
+            "as soon as",
+            "entire",
+            "whole",
+            "all",
+            "throughout",
+            "\"one\" radical in Chinese characters (Kangxi radical 1)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "個": {
+          "pinyin": "gè",
+          "translations": [
+            "(classifier used before a noun that has no specific classifier)",
+            "(bound form) individual"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "反映": {
+          "pinyin": "fǎn yìng",
+          "translations": [
+            "to mirror",
+            "to reflect",
+            "mirror image",
+            "reflection",
+            "fig. to report",
+            "to make known",
+            "to render",
+            "used erroneously for 反應|反应",
+            "response or reaction"
+          ],
+          "hsk_level": 4,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "出": {
+          "pinyin": "chū",
+          "translations": [
+            "to go out",
+            "to come out",
+            "to occur",
+            "to produce",
+            "to go beyond",
+            "to rise",
+            "to put forth",
+            "to happen",
+            "classifier for dramas",
+            "plays",
+            "operas etc"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "你": {
+          "pinyin": "nǐ",
+          "translations": [
+            "you (informal, as opposed to courteous 您)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "的": {
+          "pinyin": "de",
+          "translations": [
+            "of",
+            "~'s (possessive particle)",
+            "(used after an attribute)",
+            "(used to form a nominal expression)",
+            "(used at the end of a declarative sentence for emphasis)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "狀態": {
+          "pinyin": "zhuàng tài",
+          "translations": [
+            "condition",
+            " state",
+            " state of affairs",
+            "CL:個|个[ge4]"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 168.13232425,
+      "end": 170.05232425,
+      "text": "告訴你接下來該怎麼做",
+      "translated_text": "I'll tell you what to do next",
+      "pinyin": "gào sù nǐ jiē xià lái gāi zěn me zuò",
+      "characters": {
+        "告訴": {
+          "pinyin": "gào sù",
+          "translations": [
+            "to tell",
+            " to inform",
+            " to let know"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "你": {
+          "pinyin": "nǐ",
+          "translations": [
+            "you (informal, as opposed to courteous 您)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "接下": {
+          "pinyin": "jiē xià",
+          "translations": [
+            "to take on (a responsibility)"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "來": {
+          "pinyin": "lái",
+          "translations": [
+            "to come",
+            "(used as a substitute for a more specific verb)",
+            "hither (directional complement for motion toward the speaker, as in 回來|回来[hui2 lai5])",
+            "ever since (as in 自古以來|自古以来[zi4 gu3 yi3 lai2])",
+            "for the past (amount of time)",
+            "(prefix) the coming ...",
+            " the next ... (as in 來世|来世[lai2 shi4])",
+            "(between two verbs) in order to",
+            "(after a round number) approximately",
+            "(used after 得[de2] to indicate possibility, as in 談得來|谈得来[tan2 de5 lai2], or after 不[bu4] to indicate impossibility, as in 吃不來|吃不来[chi1 bu5 lai2])"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "該": {
+          "pinyin": "gāi",
+          "translations": [
+            "should",
+            "ought to",
+            "probably",
+            "must be",
+            "to deserve",
+            "to owe",
+            "to be sb's turn to do sth",
+            "that",
+            "the above-mentioned"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "怎麼": {
+          "pinyin": "zěn me",
+          "translations": [
+            "how?",
+            "what?",
+            "why?"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "做": {
+          "pinyin": "zuò",
+          "translations": [
+            "to do",
+            "to make",
+            "to produce",
+            "to write",
+            "to compose",
+            "to act as",
+            "to engage in",
+            "to hold (a party)",
+            "to be",
+            "to become",
+            "to function (in some capacity)",
+            "to serve as",
+            "to be used for",
+            "to form (a bond or relationship)",
+            "to pretend",
+            "to feign",
+            "to act a part",
+            "to put on appearance"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 170.05232425,
+      "end": 171.81232425000002,
+      "text": "快樂其實也有它的功能性",
+      "translated_text": "Happy actually has its function",
+      "pinyin": "kuài lè qí shí yě yǒu tā de gōng néng xìng",
+      "characters": {
+        "快樂": {
+          "pinyin": "kuài lè",
+          "translations": [
+            "happy",
+            " joyful"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "其實": {
+          "pinyin": "qí shí",
+          "translations": [
+            "actually",
+            " in fact",
+            " really"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "也": {
+          "pinyin": "yě",
+          "translations": [
+            "also",
+            "too",
+            "(in Classical Chinese) final particle implying affirmation"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "有": {
+          "pinyin": "yǒu",
+          "translations": [
+            "to have",
+            "there is",
+            "there are",
+            "to exist",
+            "to be"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "它": {
+          "pinyin": "tā",
+          "translations": [
+            "it"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "的": {
+          "pinyin": "de",
+          "translations": [
+            "of",
+            "~'s (possessive particle)",
+            "(used after an attribute)",
+            "(used to form a nominal expression)",
+            "(used at the end of a declarative sentence for emphasis)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "功能性": {
+          "pinyin": "gōng néng xìng",
+          "translations": [
+            "functionality"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 171.81232425000002,
+      "end": 174.09232425,
+      "text": "就是你在往你的目標走的時候",
+      "translated_text": "It's when you're on your way",
+      "pinyin": "jiù shì nǐ zài wǎng nǐ de mù biāo zǒu de shí hòu",
+      "characters": {
+        "就是": {
+          "pinyin": "jiù shì",
+          "translations": [
+            "exactly",
+            " precisely",
+            "only",
+            " simply",
+            " just",
+            "(used correlatively with 也[ye3]) even",
+            " even if"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "你": {
+          "pinyin": "nǐ",
+          "translations": [
+            "you (informal, as opposed to courteous 您)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "在": {
+          "pinyin": "zài",
+          "translations": [
+            "(located) at",
+            "(to be) in",
+            "to exist",
+            "in the middle of doing sth",
+            "(indicating an action in progress)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "往": {
+          "pinyin": "wǎng",
+          "translations": [
+            "to go (in a direction)",
+            "to",
+            "towards",
+            "(of a train) bound for",
+            "past",
+            "previous"
+          ],
+          "hsk_level": 4,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "的": {
+          "pinyin": "de",
+          "translations": [
+            "of",
+            "~'s (possessive particle)",
+            "(used after an attribute)",
+            "(used to form a nominal expression)",
+            "(used at the end of a declarative sentence for emphasis)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "目標": {
+          "pinyin": "mù biāo",
+          "translations": [
+            "target",
+            "goal",
+            "objective",
+            "CL:個|个[ge4]"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "走": {
+          "pinyin": "zǒu",
+          "translations": [
+            "to walk",
+            "to go",
+            "to run",
+            "to move (of vehicle)",
+            "to visit",
+            "to leave",
+            "to go away",
+            "to die (euph.)",
+            "from",
+            "through",
+            "away (in compound verbs, such as 撤走)",
+            "to change (shape, form, meaning)"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "時候": {
+          "pinyin": "shí hòu",
+          "translations": [
+            "time",
+            "length of time",
+            "moment",
+            "period"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 174.09232425,
+      "end": 175.37232425,
+      "text": "就會有快樂的感受",
+      "translated_text": "I feel happy",
+      "pinyin": "jiù huì yǒu kuài lè de gǎn shòu",
+      "characters": {
+        "就": {
+          "pinyin": "jiù",
+          "translations": [
+            "at once",
+            "right away",
+            "only",
+            "just (emphasis)",
+            "as early as",
+            "already",
+            "as soon as",
+            "then",
+            "in that case",
+            "as many as",
+            "even if",
+            "to approach",
+            "to move towards",
+            "to undertake",
+            "to engage in",
+            "to suffer",
+            "subjected to",
+            "to accomplish",
+            "to take advantage of",
+            "to go with (of foods)",
+            "with regard to",
+            "concerning"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "會": {
+          "pinyin": "huì",
+          "translations": [
+            "to balance an account",
+            "accounting",
+            "accountant"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "有": {
+          "pinyin": "yǒu",
+          "translations": [
+            "to have",
+            "there is",
+            "there are",
+            "to exist",
+            "to be"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "快樂": {
+          "pinyin": "kuài lè",
+          "translations": [
+            "happy",
+            " joyful"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "的": {
+          "pinyin": "de",
+          "translations": [
+            "of",
+            "~'s (possessive particle)",
+            "(used after an attribute)",
+            "(used to form a nominal expression)",
+            "(used at the end of a declarative sentence for emphasis)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "感受": {
+          "pinyin": "gǎn shòu",
+          "translations": [
+            "to sense",
+            "perception",
+            "to feel (through the senses)",
+            "a feeling",
+            "an impression",
+            "an experience"
+          ],
+          "hsk_level": 5,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 175.37232425,
+      "end": 177.09232425,
+      "text": "它的功能是讓你知道",
+      "translated_text": "Its function is to let you know",
+      "pinyin": "tā de gōng néng shì ràng nǐ zhī dào",
+      "characters": {
+        "它": {
+          "pinyin": "tā",
+          "translations": [
+            "it"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "的": {
+          "pinyin": "de",
+          "translations": [
+            "of",
+            "~'s (possessive particle)",
+            "(used after an attribute)",
+            "(used to form a nominal expression)",
+            "(used at the end of a declarative sentence for emphasis)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "功能": {
+          "pinyin": "gōng néng",
+          "translations": [
+            "function",
+            "capability"
+          ],
+          "hsk_level": 5,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "是": {
+          "pinyin": "shì",
+          "translations": [
+            "is",
+            "are",
+            "am",
+            "yes",
+            "to be"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "讓": {
+          "pinyin": "ràng",
+          "translations": [
+            "to yield",
+            "to permit",
+            "to let sb do sth",
+            "to have sb do sth",
+            "to make sb (feel sad etc)",
+            "by (indicates the agent in a passive clause, like 被[bei4])"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "你": {
+          "pinyin": "nǐ",
+          "translations": [
+            "you (informal, as opposed to courteous 您)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "知道": {
+          "pinyin": "zhī dào",
+          "translations": [
+            "to know",
+            "to be aware of",
+            "also pron. [zhī dao]"
+          ],
+          "hsk_level": 2,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 177.09232425,
+      "end": 178.49232425,
+      "text": "不要偏左不要偏右",
+      "translated_text": "No left, no right",
+      "pinyin": "bú yào piān zuǒ bú yào piān yòu",
+      "characters": {
+        "不要": {
+          "pinyin": "bú yào",
+          "translations": [
+            "don't!",
+            "must not"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "偏": {
+          "pinyin": "piān",
+          "translations": [
+            "to lean",
+            "to slant",
+            "oblique",
+            "prejudiced",
+            "to deviate from average",
+            "to stray from the intended line",
+            "stubbornly",
+            "contrary to expectations"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "左": {
+          "pinyin": "zuǒ",
+          "translations": [
+            "left",
+            "the Left (politics)",
+            "east",
+            "unorthodox",
+            "queer",
+            "wrong",
+            "differing",
+            "opposite",
+            "variant of 佐[zuo3]"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "右": {
+          "pinyin": "yòu",
+          "translations": [
+            "(bound form) right",
+            " right-hand side",
+            "(bound form) (politics) right of center",
+            "(bound form) (old) west",
+            "(literary) the right side as the side of precedence"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 178.49232425,
+      "end": 179.81232425000002,
+      "text": "你現在走的就是對的",
+      "translated_text": "You're right to go",
+      "pinyin": "nǐ xiàn zài zǒu de jiù shì duì de",
+      "characters": {
+        "你": {
+          "pinyin": "nǐ",
+          "translations": [
+            "you (informal, as opposed to courteous 您)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "現": {
+          "pinyin": "xiàn",
+          "translations": [
+            "to appear",
+            "present",
+            "now",
+            "existing",
+            "current"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "在": {
+          "pinyin": "zài",
+          "translations": [
+            "(located) at",
+            "(to be) in",
+            "to exist",
+            "in the middle of doing sth",
+            "(indicating an action in progress)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "走": {
+          "pinyin": "zǒu",
+          "translations": [
+            "to walk",
+            "to go",
+            "to run",
+            "to move (of vehicle)",
+            "to visit",
+            "to leave",
+            "to go away",
+            "to die (euph.)",
+            "from",
+            "through",
+            "away (in compound verbs, such as 撤走)",
+            "to change (shape, form, meaning)"
+          ],
+          "hsk_level": 2,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "的": {
+          "pinyin": "de",
+          "translations": [
+            "of",
+            "~'s (possessive particle)",
+            "(used after an attribute)",
+            "(used to form a nominal expression)",
+            "(used at the end of a declarative sentence for emphasis)"
+          ],
+          "hsk_level": 1,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "就是": {
+          "pinyin": "jiù shì",
+          "translations": [
+            "exactly",
+            " precisely",
+            "only",
+            " simply",
+            " just",
+            "(used correlatively with 也[ye3]) even",
+            " even if"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "對": {
+          "pinyin": "duì",
+          "translations": [
+            "right",
+            " correct",
+            "towards",
+            " at",
+            " for",
+            "concerning",
+            " regarding",
+            "to treat (sb a certain way)",
+            "to face",
+            "(bound form) opposite",
+            " facing",
+            " matching",
+            "to match together",
+            " to adjust",
+            "to fit",
+            " to suit",
+            "to answer",
+            " to reply",
+            "to add",
+            " to pour in (a fluid)",
+            "to check",
+            " to compare",
+            "classifier: couple",
+            " pair"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        }
+      }
+    },
+    {
+      "start": 179.81232425000002,
+      "end": 181.13232425,
+      "text": "請繼續下去",
+      "translated_text": "Please continue",
+      "pinyin": "qǐng jì xù xià qù",
+      "characters": {
+        "請": {
+          "pinyin": "qǐng",
+          "translations": [
+            "to ask",
+            "to invite",
+            "please (do sth)",
+            "to treat (to a meal etc)",
+            "to request"
+          ],
+          "hsk_level": null,
+          "is_phrase": false,
+          "is_number": false
+        },
+        "繼續": {
+          "pinyin": "jì xù",
+          "translations": [
+            "to continue",
+            "to proceed with",
+            "to go on with"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        },
+        "下去": {
+          "pinyin": "xià qù",
+          "translations": [
+            "to go down",
+            "to descend",
+            "to go on",
+            "to continue",
+            "(of a servant) to withdraw"
+          ],
+          "hsk_level": null,
+          "is_phrase": true,
+          "is_number": false
+        }
+      }
+    }
+  ]
+}
