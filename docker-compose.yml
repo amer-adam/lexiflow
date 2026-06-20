@@ -51,6 +51,15 @@ services:
       - "4557:4557"
     environment:
       - TRANSLATION_API_URL=http://libretranslate:5000/translate
+      # Which TTS backend /tts proxies to — "edge" (default, no GPU, the
+      # edge-tts service below) or "cosyvoice" (GPU, the tts-service below;
+      # see backend-fastapi/api.py's TTS_BACKEND switch). Both URLs are
+      # always set so flipping TTS_BACKEND doesn't need any other env
+      # change — just also bring up/down the matching service via its
+      # profile (tts-service is profile-gated, see below).
+      - TTS_BACKEND=edge
+      - EDGE_TTS_API_URL=http://edge-tts:5050
+      - EDGE_TTS_VOICE=zh-CN-XiaoxiaoNeural 
       - TTS_API_URL=http://tts-service:50000
       - FRONTEND_URL=${FRONTEND_URL}
       - OMP_NUM_THREADS=12
@@ -68,14 +77,30 @@ services:
     restart: unless-stopped
     depends_on:
       - libretranslate
-      - tts-service
+      - edge-tts
+
+  # OpenAI-compatible wrapper around Microsoft Edge's cloud TTS
+  # (github.com/travisvn/openai-edge-tts). Default TTS backend: no GPU, no
+  # model download, reliable even for single-character words. Needs outbound
+  # internet access (it calls Microsoft's service), unlike tts-service below.
+  edge-tts:
+    image: travisvn/openai-edge-tts:latest
+    ports:
+      - "4559:5050"
+    environment:
+      - DEFAULT_VOICE=zh-CN-XiaoxiaoNeural
+      - DEFAULT_RESPONSE_FORMAT=wav
+      - REQUIRE_API_KEY=false
+    restart: unless-stopped
 
   # Fun-CosyVoice3-0.5B-2512 served by CosyVoice's own official FastAPI
   # server (see tts-service/Dockerfile) — a plain off-the-shelf container,
   # not merged into backend-fastapi, same shape as libretranslate below.
   # Only backend-fastapi talks to it; the frontend/backend-node never call
-  # it directly.
+  # it directly. Opt-in: set TTS_BACKEND=cosyvoice on backend-fastapi above
+  # and start this with `docker compose --profile cosyvoice up -d`.
   tts-service:
+    profiles: ["cosyvoice"]
     build:
       context: ./tts-service
     ports:

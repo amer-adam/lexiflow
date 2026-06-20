@@ -1,13 +1,16 @@
-import { useMemo, useState } from "react";
-import { PlayCircle, Lock, Globe, Search, Plus, Film, Clock, ArrowUpDown } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { PlayCircle, Lock, Globe, Search, Plus, Film, Clock, ArrowUpDown, Trash2, Languages } from "lucide-react";
 import { type VideoMeta } from "@/lib/data";
 import { PageHeader, EmptyState, ErrorState, Skeleton } from "@/components/bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNav } from "@/app/nav";
-import { useQuery } from "@/app/useApi";
+import { useApi, useQuery } from "@/app/useApi";
 import { type SubtitleMatch, type VideoProgress } from "@/lib/api";
+import { useSettings, updateSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
+
+const HAS_CJK = /[㐀-鿿]/;
 
 type SearchMode = "titles" | "subtitles" | "split";
 type FilterMode = "all" | "mine" | "private";
@@ -15,11 +18,27 @@ type SortMode = "newest" | "oldest" | "az";
 
 export function LibraryView() {
   const { go } = useNav();
+  const { api } = useApi();
+  const settings = useSettings();
   const [q, setQ] = useState("");
   const [searchMode, setSearchMode] = useState<SearchMode>("titles");
   const [filterMode, setFilterMode] = useState<FilterMode>("all");
   const [sortMode, setSortMode] = useState<SortMode>("newest");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const { data, loading, error, reload } = useQuery((a) => a.getLibrary(), []);
+
+  async function handleDelete(v: VideoMeta) {
+    if (!window.confirm(`Delete "${v.title}"? This removes it from the library for everyone and can't be undone.`)) return;
+    setDeletingId(v.id);
+    try {
+      await api.deleteVideo(v.id);
+      reload();
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : "Failed to delete video");
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   const { data: progressById } = useQuery(async (a) => {
     const vids = data ?? [];
@@ -101,6 +120,13 @@ export function LibraryView() {
               className="pill border border-border text-muted-foreground hover:bg-muted gap-1">
               <ArrowUpDown className="h-3 w-3" /> {sortMode === "newest" ? "Newest first" : sortMode === "oldest" ? "Oldest first" : "Name A–Z"}
             </button>
+            <button
+              onClick={() => updateSettings({ libraryTitlesEnglish: !settings.libraryTitlesEnglish })}
+              className={cn("pill border gap-1", settings.libraryTitlesEnglish ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:bg-muted")}
+              title="Toggle video titles between original and English"
+            >
+              <Languages className="h-3 w-3" /> {settings.libraryTitlesEnglish ? "English titles" : "Original titles"}
+            </button>
           </div>
         </div>
       )}
@@ -136,7 +162,15 @@ export function LibraryView() {
               {isSplit && <h3 className="font-display text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Video matches</h3>}
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {displayedVideos.map((v) => (
-                  <VideoCard key={v.id} v={v} progress={progressById?.get(v.id)} onOpen={() => go("watch", { id: v.id })} />
+                  <VideoCard
+                    key={v.id}
+                    v={v}
+                    progress={progressById?.get(v.id)}
+                    onOpen={() => go("watch", { id: v.id })}
+                    onDelete={v.ownedByMe ? () => handleDelete(v) : undefined}
+                    deleting={deletingId === v.id}
+                    showEnglish={settings.libraryTitlesEnglish}
+                  />
                 ))}
               </div>
               {isSplit && titleMatches.length > 4 && (
@@ -170,9 +204,21 @@ export function LibraryView() {
   );
 }
 
-function VideoCard({ v, progress, onOpen }: { v: VideoMeta; progress?: VideoProgress; onOpen: () => void }) {
+function VideoCard({ v, progress, onOpen, onDelete, deleting, showEnglish }: { v: VideoMeta; progress?: VideoProgress; onOpen: () => void; onDelete?: () => void; deleting?: boolean; showEnglish?: boolean }) {
+  const { api } = useApi();
   const [imgOk, setImgOk] = useState(true);
+  const [translated, setTranslated] = useState<string | null>(null);
   const pct = progress && progress.duration > 0 ? Math.min(100, Math.round((progress.currentTime / progress.duration) * 100)) : 0;
+  const needsTranslation = showEnglish && HAS_CJK.test(v.title);
+
+  useEffect(() => {
+    if (!needsTranslation) { setTranslated(null); return; }
+    let cancelled = false;
+    api.translateText(v.title).then((t) => { if (!cancelled) setTranslated(t); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [needsTranslation, v.title, api]);
+
+  const displayTitle = needsTranslation ? (translated ?? v.title) : v.title;
   return (
     <button onClick={onOpen} className="group text-left paper overflow-hidden hover:-translate-y-0.5 transition-transform">
       <div
@@ -196,6 +242,19 @@ function VideoCard({ v, progress, onOpen }: { v: VideoMeta; progress?: VideoProg
         <span className="absolute top-2 left-2 pill bg-black/50 text-white text-[11px]">
           {v.visibility === "private" ? <><Lock className="h-3 w-3" /> Private</> : <><Globe className="h-3 w-3" /> Public</>}
         </span>
+        {onDelete && (
+          <span
+            role="button"
+            aria-label="Delete video"
+            onClick={(e) => { e.stopPropagation(); if (!deleting) onDelete(); }}
+            className={cn(
+              "absolute top-2 right-2 pill bg-black/50 text-white text-[11px] hover:bg-destructive/80 transition-colors",
+              deleting && "opacity-50 pointer-events-none"
+            )}
+          >
+            <Trash2 className="h-3 w-3" />
+          </span>
+        )}
         {pct > 0 && (
           <div className="absolute inset-x-0 bottom-0 h-1 bg-black/40">
             <div className="h-full bg-primary" style={{ width: `${pct}%` }} />
@@ -203,7 +262,10 @@ function VideoCard({ v, progress, onOpen }: { v: VideoMeta; progress?: VideoProg
         )}
       </div>
       <div className="p-3.5">
-        <div className="font-semibold leading-snug line-clamp-2 min-h-[2.6rem]">{v.title}</div>
+        <div className="font-semibold leading-snug line-clamp-2 min-h-[2.6rem]">
+          {displayTitle}
+          {needsTranslation && !translated && <span className="text-muted-foreground"> …</span>}
+        </div>
         <div className="text-sm text-muted-foreground mt-1 truncate">
           {v.channel || v.description || "Video"}
         </div>

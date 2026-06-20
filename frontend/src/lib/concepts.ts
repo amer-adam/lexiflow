@@ -57,6 +57,15 @@ export const CONCEPTS: Record<string, Concept> = {
       "OFFICIAL — bundled reference lists like the HSK levels (read-only).",
     ],
   },
+  importList: {
+    title: "Import a list",
+    what: "Load a list someone shared with you back into LexiFlow — accepts .csv (full fidelity) or .txt (the Anki export format).",
+    why: "Export → send the file → import is the easiest way to share a vocabulary list between two LexiFlow users, no account linking needed.",
+    more: [
+      "Only .csv and .txt are supported — both match this app's own export formats exactly.",
+      "Importing always creates a brand-new list; it never merges into an existing one.",
+    ],
+  },
   familiarity: {
     title: "Familiarity score",
     what: "A 0–100% estimate of how well you know a word, based on how often you've seen it and how your flashcard reviews have gone.",

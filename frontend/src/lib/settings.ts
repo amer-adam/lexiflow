@@ -30,6 +30,8 @@ export interface Settings {
   subtitlePositionY: number; // 5-95%, theater mode vertical position
   // Study
   dailyGoal: number; // cards per day
+  // Library
+  libraryTitlesEnglish: boolean; // show translated (vs original) video titles
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -44,6 +46,7 @@ export const DEFAULT_SETTINGS: Settings = {
   subtitleBgOpacity: 55,
   subtitlePositionY: 82,
   dailyGoal: 20,
+  libraryTitlesEnglish: false,
 };
 
 const KEY = "lexiflow_settings_v1";

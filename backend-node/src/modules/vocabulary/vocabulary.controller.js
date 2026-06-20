@@ -1,5 +1,8 @@
+const fs = require('fs');
+const path = require('path');
 const vocabularyService = require('./vocabulary.service');
 const exportService = require('./export.service');
+const importService = require('./import.service');
 const { createListSchema, addVocabularySchema, createListFromVideoSchema } = require('./vocabulary.validator');
 
 async function createList(req, res, next) {
@@ -146,6 +149,34 @@ async function exportList(req, res, next) {
   }
 }
 
+async function importList(req, res, next) {
+  try {
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const ext = path.extname(req.file.originalname).toLowerCase().replace('.', '');
+    const format = ext === 'csv' ? 'csv' : ext === 'txt' ? 'txt' : null;
+    if (!format) {
+      fs.unlink(req.file.path, () => {});
+      return res.status(400).json({ error: 'Unsupported file type. Use a .csv or .txt file.' });
+    }
+
+    const text = fs.readFileSync(req.file.path, 'utf-8');
+    fs.unlink(req.file.path, () => {});
+
+    const name = (req.body.name || path.basename(req.file.originalname, path.extname(req.file.originalname))).trim();
+    const result = await importService.importList({ userId, name, format, text });
+    return res.status(201).json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   createList,
   createListFromVideo,
@@ -155,5 +186,6 @@ module.exports = {
   getListDetails,
   getDictionaryDefinition,
   deleteList,
-  exportList
+  exportList,
+  importList
 };

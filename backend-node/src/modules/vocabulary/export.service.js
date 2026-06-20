@@ -1,6 +1,14 @@
 const PDFDocument = require('pdfkit');
+const path = require('path');
+const fs = require('fs');
 const prisma = require('../../config/prisma');
 const vocabularyRepository = require('./vocabulary.repository');
+
+// pdfkit's built-in fonts (Helvetica etc.) only cover WinAnsi/Latin — no
+// CJK glyphs — so any Chinese text renders as mojibake unless a real CJK
+// font is registered. Fetched into the image at build time (see Dockerfile).
+const CJK_FONT_PATH = path.join(__dirname, '../../../assets/fonts/NotoSansSC-Regular.otf');
+const CJK_FONT_AVAILABLE = fs.existsSync(CJK_FONT_PATH);
 
 function csvEscape(value) {
   const s = value === null || value === undefined ? '' : String(value);
@@ -57,6 +65,11 @@ function toAnki(list, items) {
 function toPdf(list, items, res) {
   const doc = new PDFDocument({ margin: 40 });
   doc.pipe(res);
+
+  if (CJK_FONT_AVAILABLE) {
+    doc.registerFont('cjk', CJK_FONT_PATH);
+    doc.font('cjk');
+  }
 
   doc.fontSize(18).text(list.name, { underline: true });
   doc.moveDown(0.5);

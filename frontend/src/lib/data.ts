@@ -88,8 +88,8 @@ export const FSRS_STATE_LABEL: Record<FsrsState, string> = {
 export interface Card {
   id?: string;
   vocab: Vocab;
-  front: { character: boolean; pinyin: boolean; meaning: boolean };
-  back: { character: boolean; pinyin: boolean; meaning: boolean };
+  front: { character: boolean; pinyin: boolean; meaning: boolean; audio: boolean };
+  back: { character: boolean; pinyin: boolean; meaning: boolean; audio: boolean };
   stability: number;
   difficulty: number;
   state: FsrsState;

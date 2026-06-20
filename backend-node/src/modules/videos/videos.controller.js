@@ -215,12 +215,31 @@ async function getProgress(req, res) {
     }
 }
 
+/**
+ * Handle DELETE /library/:jobId request.
+ */
+async function deleteVideo(req, res) {
+    try {
+        const userId = req.userId;
+        const { jobId } = req.params;
+        await videosService.deleteVideo(jobId, userId);
+        res.json({ success: true });
+    } catch (error) {
+        if (error.status === 404) {
+            return res.status(404).json({ error: error.message });
+        }
+        console.error('Error deleting video:', error);
+        res.status(500).json({ error: 'Failed to delete video' });
+    }
+}
+
 module.exports = {
     getLibrary,
     searchSubtitles,
     createJob,
     getJobStatus,
     uploadJob,
+    deleteVideo,
     saveProgress,
     getProgress
 };

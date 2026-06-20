@@ -165,6 +165,7 @@ export function WatchView() {
   // Mark words seen, persist a session summary (survives navigation, refresh,
   // and opening another video), then leave.
   const finishWatching = async () => {
+    finishedRef.current = true;
     flushProgress();
     if (!videoId) { go("library"); return; }
     setLeaving(true);
@@ -174,6 +175,29 @@ export function WatchView() {
     setSessionSummary({ videoTitle: job?.title, saved: saved.length, tracked, at: Date.now() });
     go("library");
   };
+
+  // The summary above only fired when the user clicked the in-page "Library"
+  // button — leaving via the main sidebar nav, closing the tab's view, or any
+  // other route change skipped it entirely, so the toast just never showed.
+  // Catch every other exit path here instead, reading refs so this always
+  // sees the latest values without re-running the effect on every render.
+  const finishedRef = useRef(false);
+  const jobRef = useRef(job); jobRef.current = job;
+  const savedRef = useRef(saved); savedRef.current = saved;
+  const apiRef = useRef(api); apiRef.current = api;
+  const videoIdRef = useRef(videoId); videoIdRef.current = videoId;
+  useEffect(() => {
+    return () => {
+      if (finishedRef.current) return;
+      const vid = videoIdRef.current;
+      if (!vid || !tRef.current) return; // never actually watched anything
+      finishedRef.current = true;
+      apiRef.current.markVideoSeen(vid).then(
+        (r) => setSessionSummary({ videoTitle: jobRef.current?.title, saved: savedRef.current.length, tracked: r.tracked, at: Date.now() }),
+        () => setSessionSummary({ videoTitle: jobRef.current?.title, saved: savedRef.current.length, tracked: 0, at: Date.now() })
+      );
+    };
+  }, []);
 
   // ── States ───────────────────────────────────────────────────
   if (!videoId) {

@@ -11,6 +11,7 @@ router.post('/upload', authMiddleware, upload.single('file'), videosController.u
 
 // Library & Search routes
 router.get('/library', authMiddleware, videosController.getLibrary);
+router.delete('/library/:jobId', authMiddleware, videosController.deleteVideo);
 router.get('/search', authMiddleware, videosController.searchSubtitles);
 
 // Video watch progress routes

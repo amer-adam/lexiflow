@@ -83,6 +83,22 @@ async function updateResult(videoId, updateFields, options = {}) {
 }
 
 /**
+ * Find a single user video association link.
+ */
+async function getUserVideoLink(jobId, userId) {
+    return await collections.userVideosCollection.findOne({ job_id: jobId, user_id: userId });
+}
+
+/**
+ * Fully delete a video: its result, its job record, and every user's link to it.
+ */
+async function deleteVideo(jobId) {
+    await collections.resultsCollection.deleteMany({ job_id: jobId });
+    await collections.jobsCollection.deleteMany({ job_id: jobId });
+    await collections.userVideosCollection.deleteMany({ job_id: jobId });
+}
+
+/**
  * Delete older jobs that have completed or failed.
  */
 async function deleteOldJobs(cutoffDate) {
@@ -128,5 +144,7 @@ module.exports = {
     searchResults,
     updateJob,
     updateResult,
-    deleteOldJobs
+    deleteOldJobs,
+    getUserVideoLink,
+    deleteVideo
 };

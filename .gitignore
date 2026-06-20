@@ -11,3 +11,4 @@ digest.txt
 frontend/digest_frontend.txt
 prod.env
 backend-fastapi/result.json
+*.pdf

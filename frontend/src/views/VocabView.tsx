@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  Search, Plus, Layers, BookOpen, Trash2, ArrowUpDown, MessageSquareQuote, Loader2, Lock, UserPlus, Clock, Download,
+  Search, Plus, Layers, BookOpen, Trash2, ArrowUpDown, MessageSquareQuote, Loader2, Lock, UserPlus, Clock, Download, Upload,
 } from "lucide-react";
 import { hskColor, type VList, type ListType, type ListItem, type HskLevel } from "@/lib/data";
 import { HskBadge, FamiliarityBar, Loading, ErrorState, EmptyState } from "@/components/bits";
@@ -48,6 +48,7 @@ export function VocabView() {
   const [occurrenceWord, setOccurrenceWord] = useState<string | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
   const [exportBusy, setExportBusy] = useState<string | null>(null);
+  const [importBusy, setImportBusy] = useState(false);
 
   const sortedLists = useMemo(
     () => [...(lists ?? [])].sort((a, b) => ORDER_WEIGHT[a.type] - ORDER_WEIGHT[b.type]),
@@ -85,6 +86,25 @@ export function VocabView() {
       alert("Could not create list: " + (e?.message ?? "unknown error"));
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function importList(file: File) {
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (ext !== "csv" && ext !== "txt") {
+      alert("Only .csv and .txt files are supported — export a list from LexiFlow (CSV or Anki/.txt) to get a file in the right format.");
+      return;
+    }
+    setImportBusy(true);
+    try {
+      const result = await api.importList(file);
+      reloadLists();
+      setActiveId(result.listId);
+      alert(`Imported ${result.wordsAdded} of ${result.wordsFound} word${result.wordsFound === 1 ? "" : "s"} into "${result.listName}".`);
+    } catch (e: any) {
+      alert("Could not import list: " + (e?.message ?? "unknown error"));
+    } finally {
+      setImportBusy(false);
     }
   }
 
@@ -190,6 +210,16 @@ export function VocabView() {
             <Button variant="outline" className="w-full mt-3 gap-1.5 border-dashed" onClick={createList} disabled={busy}>
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} New list
             </Button>
+            <label className={cn("w-full mt-1.5 gap-1.5 inline-flex items-center justify-center rounded-md border border-dashed border-border px-3 py-2 text-sm font-medium cursor-pointer hover:bg-muted transition-colors", importBusy && "opacity-60 pointer-events-none")}>
+              {importBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} Import list <InfoTip id="importList" />
+              <input
+                type="file"
+                accept=".csv,.txt"
+                className="sr-only"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) importList(f); e.target.value = ""; }}
+                disabled={importBusy}
+              />
+            </label>
           </>
         )}
       </div>

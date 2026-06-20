@@ -274,10 +274,26 @@ async function uploadJob({ file, title: reqTitle, durationStr, user_id, is_priva
     };
 }
 
+/**
+ * Delete a video from the library. Only the user who originally requested it
+ * may delete it — since results/jobs are shared across everyone's library,
+ * this removes it for all users, not just the requester.
+ */
+async function deleteVideo(jobId, userId) {
+    const link = await videosRepository.getUserVideoLink(jobId, userId);
+    if (!link) {
+        const err = new Error('Video not found or not owned by this user');
+        err.status = 404;
+        throw err;
+    }
+    await videosRepository.deleteVideo(jobId);
+}
+
 module.exports = {
     getLibrary,
     searchSubtitles,
     createJob,
     getJobStatus,
-    uploadJob
+    uploadJob,
+    deleteVideo
 };

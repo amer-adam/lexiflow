@@ -12,13 +12,34 @@ function hashFor(text, voice) {
     return crypto.createHash('sha256').update(`${voice || 'default'}::${text}`).digest('hex');
 }
 
+// backend-fastapi's /tts can come from either TTS backend (see its
+// TTS_BACKEND switch) and they don't return the same container — CosyVoice
+// always returns wav, but edge-tts returns mp3 unless its -ffmpeg image
+// variant is used. express.static (serving /media) picks Content-Type from
+// the file extension, so the cached file's extension must match what was
+// actually written or playback breaks; we read it off the real response.
+const EXT_BY_CONTENT_TYPE = { 'audio/wav': 'wav', 'audio/x-wav': 'wav', 'audio/mpeg': 'mp3' };
+
+function extFor(contentType) {
+    const base = (contentType || '').split(';')[0].trim();
+    return EXT_BY_CONTENT_TYPE[base] || 'wav';
+}
+
+function findCached(hash) {
+    for (const ext of new Set(Object.values(EXT_BY_CONTENT_TYPE))) {
+        const filePath = path.join(ttsDir, `${hash}.${ext}`);
+        if (fs.existsSync(filePath)) return { filePath, ext };
+    }
+    return null;
+}
+
 /**
  * Synthesize (or return cached) audio for a piece of Mandarin text.
  *
- * backend-node never talks to the CosyVoice container directly — it calls
+ * backend-node never talks to a TTS engine directly — it calls
  * backend-fastapi's /tts route (same pattern as translation), which proxies
- * to tts-service (the official CosyVoice FastAPI server) and hands back a
- * ready-to-cache .wav.
+ * to whichever TTS backend is configured there and hands back a
+ * ready-to-cache audio file.
  */
 async function synthesize(text, { voice } = {}) {
     if (!text || !text.trim()) {
@@ -28,11 +49,9 @@ async function synthesize(text, { voice } = {}) {
     }
 
     const hash = hashFor(text, voice);
-    const filePath = path.join(ttsDir, `${hash}.wav`);
-    const mediaUrl = `/media/tts/${hash}.wav`;
-
-    if (fs.existsSync(filePath)) {
-        return { url: mediaUrl, cached: true };
+    const cached = findCached(hash);
+    if (cached) {
+        return { url: `/media/tts/${hash}.${cached.ext}`, cached: true };
     }
 
     if (!env.PYTHON_API) {
@@ -47,8 +66,10 @@ async function synthesize(text, { voice } = {}) {
         responseType: 'arraybuffer',
     });
 
+    const ext = extFor(response.headers['content-type']);
+    const filePath = path.join(ttsDir, `${hash}.${ext}`);
     fs.writeFileSync(filePath, Buffer.from(response.data));
-    return { url: mediaUrl, cached: false };
+    return { url: `/media/tts/${hash}.${ext}`, cached: false };
 }
 
 module.exports = { synthesize };

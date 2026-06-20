@@ -61,17 +61,27 @@ async function generateNewUserQuiz({ userId, listId, count, allowedTypes }) {
     const title = `Quiz on list: ${listData.name}`;
     const completeQuizRecord = await quizzesRepository.persistQuizStructure(userId, title, preparedQuestions);
 
-    // Strip true answers from client package objects to prevent cheating
+    // Strip true answers from client package objects to prevent cheating.
+    // Only MULTIPLE_CHOICE/TRUE_FALSE should carry an `options` array — the
+    // frontend renders a button grid whenever options is non-empty, falling
+    // back to a free-text input otherwise. `q.distractors` is `[]` (not
+    // null) for FILL_BLANK/SHORT_ANSWER, and `[] ? a : b` is always truthy
+    // in JS, so the old code appended just the correct answer as a
+    // single-button "options" array for every question type — making every
+    // non-MCQ question render as a (broken, one-button) multiple choice UI.
     return {
         id: completeQuizRecord.id,
         title: completeQuizRecord.title,
         createdAt: completeQuizRecord.createdAt,
-        questions: completeQuizRecord.questions.map(q => ({
-            id: q.id,
-            type: q.type,
-            questionText: q.questionText,
-            options: q.distractors ? [...(q.distractors), q.correctAnswer].sort() : []
-        }))
+        questions: completeQuizRecord.questions.map(q => {
+            let options = [];
+            if (q.type === 'MULTIPLE_CHOICE') {
+                options = [...(q.distractors ?? []), q.correctAnswer].sort();
+            } else if (q.type === 'TRUE_FALSE') {
+                options = ['TRUE', 'FALSE'];
+            }
+            return { id: q.id, type: q.type, questionText: q.questionText, options };
+        })
     };
 }
 

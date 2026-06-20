@@ -4,6 +4,7 @@ const configElementSchema = z.object({
     character: z.boolean().default(false),
     pinyin: z.boolean().default(false),
     meaning: z.boolean().default(false),
+    audio: z.boolean().default(false),
 });
 
 const syncDeckSchema = z.object({

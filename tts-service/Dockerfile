@@ -41,6 +41,12 @@ ENV PYTHONPATH="${PYTHONPATH}:/workspace/CosyVoice:/workspace/CosyVoice/third_pa
 
 RUN git clone --recursive https://github.com/FunAudioLLM/CosyVoice.git
 
+# Upstream's runtime/python/fastapi/server.py pre-loads prompt_wav into a
+# tensor and reuses it across cosyvoice's internal load_wav() calls at
+# different sample rates — breaks for zero-shot/cross-lingual/instruct2 on
+# this checkpoint. See server.py in this directory for the fix.
+COPY server.py /workspace/CosyVoice/runtime/python/fastapi/server.py
+
 RUN conda activate ${VENV} && conda install -y -c conda-forge pynini==2.1.5
 
 # openai-whisper (pinned in requirements.txt) still does `import pkg_resources`

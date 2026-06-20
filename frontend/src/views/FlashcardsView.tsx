@@ -31,12 +31,17 @@ function CardFace({ c, side }: { c: Card; side: SideConfig }) {
       {side.character && (
         <div className="font-hans-serif text-6xl leading-none flex items-center justify-center gap-2" style={{ color: hskColor(c.vocab.hskLevel) }}>
           {c.vocab.simplified}
+          {side.audio && <SpeakButton text={c.vocab.simplified} size="md" />}
+        </div>
+      )}
+      {side.audio && !side.character && (
+        <div className="flex items-center justify-center">
           <SpeakButton text={c.vocab.simplified} size="md" />
         </div>
       )}
       {side.pinyin && <div className="text-2xl text-muted-foreground">{c.vocab.pinyin}</div>}
       {side.meaning && <div className="text-2xl font-medium">{c.vocab.meaning}</div>}
-      {!side.character && !side.pinyin && !side.meaning && <div className="text-muted-foreground text-sm">(nothing configured for this side)</div>}
+      {!side.character && !side.pinyin && !side.meaning && !side.audio && <div className="text-muted-foreground text-sm">(nothing configured for this side)</div>}
     </div>
   );
 }

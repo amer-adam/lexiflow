@@ -5,12 +5,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { InfoTip } from "@/components/InfoTip";
 
-export type SideConfig = { character: boolean; pinyin: boolean; meaning: boolean };
+export type SideConfig = { character: boolean; pinyin: boolean; meaning: boolean; audio: boolean };
 
 const FIELDS: { key: keyof SideConfig; label: string }[] = [
   { key: "character", label: "Character" },
   { key: "pinyin", label: "Pinyin" },
   { key: "meaning", label: "Meaning" },
+  { key: "audio", label: "Audio" },
 ];
 
 function FieldPicker({ value, onChange }: { value: SideConfig; onChange: (v: SideConfig) => void }) {
@@ -37,8 +38,8 @@ export function CardLayoutModal({
   onSave: (front: SideConfig, back: SideConfig) => void;
   busy?: boolean;
 }) {
-  const [front, setFront] = useState<SideConfig>(initialFront ?? { character: true, pinyin: false, meaning: false });
-  const [back, setBack] = useState<SideConfig>(initialBack ?? { character: false, pinyin: true, meaning: true });
+  const [front, setFront] = useState<SideConfig>(initialFront ?? { character: true, pinyin: false, meaning: false, audio: false });
+  const [back, setBack] = useState<SideConfig>(initialBack ?? { character: false, pinyin: true, meaning: true, audio: false });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

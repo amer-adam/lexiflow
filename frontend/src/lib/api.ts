@@ -60,6 +60,7 @@ function mapCard(c: any): Card {
     character: Boolean(x?.character),
     pinyin: Boolean(x?.pinyin),
     meaning: Boolean(x?.meaning),
+    audio: Boolean(x?.audio),
   });
   let dueInDays = 0;
   if (c?.nextReviewDate) {
@@ -176,6 +177,24 @@ export class Api {
     invalidate("lists");
     invalidate(`listwords:${listId}`);
   }
+  /** Import a list previously exported from this app (.csv or .txt — see exportList) into a new list. */
+  async importList(file: File, name?: string): Promise<{ listId: string; listName: string; wordsAdded: number; wordsFound: number }> {
+    const token = await this.getToken();
+    const fd = new FormData();
+    fd.append("file", file);
+    if (name) fd.append("name", name);
+    const res = await fetch(`${ENV.apiBase}/lexiflow/lists/import`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: fd,
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body?.error || `Import failed (${res.status})`);
+    }
+    invalidate("lists");
+    return res.json();
+  }
   async addWord(listId: string, word: Partial<Vocab> & {
     sourceVideoId?: string; contextSentence?: string; contextTranslation?: string;
   }): Promise<void> {
@@ -246,9 +265,26 @@ export class Api {
     }));
   }
 
+  /** Translate an arbitrary string (e.g. a video title) zh -> en by default.
+   *  Cached client-side (in addition to backend-node's own in-memory cache)
+   *  since the same titles get translated repeatedly as the library re-renders. */
+  translateText(text: string, source = "zh", target = "en"): Promise<string> {
+    return cachedFetch(`translate:${source}:${target}:${text}`, async () => {
+      const r = await this.req<{ translatedText: string }>(
+        `/translate?text=${encodeURIComponent(text)}&source=${source}&target=${target}`
+      );
+      return r.translatedText;
+    }, 24 * 60 * 60 * 1000); // titles never change — cache a full day
+  }
+
   // Videos --------------------------------------------------------------------
   getLibrary(): Promise<VideoMeta[]> {
     return cachedFetch("library", async () => (await this.req<any[]>("/library")).map(mapVideo));
+  }
+  /** Permanently delete a video you added (removes it for everyone, since the library is shared). */
+  async deleteVideo(jobId: string): Promise<void> {
+    await this.req<void>(`/library/${jobId}`, { method: "DELETE" });
+    invalidate("library");
   }
   private parseJob(raw: any): JobStatus {
     // The processed result payload holds segments at `result.segments`.
@@ -333,8 +369,8 @@ export class Api {
   async syncDeck(
     listId: string,
     name?: string,
-    frontConfig?: { character: boolean; pinyin: boolean; meaning: boolean },
-    backConfig?: { character: boolean; pinyin: boolean; meaning: boolean }
+    frontConfig?: { character: boolean; pinyin: boolean; meaning: boolean; audio?: boolean },
+    backConfig?: { character: boolean; pinyin: boolean; meaning: boolean; audio?: boolean }
   ): Promise<any> {
     const r = await this.req<any>("/flashcards/sync", {
       method: "POST", body: JSON.stringify({ listId, name, frontConfig, backConfig }),
@@ -349,8 +385,8 @@ export class Api {
   }
   async updateDeckLayout(
     deckId: string,
-    frontConfig: { character: boolean; pinyin: boolean; meaning: boolean },
-    backConfig: { character: boolean; pinyin: boolean; meaning: boolean }
+    frontConfig: { character: boolean; pinyin: boolean; meaning: boolean; audio?: boolean },
+    backConfig: { character: boolean; pinyin: boolean; meaning: boolean; audio?: boolean }
   ): Promise<void> {
     await this.req<void>(`/flashcards/decks/${deckId}/layout`, {
       method: "PUT", body: JSON.stringify({ frontConfig, backConfig }),
