@@ -10,12 +10,15 @@ import {
   GraduationCap,
   BookOpenCheck,
   Loader2,
-  LogIn,
+  HelpCircle,
 } from "lucide-react";
 import { NavContext, type ViewId } from "@/app/nav";
 import { cn } from "@/lib/utils";
 import { SessionControl } from "@/components/SessionControl";
 import { SessionSummaryToast } from "@/components/SessionSummaryToast";
+import { GuideTour } from "@/components/GuideTour";
+import { LandingPage } from "@/components/LandingPage";
+import { hasSeenGuide, markGuideSeen } from "@/lib/guide";
 import { useSession } from "@/app/session";
 import { Button } from "@/components/ui/button";
 
@@ -41,6 +44,7 @@ const NAV: { id: ViewId; label: string; icon: typeof Play; group: string }[] = [
 export default function App() {
   const [view, setView] = useState<ViewId>("dashboard");
   const [params, setParams] = useState<Record<string, string>>({});
+  const [guideOpen, setGuideOpen] = useState(false);
   const session = useSession();
 
   const go = (v: ViewId, p: Record<string, string> = {}) => {
@@ -49,9 +53,14 @@ export default function App() {
     document.getElementById("scroll-main")?.scrollTo({ top: 0 });
   };
 
+  // First sign-in on this browser/account → show the interactive guide once,
+  // until the user dismisses it (which marks it seen) or opens it manually.
+  const autoGuide = session.isAuthenticated && !hasSeenGuide(session.email);
+
   // ── Auth gate ──────────────────────────────────────────────────
   if (session.isLoading) return <Splash />;
-  if (!session.isAuthenticated) return <SignIn onSignIn={session.login} configured={session.configured} />;
+  if (!session.isAuthenticated)
+    return <LandingPage onSignIn={session.login} configured={session.configured} />;
 
   const groups = [...new Set(NAV.map((n) => n.group))];
 
@@ -137,7 +146,17 @@ export default function App() {
                   (view === "profile" ? "Profile" : "Watch")}
               </span>
             </div>
-            <SessionControl />
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1.5 text-muted-foreground hover:text-foreground"
+                onClick={() => setGuideOpen(true)}
+              >
+                <HelpCircle className="h-4 w-4" /> Guide
+              </Button>
+              <SessionControl />
+            </div>
           </header>
 
           <main id="scroll-main" className="relative z-[1] flex-1 overflow-y-auto">
@@ -154,6 +173,11 @@ export default function App() {
           </main>
         </div>
         <SessionSummaryToast />
+        <GuideTour
+          open={guideOpen || autoGuide}
+          onOpenChange={setGuideOpen}
+          onFinish={() => markGuideSeen(session.email)}
+        />
       </div>
     </NavContext.Provider>
   );
@@ -165,32 +189,6 @@ function Splash() {
       <div className="flex flex-col items-center gap-4">
         <span className="seal grid h-14 w-14 place-items-center text-2xl font-bold">流</span>
         <Loader2 className="h-5 w-5 animate-spin text-secondary" />
-      </div>
-    </div>
-  );
-}
-
-function SignIn({ onSignIn, configured }: { onSignIn: () => void; configured: boolean }) {
-  return (
-    <div className="h-screen grid place-items-center px-6">
-      <div className="paper max-w-md w-full p-8 text-center">
-        <span className="seal grid h-14 w-14 place-items-center text-2xl font-bold mx-auto mb-5">流</span>
-        <h1 className="font-display text-3xl font-semibold">LexiFlow</h1>
-        <p className="text-muted-foreground mt-2 leading-relaxed">
-          Learn Mandarin Chinese from real video — with interactive subtitles, spaced-repetition
-          flashcards, and quizzes that adapt to you.
-        </p>
-        <Button size="lg" className="w-full mt-6 gap-2" onClick={onSignIn} disabled={!configured}>
-          <LogIn className="h-4 w-4" /> Sign in to continue
-        </Button>
-        {!configured && (
-          <p className="text-xs text-muted-foreground mt-3">
-            Sign-in isn't configured in this build. Set the Auth0 variables in <code>.env.local</code>.
-          </p>
-        )}
-        <p className="text-xs text-muted-foreground mt-4">
-          Your lists, decks and progress are saved to your account.
-        </p>
       </div>
     </div>
   );

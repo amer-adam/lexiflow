@@ -51,6 +51,54 @@
     --hsk-0: 174 8% 55%;    /* unknown / not graded */
 
     --gold: 38 60% 50%;     /* seen / streak accents */
+
+    color-scheme: light;
+  }
+
+  /* ── Ink & Paper, after dark ───────────────────────────────────────
+     Same palette logic, inverted: lamp-black background, warm
+     parchment ink for text, a brighter seal vermilion and jade so
+     they still read clearly against the dark ground. */
+  .dark {
+    --background: 174 22% 9%;          /* lamp-black ink        #0E1715 */
+    --foreground: 42 30% 92%;          /* warm parchment        #EDE6D6 */
+
+    --card: 174 18% 12%;               /* lifted panel          #15201D */
+    --card-foreground: 42 30% 92%;
+
+    --popover: 174 18% 12%;
+    --popover-foreground: 42 30% 92%;
+
+    --primary: 8 65% 56%;              /* seal vermilion, brightened */
+    --primary-foreground: 42 40% 97%;
+
+    --secondary: 174 32% 46%;          /* jade, brightened */
+    --secondary-foreground: 42 40% 97%;
+
+    --muted: 174 15% 17%;
+    --muted-foreground: 42 12% 65%;
+
+    --accent: 174 15% 19%;
+    --accent-foreground: 42 30% 92%;
+
+    --destructive: 0 62% 56%;
+    --destructive-foreground: 42 40% 97%;
+
+    --border: 174 14% 21%;
+    --input: 174 14% 23%;
+    --ring: 8 65% 56%;
+
+    --hsk-1: 145 45% 50%;
+    --hsk-2: 174 42% 48%;
+    --hsk-3: 205 58% 56%;
+    --hsk-4: 250 48% 66%;
+    --hsk-5: 32 72% 58%;
+    --hsk-6: 8 65% 58%;
+    --hsk-0: 174 8% 48%;
+
+    --gold: 38 65% 60%;
+
+    color-scheme: dark;
   }
 }
 
@@ -77,6 +125,9 @@
     opacity: 0.5;
     background-image: radial-gradient(hsl(40 20% 60% / 0.05) 1px, transparent 1px);
     background-size: 4px 4px;
+  }
+  .dark body::before {
+    background-image: radial-gradient(hsl(42 30% 80% / 0.035) 1px, transparent 1px);
   }
 }
 
@@ -113,3 +164,5 @@
   border: 2px solid hsl(var(--background));
 }
 ::-webkit-scrollbar-thumb:hover { background: hsl(40 18% 60%); }
+.dark ::-webkit-scrollbar-thumb { background: hsl(174 14% 26%); border-color: hsl(var(--background)); }
+.dark ::-webkit-scrollbar-thumb:hover { background: hsl(174 14% 33%); }
