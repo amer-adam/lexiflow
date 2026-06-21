@@ -50,7 +50,18 @@ services:
     ports:
       - "4557:4557"
     environment:
+      # Used only by the standalone /translate-text endpoint (ad-hoc single-string
+      # translation, e.g. video titles). The main per-video translation pipeline
+      # (api_translate) uses the LLM_* settings below instead - see
+      # backend-fastapi/src/llm/translator.py.
       - TRANSLATION_API_URL=http://libretranslate:5000/translate
+      # Transcript translation backend - "deepseek" (default, deepseek-v4-flash) or
+      # "groq" (qwen/qwen3-32b, reuses GROQ_API_KEY set below for Whisper). Swap
+      # to compare quality with no code change - see backend-fastapi/src/llm/llmProvider.py.
+      - LLM_PROVIDER=deepseek
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - LLM_RATE_LIMIT=60
+      - LLM_TRANSLATE_CHUNK_MINUTES=5
       # Whisper transcription backend - "api" (default, calls a remote
       # OpenAI-compatible transcription API, no GPU/CPU model needed) or
       # "faster-whisper"/"whisper" for local inference. See

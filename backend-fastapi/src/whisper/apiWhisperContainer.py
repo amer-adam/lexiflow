@@ -16,7 +16,7 @@ from src.languages import get_language_from_name
 from src.modelCache import ModelCache
 from src.prompts.abstractPromptStrategy import AbstractPromptStrategy
 from src.whisper.abstractWhisperContainer import AbstractWhisperCallback, AbstractWhisperContainer
-from src.whisper.rateLimiter import RateLimiter
+from src.rateLimiter import RateLimiter
 
 # Defaults per provider, so swapping providers is just an env var change -
 # no code change required. Any provider that speaks the OpenAI
