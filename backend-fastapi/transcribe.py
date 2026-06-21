@@ -317,7 +317,7 @@ def create_parser(app_config: ApplicationConfig = None, output_dir: str = '') ->
                         help="directory to save the outputs")
     parser.add_argument("--verbose", type=str2bool, default=app_config.verbose,
                         help="whether to print out the progress and debug messages")
-    parser.add_argument("--whisper_implementation", type=str, default=default_whisper_implementation, choices=["whisper", "faster-whisper"],
+    parser.add_argument("--whisper_implementation", type=str, default=default_whisper_implementation, choices=["whisper", "faster-whisper", "dummy", "api"],
                         help="the Whisper implementation to use")
 
     parser.add_argument("--task", type=str, default=app_config.task, choices=["transcribe", "translate"],

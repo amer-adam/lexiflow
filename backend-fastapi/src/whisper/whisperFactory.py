@@ -21,5 +21,12 @@ def create_whisper_container(whisper_implementation: str,
         # This is useful for testing
         from src.whisper.dummyWhisperContainer import DummyWhisperContainer
         return DummyWhisperContainer(model_name=model_name, device=device, compute_type=compute_type, download_root=download_root, cache=cache, models=models)
+    elif (whisper_implementation in ("api", "api-whisper", "groq", "groq-whisper")):
+        # Calls a remote, OpenAI-compatible transcription API (Groq by default) instead
+        # of loading a local model - no GPU/CPU model inference required. See
+        # src/whisper/apiWhisperContainer.py for the provider env vars (WHISPER_API_PROVIDER,
+        # WHISPER_API_KEY, WHISPER_API_BASE_URL, WHISPER_API_MODEL, WHISPER_API_RATE_LIMIT).
+        from src.whisper.apiWhisperContainer import ApiWhisperContainer
+        return ApiWhisperContainer(model_name=model_name, device=device, compute_type=compute_type, download_root=download_root, cache=cache, models=models)
     else:
         raise ValueError("Unknown Whisper implementation: " + whisper_implementation)

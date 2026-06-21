@@ -70,28 +70,37 @@
 
     // * General options *
 
-    // The default implementation to use for Whisper. Can be "whisper" or "faster-whisper".
-    // Note that you must either install the requirements for faster-whisper (requirements-fasterWhisper.txt) 
-    // or whisper (requirements.txt)
-    "whisper_implementation": "faster-whisper",
+    // The default implementation to use for Whisper. Can be "whisper", "faster-whisper", "dummy",
+    // or "api" (calls a remote OpenAI-compatible transcription API - Groq by default - instead of
+    // loading a local model; see src/whisper/apiWhisperContainer.py for provider env vars). The
+    // "api" implementation needs no GPU/CPU model inference at all.
+    // Note that "whisper"/"faster-whisper" also require their respective package requirements.
+    "whisper_implementation": "api",
 
-    // The default model name.
+    // The default model name. Ignored by the "api" implementation, which picks its own model
+    // via WHISPER_API_MODEL (defaults to the provider's Whisper model, e.g. "whisper-large-v3" on Groq).
     "default_model_name": "large-v3",
     // The default VAD.
     "default_vad": "silero-vad",
     // A commma delimited list of CUDA devices to use for parallel processing. If None, disable parallel processing.
     "vad_parallel_devices": "",
-    // The number of CPU cores to use for VAD pre-processing.
-    "vad_cpu_cores": 4,
+    // The number of CPU cores to use for VAD pre-processing. Kept at 1 while using the "api"
+    // implementation: the in-process rate limiter that enforces the requests-per-minute budget
+    // isn't shared across forked worker processes, so parallel VAD workers could collectively
+    // exceed the API's rate limit. Safe to raise again when using a local implementation.
+    "vad_cpu_cores": 1,
     // The number of seconds before inactivate processes are terminated. Use 0 to close processes immediately, or None for no timeout.
     "vad_process_timeout": 1800,
-    // True to use all available GPUs and CPU cores for processing. Use vad_cpu_cores/vad_parallel_devices to specify the number of CPU cores/GPUs to use.
-    "auto_parallel": true,
+    // True to use all available GPUs and CPU cores for processing. Kept false for the "api"
+    // implementation - see the vad_cpu_cores note above on why parallelism and the rate
+    // limiter don't currently mix.
+    "auto_parallel": false,
     // Directory to save the outputs (CLI will use the current directory if not specified)
     "output_dir": "/home/amer/lexiflow/backend/temp",
     // The path to save model files; uses ~/.cache/whisper by default
     "model_dir": null,
-    // Device to use for PyTorch inference, or Null to use the default device
+    // Device to use for PyTorch inference, or Null to use the default device. Ignored by the
+    // "api" implementation (no local inference happens).
     "device": "cuda",
     // Whether to print out the progress and debug messages
     "verbose": true,

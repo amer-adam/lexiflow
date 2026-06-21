@@ -51,6 +51,14 @@ services:
       - "4557:4557"
     environment:
       - TRANSLATION_API_URL=http://libretranslate:5000/translate
+      # Whisper transcription backend - "api" (default, calls a remote
+      # OpenAI-compatible transcription API, no GPU/CPU model needed) or
+      # "faster-whisper"/"whisper" for local inference. See
+      # backend-fastapi/src/whisper/apiWhisperContainer.py for provider env vars.
+      - WHISPER_IMPLEMENTATION=api
+      - WHISPER_API_PROVIDER=groq
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - WHISPER_API_RATE_LIMIT=30
       # Which TTS backend /tts proxies to — "edge" (default, no GPU, the
       # edge-tts service below) or "cosyvoice" (GPU, the tts-service below;
       # see backend-fastapi/api.py's TTS_BACKEND switch). Both URLs are
