@@ -26,6 +26,7 @@ from transcribe import api_transcribe
 from postprocces import api_postprocess
 from src.download import download_url, uri_validator, get_duration
 from src.captions import find_existing_captions, download_and_parse_captions
+from src.llm.translator import translate_segments
 
 from services.quiz.generator import QuizGenerator
 from services.quiz.judge import QuizJudge
@@ -130,7 +131,6 @@ def download_video(url: str, job_id: str) -> str:
 
 
 def api_translate(transcription_result):
-    url = os.getenv("TRANSLATION_API_URL", "http://127.0.0.1:5000/translate")
     get_pinyin = False
 
     # detect source language
@@ -161,31 +161,15 @@ def api_translate(transcription_result):
     
     transcription_result["language"] = source_language
 
-    # translate segments
-    for segment in transcription_result['segments']:
-        text = segment['text']
-        # text = json.dumps(text, ensure_ascii=False)
-        print(f"Translating text: {text}")
+    # Translate segments via a chat-completion LLM, batched into time-windowed
+    # chunks (see src/llm/translator.py). Provider/model are swappable via the
+    # LLM_PROVIDER/LLM_MODEL env vars - same pattern as the Whisper API container.
+    translate_segments(transcription_result["segments"], source_language=source_language, target_language="English")
 
-        payload = {
-            "q": text,
-            "source": source_language,
-            "target": "en"
-        }
-        headers = {"Content-Type": "application/json"}
-
-        response = requests.post(url, json=payload, headers=headers)
-
-        if response.status_code != 200:
-            raise Exception(f"Translation failed: {response.text}")
-
-        segment['translated_text'] = response.json()['translatedText']
-        print(f"Translated text: {segment['translated_text']}")
-
-        if get_pinyin:
-                pinyin_text = pinyin(text, style='normal')
-                segment["pinyin"] = ' '.join(
-                    [word[0] for word in pinyin_text])
+    if get_pinyin:
+        for segment in transcription_result["segments"]:
+            pinyin_text = pinyin(segment["text"], style="normal")
+            segment["pinyin"] = " ".join([word[0] for word in pinyin_text])
 
     return transcription_result
 
