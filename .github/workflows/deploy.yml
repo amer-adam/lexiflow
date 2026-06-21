@@ -1,4 +1,4 @@
-name: Build and Deploy Lexiflow Image
+name: Build and Deploy Lexiflow
 
 on:
   push:
@@ -6,41 +6,107 @@ on:
       - main
     paths:
       - 'backend-node/**'
+      - 'backend-fastapi/**'
+      - 'docker-compose.server.yml'
       - '.github/workflows/deploy.yml'
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: amer-adam/backend-node
 
 jobs:
-  build-and-deploy:
+  # Detects which service(s) actually changed so we only rebuild/push the
+  # image(s) that need it - a docker-compose.server.yml-only change (e.g.
+  # tweaking an env var) shouldn't trigger a full rebuild of both images.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      node: ${{ steps.filter.outputs.node }}
+      fastapi: ${{ steps.filter.outputs.fastapi }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            node:
+              - 'backend-node/**'
+            fastapi:
+              - 'backend-fastapi/**'
+
+  build-backend-node:
+    needs: changes
+    if: needs.changes.outputs.node == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write 
-
+      packages: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      # 1. Log into GitHub Container Registry to push the image
       - name: Log in to the Container registry
         uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }} # Built-in token, no setup needed
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 2. Build the Docker image and push it to GHCR
-      - name: Build and push Docker image
+      - name: Build and push backend-node image
         uses: docker/build-push-action@v7
         with:
           context: ./backend-node
           push: true
-          # Tags it as 'latest' and converts to lowercase automatically
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest 
+          tags: ${{ env.REGISTRY }}/amer-adam/backend-node:latest
 
-      # 3. Connect to Tencent Server and Deploy
+  build-backend-fastapi:
+    needs: changes
+    if: needs.changes.outputs.fastapi == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push backend-fastapi image
+        uses: docker/build-push-action@v7
+        with:
+          context: ./backend-fastapi
+          push: true
+          tags: ${{ env.REGISTRY }}/amer-adam/backend-fastapi:latest
+
+  deploy:
+    needs: [build-backend-node, build-backend-fastapi]
+    # Run even if one (or both) build jobs were skipped because their path
+    # didn't change - e.g. a docker-compose.server.yml-only change should
+    # still redeploy. Only bail out if a build that DID run actually failed.
+    if: ${{ always() && !cancelled() && !contains(needs.*.result, 'failure') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      # Keep the server's compose file in sync with the repo, so
+      # docker-compose.server.yml is the single source of truth instead of a
+      # manually-pasted copy on the VM.
+      - name: Sync docker-compose.yml to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "docker-compose.server.yml"
+          target: "~/lexiflow"
+          strip_components: 0
+
       - name: Deploy to Tencent Server
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -50,18 +116,23 @@ jobs:
           script: |
             # Log the server into GHCR using your PAT so it can pull private images
             echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
-            # Navigate to where your docker-compose.yml lives on the server
+
+            # Navigate to where docker-compose.yml lives on the server
             cd ~/lexiflow
-            
+
+            # The synced file lands as docker-compose.server.yml - rename it to
+            # the canonical docker-compose.yml so a manual `docker compose ...`
+            # on the box still works without an explicit -f.
+            mv -f docker-compose.server.yml docker-compose.yml
+
             # Create/Update .env file from GitHub Secrets
             echo "${{ secrets.ENV_FILE }}" > .env
-            
-            # Pull the brand new image from GitHub
+
+            # Pull the brand new image(s) from GitHub
             docker compose pull
-            
-            # Restart the container with the new image in the background
+
+            # Restart any containers whose image/config changed, in the background
             docker compose up -d
-            
-            # Clean up old, unused images to save disk space on your 40GB drive
+
+            # Clean up old, unused images to save disk space
             docker image prune -f

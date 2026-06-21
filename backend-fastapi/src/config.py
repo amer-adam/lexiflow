@@ -5,9 +5,6 @@ import os
 from typing import List
 from urllib.parse import urlparse
 import json5
-import torch
-
-from tqdm import tqdm
 
 class ModelConfig:
     def __init__(self, name: str, url: str, path: str = None, type: str = "whisper"):
@@ -157,7 +154,6 @@ class ApplicationConfig:
         import json5
 
         with open(config_path, "r", encoding="utf-8") as f:
-            # Load using json5VadSileroTranscription
             data = json5.load(f)
             data_models = data.pop("models", [])
 

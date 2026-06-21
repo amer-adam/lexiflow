@@ -13,20 +13,9 @@ pydub
 pymongo
 lingua-language-detector
 pypinyin
-openai-whisper
-faster-whisper
-# Pinned to a CUDA 12.4 build — driver 575.x (CUDA 12.9 max) can't run the
-# CUDA 13 wheels that "torch" (unpinned) resolves to as of late 2026, which
-# fails with "CUDA driver version is insufficient for CUDA runtime version".
-# Bump these only alongside a host NVIDIA driver upgrade that supports the
-# newer CUDA major version.
---extra-index-url https://download.pytorch.org/whl/cu124
-torch==2.5.1+cu124
-torchaudio==2.5.1+cu124
-# Pinned to the version already validated against this driver — ctranslate2's
-# bundled CUDA runtime libs are independent of torch's, leave unless retested.
-ctranslate2==4.8.0
-onnxruntime
 jieba
-transformers
-sentence-transformers
+# No local model inference anywhere: Whisper transcription, transcript/title
+# translation, and quiz judging/distractor generation are all API-based (see
+# src/whisper/apiWhisperContainer.py, src/llm/translator.py,
+# services/quiz/judge.py, services/quiz/distractors.py) - no torch,
+# transformers, or sentence-transformers needed, and no GPU required anywhere.

@@ -50,14 +50,11 @@ services:
     ports:
       - "4557:4557"
     environment:
-      # Used only by the standalone /translate-text endpoint (ad-hoc single-string
-      # translation, e.g. video titles). The main per-video translation pipeline
-      # (api_translate) uses the LLM_* settings below instead - see
-      # backend-fastapi/src/llm/translator.py.
-      - TRANSLATION_API_URL=http://libretranslate:5000/translate
-      # Transcript translation backend - "deepseek" (default, deepseek-v4-flash) or
-      # "groq" (qwen/qwen3-32b, reuses GROQ_API_KEY set below for Whisper). Swap
-      # to compare quality with no code change - see backend-fastapi/src/llm/llmProvider.py.
+      # Translation backend (transcript translation, the /translate-text endpoint, and
+      # quiz judging/distractor generation all share this) - "deepseek" (default,
+      # deepseek-v4-flash) or "groq" (qwen/qwen3-32b, reuses GROQ_API_KEY set below for
+      # Whisper). Swap to compare quality with no code change - see
+      # backend-fastapi/src/llm/llmProvider.py.
       - LLM_PROVIDER=deepseek
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
       - LLM_RATE_LIMIT=60
@@ -71,38 +68,22 @@ services:
       - GROQ_API_KEY=${GROQ_API_KEY}
       - WHISPER_API_RATE_LIMIT=100
       - WHISPER_API_MAX_FILE_MB=50
-      # Which TTS backend /tts proxies to — "edge" (default, no GPU, the
-      # edge-tts service below) or "cosyvoice" (GPU, the tts-service below;
-      # see backend-fastapi/api.py's TTS_BACKEND switch). Both URLs are
-      # always set so flipping TTS_BACKEND doesn't need any other env
-      # change — just also bring up/down the matching service via its
-      # profile (tts-service is profile-gated, see below).
-      - TTS_BACKEND=edge
+      # TTS: always edge-tts (cloud-backed, no GPU). The self-hosted
+      # CosyVoice GPU TTS path (tts-service) was removed entirely so this
+      # whole stack can run on a GPU-less host.
       - EDGE_TTS_API_URL=http://edge-tts:5050
-      - EDGE_TTS_VOICE=zh-CN-XiaoxiaoNeural 
-      - TTS_API_URL=http://tts-service:50000
+      - EDGE_TTS_VOICE=zh-CN-XiaoxiaoNeural
       - FRONTEND_URL=${FRONTEND_URL}
       - OMP_NUM_THREADS=12
       - MKL_NUM_THREADS=12
-    # Requires nvidia-container-toolkit on the host (see README/setup docs) —
-    # without it Docker silently runs this on plain runc with no GPU access,
-    # and faster-whisper/ctranslate2 fall back to (much slower) CPU inference.
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
     restart: unless-stopped
     depends_on:
-      - libretranslate
       - edge-tts
 
   # OpenAI-compatible wrapper around Microsoft Edge's cloud TTS
-  # (github.com/travisvn/openai-edge-tts). Default TTS backend: no GPU, no
-  # model download, reliable even for single-character words. Needs outbound
-  # internet access (it calls Microsoft's service), unlike tts-service below.
+  # (github.com/travisvn/openai-edge-tts). No GPU, no model download,
+  # reliable even for single-character words. Needs outbound internet access
+  # (it calls Microsoft's service).
   edge-tts:
     image: travisvn/openai-edge-tts:latest
     ports:
@@ -113,47 +94,6 @@ services:
       - REQUIRE_API_KEY=false
     restart: unless-stopped
 
-  # Fun-CosyVoice3-0.5B-2512 served by CosyVoice's own official FastAPI
-  # server (see tts-service/Dockerfile) — a plain off-the-shelf container,
-  # not merged into backend-fastapi, same shape as libretranslate below.
-  # Only backend-fastapi talks to it; the frontend/backend-node never call
-  # it directly. Opt-in: set TTS_BACKEND=cosyvoice on backend-fastapi above
-  # and start this with `docker compose --profile cosyvoice up -d`.
-  tts-service:
-    profiles: ["cosyvoice"]
-    build:
-      context: ./tts-service
-    ports:
-      - "4558:50000"
-    volumes:
-      - tts-models:/opt/models
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-    restart: unless-stopped
-
-  libretranslate:
-    image: libretranslate/libretranslate
-    ports:
-      - "5000:5000"
-    environment:
-      - LT_LOAD_ONLY=en,zh
-      - LT_DISABLE_WEB_UI=true
-      - LT_DISABLE_FILES_TRANSLATION=true
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
-    restart: unless-stopped
-
   # NOTE: PostgreSQL is provided by the HOST machine (systemd `postgresql`),
   # which already holds the lexiflow_db database. backend-node reaches it via
   # host.docker.internal (see that service). No DB container is run here.
-
-volumes:
-  # Caches the downloaded Fun-CosyVoice3-0.5B-2512 model across container
-  # restarts/rebuilds so it isn't re-fetched every time (see tts-service/entrypoint.sh).
-  tts-models:
