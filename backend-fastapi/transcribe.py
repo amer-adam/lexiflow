@@ -34,7 +34,7 @@ from src.utils import optional_int, str2bool, write_srt, write_vtt, optional_flo
 
 from src.vad import AbstractTranscription, NonSpeechStrategy, TranscriptionConfig, VadSileroTranscription
 from src.whisper.abstractWhisperContainer import AbstractWhisperContainer
-from src.whisper.whisperFactory import create_whisper_container
+from src.whisper.whisperFactory import create_whisper_container, is_api_whisper_implementation
 from src.vadParallel import ParallelContext, ParallelTranscription
 
 # Configure more application defaults in config.json5
@@ -426,6 +426,10 @@ def api_transcribe(audio_path: str):
         temperature = [temperature]
 
     vad = args.pop("vad")
+    if is_api_whisper_implementation(whisper_implementation):
+        # API implementations send the whole file in one request and rely on the
+        # API's own segments instead of local VAD - see apiWhisperContainer.py.
+        vad = "none"
     vad_initial_prompt_mode = args.pop("vad_initial_prompt_mode")
     vad_merge_window = args.pop("vad_merge_window")
     vad_max_merge_size = args.pop("vad_max_merge_size")

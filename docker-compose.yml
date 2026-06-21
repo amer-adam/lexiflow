@@ -58,7 +58,8 @@ services:
       - WHISPER_IMPLEMENTATION=api
       - WHISPER_API_PROVIDER=groq
       - GROQ_API_KEY=${GROQ_API_KEY}
-      - WHISPER_API_RATE_LIMIT=30
+      - WHISPER_API_RATE_LIMIT=100
+      - WHISPER_API_MAX_FILE_MB=50
       # Which TTS backend /tts proxies to — "edge" (default, no GPU, the
       # edge-tts service below) or "cosyvoice" (GPU, the tts-service below;
       # see backend-fastapi/api.py's TTS_BACKEND switch). Both URLs are

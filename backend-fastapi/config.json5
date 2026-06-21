@@ -78,22 +78,21 @@
     "whisper_implementation": "api",
 
     // The default model name. Ignored by the "api" implementation, which picks its own model
-    // via WHISPER_API_MODEL (defaults to the provider's Whisper model, e.g. "whisper-large-v3" on Groq).
+    // via WHISPER_API_MODEL (defaults to the provider's Whisper model, e.g. "whisper-large-v3-turbo" on Groq).
     "default_model_name": "large-v3",
-    // The default VAD.
+    // The default VAD. Ignored by the "api" implementation, which always forces "none" in
+    // transcribe.py and sends the whole file in one request instead - see
+    // src/whisper/apiWhisperContainer.py. Only used by local ("whisper"/"faster-whisper") implementations.
     "default_vad": "silero-vad",
     // A commma delimited list of CUDA devices to use for parallel processing. If None, disable parallel processing.
     "vad_parallel_devices": "",
-    // The number of CPU cores to use for VAD pre-processing. Kept at 1 while using the "api"
-    // implementation: the in-process rate limiter that enforces the requests-per-minute budget
-    // isn't shared across forked worker processes, so parallel VAD workers could collectively
-    // exceed the API's rate limit. Safe to raise again when using a local implementation.
+    // The number of CPU cores to use for VAD pre-processing. Irrelevant to the "api"
+    // implementation (no VAD runs at all); only applies to local implementations.
     "vad_cpu_cores": 1,
     // The number of seconds before inactivate processes are terminated. Use 0 to close processes immediately, or None for no timeout.
     "vad_process_timeout": 1800,
-    // True to use all available GPUs and CPU cores for processing. Kept false for the "api"
-    // implementation - see the vad_cpu_cores note above on why parallelism and the rate
-    // limiter don't currently mix.
+    // True to use all available GPUs and CPU cores for processing. Irrelevant to the "api"
+    // implementation; only applies to local implementations.
     "auto_parallel": false,
     // Directory to save the outputs (CLI will use the current directory if not specified)
     "output_dir": "/home/amer/lexiflow/backend/temp",
