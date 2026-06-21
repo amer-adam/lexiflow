@@ -1,7 +1,5 @@
 import os
 import re
-import io
-import wave
 import uuid
 import json
 import time
@@ -26,7 +24,8 @@ from transcribe import api_transcribe
 from postprocces import api_postprocess
 from src.download import download_url, uri_validator, get_duration
 from src.captions import find_existing_captions, download_and_parse_captions
-from src.llm.translator import translate_segments
+from src.languages import get_language_from_code
+from src.llm.translator import translate_segments, translate_text as llm_translate_text
 
 from services.quiz.generator import QuizGenerator
 from services.quiz.judge import QuizJudge
@@ -373,36 +372,18 @@ async def fetch_dictionary_definition(word: str):
 
 
 @app.get("/translate-text")
-async def translate_text(text: str, source: str = "zh", target: str = "en"):
-    """Ad-hoc single-string translation (e.g. video titles in the library
-    view), as opposed to api_translate() above which translates every
-    segment of a transcription during video processing. Same libretranslate
-    backend, just a thin passthrough for one string at a time."""
-    url = os.getenv("TRANSLATION_API_URL", "http://127.0.0.1:5000/translate")
+async def translate_text_endpoint(text: str, source: str = "zh", target: str = "en"):
+    """Ad-hoc single-string translation (e.g. video titles in the library view), as
+    opposed to api_translate() above which batches a whole transcript. Same LLM
+    backend as api_translate (LLM_PROVIDER env var - see src/llm/llmProvider.py)."""
+    target_lang = get_language_from_code(target)
+    target_language = target_lang.name if target_lang else target
     try:
-        response = requests.post(
-            url,
-            json={"q": text, "source": source, "target": target},
-            headers={"Content-Type": "application/json"},
-            timeout=15,
-        )
-    except requests.RequestException as e:
-        raise HTTPException(status_code=503, detail=f"Translation service unreachable: {e}")
+        translated = await asyncio.to_thread(llm_translate_text, text, target_language)
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Translation failed: {e}")
 
-    if response.status_code != 200:
-        raise HTTPException(status_code=502, detail=f"Translation failed: {response.text}")
-    return {"translatedText": response.json().get("translatedText", text)}
-
-## Which TTS backend /tts proxies to. Switch with the TTS_BACKEND env var:
-##   "edge"      (default) -> edge-tts service (openai-edge-tts, cloud-backed,
-##                no GPU, fast, reliable even for single-character words)
-##   "cosyvoice" -> tts-service (self-hosted Fun-CosyVoice3-0.5B-2512, GPU,
-##                needs the tts-service container running)
-## Both code paths stay implemented side by side so flipping back is just an
-## env var change (and starting/stopping the relevant docker compose
-## service), with no code changes needed either way.
-TTS_BACKEND = os.getenv("TTS_BACKEND", "edge")
-
+    return {"translatedText": translated or text}
 
 def _sniff_audio_content_type(audio_bytes: bytes) -> str:
     """openai-edge-tts (without the -ffmpeg image variant) can't actually
@@ -420,8 +401,8 @@ def _sniff_audio_content_type(audio_bytes: bytes) -> str:
 def _synthesize_edge_tts(text: str, voice: Optional[str]) -> tuple[bytes, str]:
     """Calls openai-edge-tts (github.com/travisvn/openai-edge-tts), an
     OpenAI-compatible /v1/audio/speech wrapper around Microsoft Edge's cloud
-    TTS. It returns a fully-formed audio file directly — no PCM-wrapping or
-    short-text retry dance needed, unlike the self-hosted CosyVoice path."""
+    TTS. It returns a fully-formed audio file directly - no GPU, no model
+    download, no PCM-wrapping needed."""
     url = os.getenv("EDGE_TTS_API_URL", "http://edge-tts:5050")
     api_key = os.getenv("EDGE_TTS_API_KEY", "")
     headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
@@ -446,105 +427,10 @@ def _synthesize_edge_tts(text: str, voice: Optional[str]) -> tuple[bytes, str]:
     return response.content, _sniff_audio_content_type(response.content)
 
 
-## Fun-CosyVoice3-0.5B-2512 is the base checkpoint and ships no SFT preset
-## speakers (no spk2info.pt) — only zero-shot voice cloning works, using a
-## short reference clip + its transcript. CosyVoice's own repo ships exactly
-## such a clip for demos, baked into the tts-service image at this path.
-TTS_PROMPT_WAV = os.path.join(os.path.dirname(__file__), "assets", "tts_prompt.wav")
-## CosyVoice3's LLM asserts that the combined prompt_text+text token sequence
-## contains the special <|endofprompt|> token (id 151646) — without it,
-## inference fails with "<|endofprompt|> not detected in CosyVoice3 text or
-## prompt_text, check your input!" (cosyvoice/llm/llm.py).
-TTS_PROMPT_TEXT = "希望你以后能够做的比我还好呦。<|endofprompt|>"
-
-
-def _call_tts_service(url: str, text: str) -> bytes:
-    with open(TTS_PROMPT_WAV, "rb") as prompt_file:
-        response = requests.post(
-            f"{url}/inference_zero_shot",
-            data={"tts_text": text, "prompt_text": TTS_PROMPT_TEXT},
-            files={"prompt_wav": ("prompt.wav", prompt_file, "audio/wav")},
-            timeout=30,
-        )
-    if response.status_code != 200:
-        raise HTTPException(status_code=502, detail=f"TTS synthesis failed: {response.text}")
-    return response.content
-
-
-def _synthesize_cosyvoice(text: str) -> bytes:
-    """Proxies to the CosyVoice FastAPI server (tts-service). The official
-    server streams raw 16-bit PCM with no container, so we wrap it into a
-    real .wav here before handing it back to backend-node.
-
-    CosyVoice3's LLM uses top-k sampling, and for very short text (1-2
-    characters) against our long fixed reference prompt, the combined
-    prompt+text length pushes its token-ratio bounds into a range where an
-    early stop (near-empty output) is the dominant outcome rather than a rare
-    fluke — request still comes back 200 with a "valid" but near-silent wav.
-    There's no sampling knob exposed through the official server, so we lean
-    on retrying more times for short inputs, since it's not 100%
-    deterministic, just heavily skewed toward failing."""
-    url = os.getenv("TTS_API_URL", "http://tts-service:50000")
-    sample_rate = 22050
-
-    # Below ~3 characters, this checkpoint's zero-shot sampling lands in a
-    # degenerate near-empty-output regime far more often than not (confirmed
-    # empirically — even 20 retries sometimes all fail for a single
-    # character), because the combined prompt+text length is too short
-    # relative to our long fixed reference prompt. Doubling the text reliably
-    # escapes that regime (matches durations seen for genuine 2-char words),
-    # so we synthesize "XX" instead of "X" and keep only the first half of
-    # the resulting audio.
-    is_short = len(text) <= 2
-    synth_text = text * 2 if is_short else text
-    min_seconds = max(0.25, 0.18 * len(synth_text))
-    max_attempts = 8 if is_short else 3
-
-    pcm = b""
-    last_error = None
-    for attempt in range(max_attempts):
-        try:
-            pcm = _call_tts_service(url, synth_text)
-            last_error = None
-        except (requests.RequestException, OSError) as e:
-            # A model crash from too-few-generated-tokens (the same failure
-            # mode as the near-silent-audio case below) surfaces here as a
-            # ChunkedEncodingError mid-stream rather than a clean error
-            # response — retry it like any other bad generation instead of
-            # failing the whole request on the first bad attempt.
-            last_error = e
-            pcm = b""
-            continue
-
-        duration = len(pcm) / 2 / sample_rate
-        if duration >= min_seconds:
-            break
-
-    if last_error is not None:
-        raise HTTPException(status_code=503, detail=f"TTS service unreachable: {last_error}")
-
-    if is_short and pcm:
-        half = (len(pcm) // 2) // 2 * 2  # first half, rounded to a whole 16-bit sample
-        pcm = pcm[:half]
-
-    buf = io.BytesIO()
-    with wave.open(buf, "wb") as wf:
-        wf.setnchannels(1)
-        wf.setsampwidth(2)
-        wf.setframerate(sample_rate)
-        wf.writeframes(pcm)
-
-    return buf.getvalue()
-
-
 @app.get("/tts")
 async def synthesize_speech(text: str, voice: Optional[str] = None):
-    """Proxies to whichever TTS backend TTS_BACKEND selects (see above)."""
-    if TTS_BACKEND == "cosyvoice":
-        audio_bytes, content_type = _synthesize_cosyvoice(text), "audio/wav"
-    else:
-        audio_bytes, content_type = _synthesize_edge_tts(text, voice)
-
+    """Synthesizes speech via edge-tts (cloud-backed, no GPU)."""
+    audio_bytes, content_type = _synthesize_edge_tts(text, voice)
     return Response(content=audio_bytes, media_type=content_type)
 
 

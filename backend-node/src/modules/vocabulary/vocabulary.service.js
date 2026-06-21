@@ -145,7 +145,7 @@ async function syncWatchProgressToVocab(userId, videoId, currentTime, duration) 
 
     if (newHighestSegmentIndex > lastSegmentIndexSeen) {
       await videoProgressRepository.updateLastSegmentIndexSeen(userId, videoId, newHighestSegmentIndex);
-      console.log(`Processed segments ${lastSegmentIndexSeen + 1} to ${newHighestSegmentIndex}, added ${addedWords.length} words`);
+      // console.log(`Processed segments ${lastSegmentIndexSeen + 1} to ${newHighestSegmentIndex}, added ${addedWords.length} words`);
     }
 
     return {

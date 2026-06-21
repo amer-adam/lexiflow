@@ -101,6 +101,13 @@ def _request_translations(texts: List[str], target_language: str, provider: LlmP
     return None
 
 
+def translate_text(text: str, target_language: str = "English", provider: LlmProvider = None) -> str:
+    """Ad-hoc single-string translation (e.g. video titles), as opposed to
+    translate_segments() above which batches a whole transcript."""
+    provider = provider or LlmProvider()
+    return _translate_single(text, target_language, provider)
+
+
 def _translate_single(text: str, target_language: str, provider: LlmProvider) -> str:
     system = (
         f"You are a professional subtitle translator. Translate the user's sentence into natural, "

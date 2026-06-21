@@ -5,8 +5,8 @@ const vocabularyService = require('../vocabulary/vocabulary.service');
  * Save user watch progress and sync vocabulary words from recently watched segments.
  */
 async function saveProgressAndSyncVocab(userId, videoId, currentTime, duration) {
-    console.log(`Syncing vocab for user ${userId}, video ${videoId}`);
-    
+    //console.log(`Syncing vocab for user ${userId}, video ${videoId}`);
+
     // Save progress to PostgreSQL
     const progress = await videoProgressRepository.upsertProgress(userId, videoId, currentTime, duration);
 

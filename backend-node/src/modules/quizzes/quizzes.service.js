@@ -29,10 +29,6 @@ async function generateNewUserQuiz({ userId, listId, count, allowedTypes }) {
 
     const activeUrl = workerRouter.getActiveWorkerUrl() || env.PYTHON_API;
 
-    console.log(activeUrl, "activeUrl")
-    console.log(targetItemsPayload, "targetItemsPayload")
-    console.log(count, "count")
-    console.log(mappedTypes, "mappedTypes")
 
     // Send request to Python Deep Learning layer
     const response = await axios.post(`${activeUrl}/quiz/generate`, {
