@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <rect width="1200" height="630" fill="#f5f2ea"/>
+  <text x="1050" y="520" text-anchor="middle" font-family="'Noto Serif CJK SC', serif" font-size="520" font-weight="700" fill="#be402d" opacity="0.06">学</text>
+
+  <rect x="120" y="195" width="120" height="120" rx="18" fill="#be402d"/>
+  <rect x="126" y="201" width="108" height="108" rx="14" fill="none" stroke="#fcf9f3" stroke-opacity="0.35" stroke-width="2.5"/>
+  <text x="180" y="282" text-anchor="middle" font-family="'Noto Serif CJK SC', serif" font-size="62" font-weight="700" fill="#fcf9f3">流</text>
+
+  <text x="280" y="280" font-family="Georgia, 'Liberation Serif', serif" font-size="76" font-weight="700" fill="#3a332b" letter-spacing="-1">LexiFlow</text>
+  <text x="280" y="335" font-family="'Public Sans', 'DejaVu Sans', sans-serif" font-size="28" fill="#6b6256">Learn Mandarin from real video</text>
+
+  <text x="120" y="410" font-family="'Public Sans', 'DejaVu Sans', sans-serif" font-size="22" fill="#3a332b">Tap a word for pinyin and meaning, save it, then drill it with</text>
+  <text x="120" y="446" font-family="'Public Sans', 'DejaVu Sans', sans-serif" font-size="22" fill="#3a332b">spaced-repetition flashcards built from your own vocabulary.</text>
+</svg>
