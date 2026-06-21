@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   SkipBack, SkipForward, Repeat, OctagonPause, BookmarkPlus, Check, Settings2,
   Maximize2, Minimize2, Film, Loader2, ArrowLeft, Play, Pause,
@@ -471,18 +472,25 @@ function TheaterOverlay({
   useEffect(() => { startHideTimer(); return () => clearTimeout(hideTimer.current); }, [startHideTimer]);
 
   const onPointerMove = (e: React.PointerEvent) => {
-    setShowUI(true);
-    startHideTimer();
     if (!dragging.current || !containerRef.current) return;
     const r = containerRef.current.getBoundingClientRect();
     const pct = ((e.clientY - r.top) / r.height) * 100;
     updateSettings({ subtitlePositionY: Math.max(5, Math.min(95, pct)) });
   };
 
+  // Track mouse movement on the document (not this overlay) so showing the
+  // auto-hide controls doesn't require this container to capture pointer
+  // events itself — it stays click-through everywhere except its actual UI.
+  useEffect(() => {
+    const onMove = () => { setShowUI(true); startHideTimer(); };
+    document.addEventListener("mousemove", onMove);
+    return () => document.removeEventListener("mousemove", onMove);
+  }, [startHideTimer]);
+
   return (
-    <div ref={containerRef} className="absolute inset-0" onPointerMove={onPointerMove} onMouseMove={() => { setShowUI(true); startHideTimer(); }}>
+    <div ref={containerRef} className="absolute inset-0 pointer-events-none" onPointerMove={onPointerMove}>
       {/* Draggable subtitle bar */}
-      <div className="absolute inset-x-0 px-8" style={{ top: `${subY}%`, transform: "translateY(-50%)" }}>
+      <div className="absolute inset-x-0 px-8 pointer-events-auto" style={{ top: `${subY}%`, transform: "translateY(-50%)" }}>
         <div className="mx-auto max-w-4xl rounded-xl backdrop-blur px-6 py-4 relative" style={{ background: `rgba(0,0,0,${settings.subtitleBgOpacity / 100})` }}>
           <div
             className="absolute -top-3 left-1/2 -translate-x-1/2 h-3 w-10 rounded-full bg-white/30 cursor-grab active:cursor-grabbing flex items-center justify-center gap-0.5"
@@ -492,7 +500,7 @@ function TheaterOverlay({
           >
             {[0, 1, 2].map((i) => <span key={i} className="h-0.5 w-1.5 rounded-full bg-white/70" />)}
           </div>
-          <SubtitleLine seg={seg} settings={settings} onSelect={onSelect} saved={saved} dark />
+          <SubtitleLine seg={seg} settings={settings} onSelect={onSelect} saved={saved} dark portalNode={portalNode} />
           {settings.showTranslation && seg.translated_text && (
             <p className="text-white/80 border-l-2 border-primary/60 pl-3 italic mt-3 text-center">{seg.translated_text}</p>
           )}
@@ -500,7 +508,7 @@ function TheaterOverlay({
       </div>
 
       {/* Auto-hiding controls */}
-      <div className={cn("absolute inset-x-0 bottom-3 px-6 flex items-center justify-center gap-1 transition-opacity", showUI ? "opacity-100" : "opacity-0 pointer-events-none")}>
+      <div className={cn("absolute inset-x-0 bottom-3 px-6 flex items-center justify-center gap-1 transition-opacity pointer-events-auto", showUI ? "opacity-100" : "opacity-0 pointer-events-none")}>
         <div className="flex items-center gap-1 rounded-full bg-black/60 backdrop-blur px-2 py-1.5">
           <Button size="icon" variant="ghost" className="h-8 w-8 text-white hover:bg-white/10" onClick={onPrev} title="Previous line"><SkipBack className="h-4 w-4" /></Button>
           <Button size="icon" variant="ghost" className="h-8 w-8 text-white hover:bg-white/10" onClick={onPlayPause} title="Play / pause">
@@ -667,13 +675,17 @@ function WordPanel({
 
 // ── Subtitle line with hover tooltip + click-to-look-up ─────────────────────
 function SubtitleLine({
-  seg, settings, onSelect, saved, dark = false,
+  seg, settings, onSelect, saved, dark = false, portalNode,
 }: {
   seg: Segment;
   settings: ReturnType<typeof useSettings>;
   onSelect: (t: CharToken) => void;
   saved: CharToken[];
   dark?: boolean;
+  /** In theater mode, the fullscreen element to portal the hover tooltip into —
+   *  document.body sits outside the fullscreen subtree and is never visible
+   *  while fullscreen is active (see portalNode in WatchView). */
+  portalNode?: HTMLElement | null;
 }) {
   const [hover, setHover] = useState<{ tok: CharToken; x: number; y: number } | null>(null);
   const colorOf = (lvl: CharToken["hsk_level"]) =>
@@ -696,7 +708,7 @@ function SubtitleLine({
         );
       })}
 
-      {hover && (
+      {hover && createPortal(
         <div className="fixed z-[60] -translate-x-1/2 -translate-y-full pointer-events-none" style={{ left: hover.x, top: hover.y - 8 }}>
           <div className="paper px-3 py-2 shadow-lg max-w-xs">
             <div className="flex items-center gap-2 mb-1">
@@ -712,7 +724,8 @@ function SubtitleLine({
               {hover.tok.translations.length ? hover.tok.translations.join("; ") : "No dictionary entry"}
             </p>
           </div>
-        </div>
+        </div>,
+        portalNode ?? document.body
       )}
     </div>
   );
