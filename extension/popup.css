@@ -1,0 +1,83 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=Noto+Serif+SC:wght@700&display=swap');
+
+:root {
+  --background: 42 36% 94%;
+  --foreground: 174 18% 15%;
+  --card: 44 50% 98%;
+  --primary: 8 62% 46%;
+  --primary-foreground: 44 60% 97%;
+  --secondary: 174 30% 32%;
+  --muted: 40 24% 88%;
+  --muted-foreground: 174 10% 38%;
+  --border: 40 22% 82%;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: 174 22% 9%;
+    --foreground: 42 30% 92%;
+    --card: 174 18% 12%;
+    --primary: 8 65% 56%;
+    --primary-foreground: 42 40% 97%;
+    --secondary: 174 32% 46%;
+    --muted: 174 15% 17%;
+    --muted-foreground: 42 12% 65%;
+    --border: 174 14% 21%;
+  }
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  width: 280px;
+  font-family: 'Public Sans', system-ui, sans-serif;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+.lf-popup { padding: 14px; }
+.lf-popup-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.lf-seal {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 7px;
+  background: hsl(var(--primary)); color: hsl(var(--primary-foreground));
+  font-family: 'Noto Serif SC', serif; font-size: 16px; font-weight: 700;
+}
+.lf-title { font-family: 'Fraunces', Georgia, serif; font-weight: 700; font-size: 15px; }
+.lf-subtitle { font-size: 11px; color: hsl(var(--muted-foreground)); text-transform: uppercase; letter-spacing: 0.08em; }
+
+.lf-status {
+  font-size: 12px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 10px;
+}
+.lf-status.connected { color: hsl(var(--secondary)); }
+
+.lf-btn {
+  width: 100%;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+}
+.lf-btn-primary {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border: none;
+}
+
+.lf-btn + .lf-btn { margin-top: 8px; }
+
+.lf-progress { margin-top: 10px; }
+.lf-progress-label { font-size: 12px; color: hsl(var(--muted-foreground)); margin-bottom: 5px; }
+.lf-progress-track { height: 6px; border-radius: 999px; background: hsl(var(--muted)); overflow: hidden; }
+.lf-progress-fill { height: 100%; background: hsl(var(--primary)); width: 0%; transition: width 0.3s; }
+
+#ready-section { margin-top: 10px; }
+
+.lf-hint { font-size: 11px; color: hsl(var(--muted-foreground)); margin-top: 14px; line-height: 1.4; }

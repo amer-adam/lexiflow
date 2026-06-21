@@ -34,6 +34,7 @@ import { VocabView } from "@/views/VocabView";
 import { FlashcardsView } from "@/views/FlashcardsView";
 import { QuizView } from "@/views/QuizView";
 import { ProfileView } from "@/views/ProfileView";
+import { ExtensionAuthView } from "@/views/ExtensionAuthView";
 
 const NAV: { id: ViewId; label: string; icon: typeof Play; group: string }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, group: "Learn" },
@@ -46,8 +47,17 @@ const NAV: { id: ViewId; label: string; icon: typeof Play; group: string }[] = [
 ];
 
 export default function App() {
-  const [view, setView] = useState<ViewId>("dashboard");
-  const [params, setParams] = useState<Record<string, string>>({});
+  // The companion browser extension's auth-relay page — bypasses the
+  // regular sidebar shell entirely, it just needs the Auth0 session.
+  if (window.location.pathname === "/extension-connect") return <ExtensionAuthView />;
+
+  // Deep links from outside the app (e.g. the extension's "More" button)
+  // arrive as ?id=<jobId>&t=<seconds>; seed the watch view from them once.
+  const deepLink = new URLSearchParams(window.location.search);
+  const [view, setView] = useState<ViewId>(deepLink.get("id") ? "watch" : "dashboard");
+  const [params, setParams] = useState<Record<string, string>>(
+    deepLink.get("id") ? { id: deepLink.get("id")!, ...(deepLink.get("t") ? { t: deepLink.get("t")! } : {}) } : {}
+  );
   const [guideOpen, setGuideOpen] = useState(false);
   const session = useSession();
   const { api } = useApi();

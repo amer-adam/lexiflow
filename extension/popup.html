@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="lf-popup">
+    <div class="lf-popup-header">
+      <span class="lf-seal">流</span>
+      <div>
+        <div class="lf-title">LexiFlow</div>
+        <div class="lf-subtitle">for YouTube</div>
+      </div>
+    </div>
+
+    <div id="status" class="lf-status">Checking connection…</div>
+
+    <button id="connect-btn" class="lf-btn lf-btn-primary" style="display:none;">Connect to LexiFlow</button>
+
+    <div id="not-youtube" class="lf-hint" style="display:none;">
+      Open a YouTube video to use LexiFlow here.
+    </div>
+
+    <div id="video-section" style="display:none;">
+      <button id="add-btn" class="lf-btn lf-btn-primary">Add to LexiFlow</button>
+
+      <div id="progress" class="lf-progress" style="display:none;">
+        <div class="lf-progress-label"></div>
+        <div class="lf-progress-track"><div class="lf-progress-fill"></div></div>
+      </div>
+
+      <div id="ready-section" style="display:none;">
+        <button id="toggle-panel-btn" class="lf-btn lf-btn-primary">Show transcript on video</button>
+        <button id="more-btn" class="lf-btn">Open in LexiFlow ↗</button>
+      </div>
+    </div>
+
+    <p class="lf-hint">Click "Add to LexiFlow" while watching any video, then toggle the transcript overlay here.</p>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
