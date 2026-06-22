@@ -28,10 +28,13 @@ services:
     restart: always
     depends_on:
       - edge-tts
+      - bgutil-pot-provider
     # YouTube blocks datacenter/VPS IPs ("Sign in to confirm you're not a
     # bot") even with the mobile-UA + android/ios player_client workaround
     # already in src/download.py and src/captions.py. The fix is real
-    # browser cookies - see the YTDLP_COOKIES_FILE note below.
+    # browser cookies (YTDLP_COOKIES_FILE below) - which in turn requires a
+    # PO token for the "web" client, supplied by the bgutil-pot-provider
+    # sidecar below (YTDLP_POT_PROVIDER_URL).
     #
     # cookies.txt must exist on the host BEFORE the first `docker compose up`,
     # or Docker will bind-mount an empty directory in its place instead of
@@ -66,6 +69,7 @@ services:
       - EDGE_TTS_VOICE=zh-CN-XiaoxiaoNeural
       - FRONTEND_URL=${FRONTEND_URL}
       - YTDLP_COOKIES_FILE=/app/cookies.txt
+      - YTDLP_POT_PROVIDER_URL=http://bgutil-pot-provider:4416
 
   # OpenAI-compatible wrapper around Microsoft Edge's cloud TTS. No GPU, no
   # model download. Internal-only - only backend-fastapi talks to it.
@@ -77,6 +81,14 @@ services:
       - DEFAULT_VOICE=zh-CN-XiaoxiaoNeural
       - DEFAULT_RESPONSE_FORMAT=wav
       - REQUIRE_API_KEY=false
+
+  # Generates PO (proof-of-origin) tokens that YouTube now requires for yt-dlp's
+  # "web" player client once cookies are attached - see the backend-fastapi note
+  # above. https://github.com/Brainicism/bgutil-ytdlp-pot-provider - internal-only.
+  bgutil-pot-provider:
+    image: brainicism/bgutil-ytdlp-pot-provider:latest
+    container_name: lexiflow-pot-provider
+    restart: always
 
   db:
     image: postgres:15-alpine

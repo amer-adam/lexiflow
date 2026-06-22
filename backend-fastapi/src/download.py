@@ -8,6 +8,7 @@ import yt_dlp
 from yt_dlp.postprocessor import PostProcessor
 
 from src.ytdlpCookies import cookie_opts
+from src.ytdlpPot import pot_provider_extractor_args
 
 class FilenameCollectorPP(PostProcessor):
     def __init__(self):
@@ -53,8 +54,13 @@ def _perform_download(url: str, maxDuration: int = None, outputTemplate: str = N
         # The android/ios player clients are designed for cookie-less, signed-out
         # access and can return an empty/restricted format list once real auth
         # cookies are attached (see YTDLP_COOKIES_FILE below) - "web" is the
-        # client that actually benefits from cookies, so try it first.
-        'extractor_args': {'youtube': {'player_client': ['web', 'android', 'ios']}},
+        # client that actually benefits from cookies, so try it first. "web"
+        # in turn needs a PO token once cookies are present - see
+        # YTDLP_POT_PROVIDER_URL / pot_provider_extractor_args().
+        'extractor_args': {
+            'youtube': {'player_client': ['web', 'android', 'ios']},
+            **pot_provider_extractor_args(),
+        },
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'wav',
@@ -135,8 +141,12 @@ def get_duration(url: str) -> float:
         'force_ipv4': True,
         'user_agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
         # See the comment in _perform_download above - "web" goes first since
-        # it's the client that actually benefits from cookies.
-        'extractor_args': {'youtube': {'player_client': ['web', 'android', 'ios']}}
+        # it's the client that actually benefits from cookies (and needs a PO
+        # token in turn - see pot_provider_extractor_args()).
+        'extractor_args': {
+            'youtube': {'player_client': ['web', 'android', 'ios']},
+            **pot_provider_extractor_args(),
+        }
     }
     
     if node_path:

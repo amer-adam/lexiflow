@@ -19,6 +19,7 @@ import requests
 import yt_dlp
 
 from src.ytdlpCookies import cookie_opts
+from src.ytdlpPot import pot_provider_extractor_args
 
 # Caption track language codes YouTube uses for (variants of) Chinese.
 ZH_LANG_CODES = ("zh-Hans", "zh-Hant", "zh-CN", "zh-TW", "zh-HK", "zh")
@@ -36,8 +37,12 @@ _COMMON_YDL_OPTS = {
     # The android/ios player clients are designed for cookie-less, signed-out
     # access and can return an empty/restricted format list once real auth
     # cookies are attached (see YTDLP_COOKIES_FILE) - "web" is the client that
-    # actually benefits from cookies, so try it first.
-    "extractor_args": {"youtube": {"player_client": ["web", "android", "ios"]}},
+    # actually benefits from cookies, so try it first. "web" in turn needs a
+    # PO token once cookies are present - see pot_provider_extractor_args().
+    "extractor_args": {
+        "youtube": {"player_client": ["web", "android", "ios"]},
+        **pot_provider_extractor_args(),
+    },
 }
 
 

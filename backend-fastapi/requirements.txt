@@ -7,6 +7,10 @@ json5
 pycccedict
 pydantic
 yt-dlp
+# yt-dlp plugin - generates the PO (proof-of-origin) token YouTube now requires
+# for the "web" player client once real cookies are attached. Talks to the
+# bgutil-pot-provider sidecar - see src/ytdlpPot.py / YTDLP_POT_PROVIDER_URL.
+bgutil-ytdlp-pot-provider
 ffmpeg-python
 numpy
 pydub

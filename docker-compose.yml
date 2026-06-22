@@ -76,9 +76,16 @@ services:
       - FRONTEND_URL=${FRONTEND_URL}
       - OMP_NUM_THREADS=12
       - MKL_NUM_THREADS=12
+      # Usually unnecessary from a home/dev IP - YouTube's bot-check mainly
+      # targets datacenter/VPS IPs. Uncomment if you start hitting "Sign in to
+      # confirm you're not a bot" locally too; see docker-compose.server.yml
+      # for the full explanation and one-time cookies.txt setup.
+      # - YTDLP_COOKIES_FILE=/app/cookies.txt
+      # - YTDLP_POT_PROVIDER_URL=http://bgutil-pot-provider:4416
     restart: unless-stopped
     depends_on:
       - edge-tts
+      # - bgutil-pot-provider
 
   # OpenAI-compatible wrapper around Microsoft Edge's cloud TTS
   # (github.com/travisvn/openai-edge-tts). No GPU, no model download,
@@ -93,6 +100,12 @@ services:
       - DEFAULT_RESPONSE_FORMAT=wav
       - REQUIRE_API_KEY=false
     restart: unless-stopped
+
+  # PO-token sidecar for yt-dlp - see the note above and docker-compose.server.yml.
+  # Uncomment alongside YTDLP_POT_PROVIDER_URL above if needed locally.
+  # bgutil-pot-provider:
+  #   image: brainicism/bgutil-ytdlp-pot-provider:latest
+  #   restart: unless-stopped
 
   # NOTE: PostgreSQL is provided by the HOST machine (systemd `postgresql`),
   # which already holds the lexiflow_db database. backend-node reaches it via
