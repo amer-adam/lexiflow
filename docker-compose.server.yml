@@ -41,8 +41,12 @@ services:
     # via the "Get cookies.txt LOCALLY" browser extension, logged into
     # YouTube) when it starts getting rejected again - sessions expire.
     # Never commit cookies.txt to the repo.
+    #
+    # NOT mounted read-only: yt-dlp writes the cookie jar back to this file
+    # after each request (session refresh) - a :ro mount makes every request
+    # fail with "Read-only file system: '/app/cookies.txt'".
     volumes:
-      - ./cookies.txt:/app/cookies.txt:ro
+      - ./cookies.txt:/app/cookies.txt
     environment:
       # Translation backend (transcript translation, /translate-text, and quiz
       # judging/distractors) - "deepseek" (default) or "groq". Swap with no
