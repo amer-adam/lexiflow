@@ -28,6 +28,21 @@ services:
     restart: always
     depends_on:
       - edge-tts
+    # YouTube blocks datacenter/VPS IPs ("Sign in to confirm you're not a
+    # bot") even with the mobile-UA + android/ios player_client workaround
+    # already in src/download.py and src/captions.py. The fix is real
+    # browser cookies - see the YTDLP_COOKIES_FILE note below.
+    #
+    # cookies.txt must exist on the host BEFORE the first `docker compose up`,
+    # or Docker will bind-mount an empty directory in its place instead of
+    # failing loudly. One-time setup on the server:
+    #   touch ~/lexiflow/cookies.txt
+    # Then periodically replace it with a real export (Netscape format, e.g.
+    # via the "Get cookies.txt LOCALLY" browser extension, logged into
+    # YouTube) when it starts getting rejected again - sessions expire.
+    # Never commit cookies.txt to the repo.
+    volumes:
+      - ./cookies.txt:/app/cookies.txt:ro
     environment:
       # Translation backend (transcript translation, /translate-text, and quiz
       # judging/distractors) - "deepseek" (default) or "groq". Swap with no
@@ -46,6 +61,7 @@ services:
       - EDGE_TTS_API_URL=http://edge-tts:5050
       - EDGE_TTS_VOICE=zh-CN-XiaoxiaoNeural
       - FRONTEND_URL=${FRONTEND_URL}
+      - YTDLP_COOKIES_FILE=/app/cookies.txt
 
   # OpenAI-compatible wrapper around Microsoft Edge's cloud TTS. No GPU, no
   # model download. Internal-only - only backend-fastapi talks to it.

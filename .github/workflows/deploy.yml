@@ -128,6 +128,13 @@ jobs:
             # Create/Update .env file from GitHub Secrets
             echo "${{ secrets.ENV_FILE }}" > .env
 
+            # cookies.txt must exist as a file before the bind-mount below,
+            # or Docker creates an empty directory there instead - which then
+            # breaks both yt-dlp and any later attempt to drop a real cookie
+            # export in its place. Only touches it if missing; never
+            # overwrites a real cookies.txt you've already placed there.
+            touch -a cookies.txt
+
             # Pull the brand new image(s) from GitHub
             docker compose pull
 
