@@ -7,6 +7,8 @@ from urllib.parse import urlparse
 import yt_dlp
 from yt_dlp.postprocessor import PostProcessor
 
+from src.ytdlpCookies import cookie_opts
+
 class FilenameCollectorPP(PostProcessor):
     def __init__(self):
         super(FilenameCollectorPP, self).__init__(None)
@@ -62,6 +64,8 @@ def _perform_download(url: str, maxDuration: int = None, outputTemplate: str = N
         ydl_opts['js_runtimes'] = {'node': {}}
     if (playlistItems):
         ydl_opts['playlist_items'] = playlistItems
+
+    ydl_opts.update(cookie_opts())
 
     # Add output template if specified
 
@@ -133,10 +137,12 @@ def get_duration(url: str) -> float:
         ydl_opts['js_runtimes'] = {'node': {'path': node_path}}
     else:
         ydl_opts['js_runtimes'] = {'node': {}}
-        
+
+    ydl_opts.update(cookie_opts())
+
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
-        
+
         # Handle playlists (return total duration of all videos)
         if 'entries' in info:
             return sum(float(entry['duration']) for entry in info['entries'] if entry.get('duration'))
