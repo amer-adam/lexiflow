@@ -1,14 +1,18 @@
+import hashlib
 import os
+import re
 from tempfile import mkdtemp
 from typing import List
 from yt_dlp import YoutubeDL
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 
 import yt_dlp
 from yt_dlp.postprocessor import PostProcessor
 
+from src.firecrawlFallback import FirecrawlUnavailable, download_audio as firecrawl_download_audio
 from src.ytdlpCookies import cookie_opts
 from src.ytdlpPot import pot_provider_extractor_args
+from src.ytdlpProxy import is_proxy_configured, is_proxy_reachable, proxy_opts
 
 class FilenameCollectorPP(PostProcessor):
     def __init__(self):
@@ -19,14 +23,59 @@ class FilenameCollectorPP(PostProcessor):
         self.filenames.append(information["filepath"])
         return [], information
 
-def download_url(url: str, maxDuration: int = None, destinationDirectory: str = None, playlistItems: str = "1") -> List[str]: 
+def download_url(url: str, maxDuration: int = None, destinationDirectory: str = None, playlistItems: str = "1") -> List[str]:
+    """
+    Downloads a video's audio. YouTube bot-walls datacenter/VPS IPs by reputation
+    regardless of cookie/PO-token validity (see src/ytdlpCookies.py, src/ytdlpPot.py),
+    so the real fix is routing yt-dlp through a non-datacenter IP - normally a SOCKS5
+    proxy tunneled back through an SSH reverse forward to a home connection
+    (YTDLP_PROXY_URL). If that tunnel is down, fall back to Firecrawl's audio-extraction
+    API (FIRECRAWL_API_KEY, self-rate-limited - see src/firecrawlFallback.py) before
+    finally trying a direct, unproxied yt-dlp call as a last resort.
+    """
+    if destinationDirectory is None:
+        destinationDirectory = mkdtemp()
+
+    if is_proxy_configured() and not is_proxy_reachable():
+        print("YTDLP_PROXY_URL is configured but unreachable (tunnel down?) - trying Firecrawl fallback")
+        try:
+            return [_download_via_firecrawl(url, destinationDirectory)]
+        except FirecrawlUnavailable as e:
+            print(f"Firecrawl fallback unavailable ({e}); falling back to a direct (likely bot-walled) yt-dlp attempt")
+
     try:
         return _perform_download(url, maxDuration=maxDuration, outputTemplate=None, destinationDirectory=destinationDirectory, playlistItems=playlistItems)
     except yt_dlp.utils.DownloadError as e:
         # In case of an OS error, try again with a different output template
         if e.msg and e.msg.find("[Errno 36] File name too long") >= 0:
-            return _perform_download(url, maxDuration=maxDuration, outputTemplate="%(title).10s %(id)s.%(ext)s")
+            return _perform_download(url, maxDuration=maxDuration, outputTemplate="%(title).10s %(id)s.%(ext)s", destinationDirectory=destinationDirectory)
+
+        # Last resort: the proxy was reachable (or unconfigured) but yt-dlp still
+        # failed outright (e.g. bot-walled) - try Firecrawl once before giving up.
+        try:
+            return [_download_via_firecrawl(url, destinationDirectory)]
+        except FirecrawlUnavailable:
+            pass
         raise e
+
+
+def _download_via_firecrawl(url: str, destination_directory: str) -> str:
+    destination_path = os.path.join(destination_directory, _firecrawl_filename(url))
+    firecrawl_download_audio(url, destination_path)
+    print("Downloaded (via Firecrawl) " + destination_path)
+    return destination_path
+
+
+def _firecrawl_filename(url: str) -> str:
+    parsed = urlparse(url)
+    video_id = (parse_qs(parsed.query).get("v") or [None])[0]
+
+    if not video_id:
+        # youtu.be/<id> and youtube.com/shorts/<id> links - id is the last path segment
+        match = re.search(r"/(?:shorts/)?([\w-]{6,})/?$", parsed.path)
+        video_id = match.group(1) if match else hashlib.sha1(url.encode()).hexdigest()[:11]
+
+    return f"firecrawl_{video_id}.mp3"
 
 def _perform_download(url: str, maxDuration: int = None, outputTemplate: str = None, destinationDirectory: str = None, playlistItems: str = "1"):
     # Create a temporary directory to store the downloaded files
@@ -76,8 +125,7 @@ def _perform_download(url: str, maxDuration: int = None, outputTemplate: str = N
         ydl_opts['playlist_items'] = playlistItems
 
     ydl_opts.update(cookie_opts())
-
-    # Add output template if specified
+    ydl_opts.update(proxy_opts())
 
     # Add output template if specified
     if outputTemplate:
@@ -155,6 +203,7 @@ def get_duration(url: str) -> float:
         ydl_opts['js_runtimes'] = {'node': {}}
 
     ydl_opts.update(cookie_opts())
+    ydl_opts.update(proxy_opts())
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)

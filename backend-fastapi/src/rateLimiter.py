@@ -33,3 +33,19 @@ class RateLimiter:
                 wait_time = self.period_seconds - (now - self._timestamps[0])
 
             time.sleep(max(wait_time, 0.05))
+
+    def try_acquire(self) -> bool:
+        """Non-blocking variant: returns True/False immediately instead of waiting.
+        For callers where blocking for up to a full period (e.g. an hour) would hang
+        a request rather than just failing over to something else."""
+        with self._lock:
+            now = time.monotonic()
+
+            while self._timestamps and now - self._timestamps[0] >= self.period_seconds:
+                self._timestamps.popleft()
+
+            if len(self._timestamps) < self.max_requests:
+                self._timestamps.append(now)
+                return True
+
+            return False

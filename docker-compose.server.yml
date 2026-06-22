@@ -48,6 +48,19 @@ services:
     # NOT mounted read-only: yt-dlp writes the cookie jar back to this file
     # after each request (session refresh) - a :ro mount makes every request
     # fail with "Read-only file system: '/app/cookies.txt'".
+    #
+    # None of the above is enough on its own: YouTube also bot-walls
+    # datacenter/VPS IPs by reputation, independent of cookie/PO-token
+    # validity. The actual fix is routing yt-dlp through a non-datacenter IP:
+    # YTDLP_PROXY_URL points at a SOCKS5 proxy tunneled back through an SSH
+    # reverse forward to a home connection (see the repo README/ops notes for
+    # the exact `ssh -R` setup - that part runs on your home machine, not here).
+    # If that tunnel is down, src/download.py falls back to Firecrawl's audio
+    # extraction API (FIRECRAWL_API_KEY), rate-limited to FIRECRAWL_RATE_LIMIT
+    # calls per FIRECRAWL_RATE_LIMIT_PERIOD_SECONDS (default 1/hour) to ration
+    # the free tier - see src/firecrawlFallback.py.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./cookies.txt:/app/cookies.txt
     environment:
@@ -70,6 +83,13 @@ services:
       - FRONTEND_URL=${FRONTEND_URL}
       - YTDLP_COOKIES_FILE=/app/cookies.txt
       - YTDLP_POT_PROVIDER_URL=http://bgutil-pot-provider:4416
+      # SSH reverse tunnel's SOCKS proxy, reachable on the host at this port -
+      # see the comment above. Leave unset and the app falls straight to
+      # Firecrawl/direct yt-dlp if you haven't set the tunnel up yet.
+      - YTDLP_PROXY_URL=socks5://host.docker.internal:1080
+      - FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY}
+      - FIRECRAWL_RATE_LIMIT=1
+      - FIRECRAWL_RATE_LIMIT_PERIOD_SECONDS=3600
 
   # OpenAI-compatible wrapper around Microsoft Edge's cloud TTS. No GPU, no
   # model download. Internal-only - only backend-fastapi talks to it.

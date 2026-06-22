@@ -20,6 +20,7 @@ import yt_dlp
 
 from src.ytdlpCookies import cookie_opts
 from src.ytdlpPot import pot_provider_extractor_args
+from src.ytdlpProxy import proxy_opts
 
 # Caption track language codes YouTube uses for (variants of) Chinese.
 ZH_LANG_CODES = ("zh-Hans", "zh-Hant", "zh-CN", "zh-TW", "zh-HK", "zh")
@@ -51,6 +52,7 @@ def _ydl_opts() -> dict:
     node_path = shutil.which("node")
     opts["js_runtimes"] = {"node": {"path": node_path}} if node_path else {"node": {}}
     opts.update(cookie_opts())
+    opts.update(proxy_opts())
     return opts
 
 

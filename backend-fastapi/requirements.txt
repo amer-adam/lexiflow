@@ -11,6 +11,9 @@ yt-dlp
 # for the "web" player client once real cookies are attached. Talks to the
 # bgutil-pot-provider sidecar - see src/ytdlpPot.py / YTDLP_POT_PROVIDER_URL.
 bgutil-ytdlp-pot-provider
+# SOCKS5 proxy support for yt-dlp - see src/ytdlpProxy.py / YTDLP_PROXY_URL
+# (an SSH-reverse-tunneled proxy back to a non-datacenter IP).
+PySocks
 ffmpeg-python
 numpy
 pydub
