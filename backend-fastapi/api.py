@@ -442,7 +442,11 @@ async def generate_quiz_payload(payload: QuizGenerateRequest):
     """
     try:
         items_dict = [item.model_dump() for item in payload.vocab_items]
-        generated_questions = quiz_generator.generate_quiz(
+        # generate_quiz makes blocking LLM HTTP calls; running it inline would
+        # freeze the whole event loop (and with it every other request,
+        # including health checks) until the LLM calls finish.
+        generated_questions = await asyncio.to_thread(
+            quiz_generator.generate_quiz,
             vocab_items=items_dict,
             count=payload.count,
             allowed_types=payload.allowed_types
@@ -461,7 +465,10 @@ async def evaluate_short_answer_response(payload: ShortAnswerEvaluateRequest):
     against baseline configurations via multilingual Sentence-BERT embeddings.
     """
     try:
-        evaluation_report = quiz_judge.evaluate_short_answer(
+        # evaluate_short_answer makes a blocking LLM HTTP call; offload it so
+        # it doesn't freeze the event loop for the rest of the worker.
+        evaluation_report = await asyncio.to_thread(
+            quiz_judge.evaluate_short_answer,
             correct_reference=payload.correct_reference,
             user_response=payload.user_response
         )
