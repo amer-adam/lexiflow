@@ -223,14 +223,16 @@ async function getJobStatus(jobId) {
         return { job, responseJSON };
     }
 
+    const targetJob = await agenda._collection.findOne({ 'data.jobId': jobId });
+    if (!targetJob) {
+        return { job: null, error: 'Job not found in queue' };
+    }
+
     const [eta, queueNumber] = await estimateWaitTime(jobId);
     responseJSON.eta = eta;
     responseJSON.queue_number = queueNumber;
 
-    const targetJob = await agenda._collection.findOne({ 'data.jobId': jobId });
-    if (!targetJob) {
-        return { job: null, error: 'Job not found in queue' };
-    } else if (targetJob.nextRunAt !== null) {
+    if (targetJob.nextRunAt !== null) {
         responseJSON.status = 'queued';
     }
 
