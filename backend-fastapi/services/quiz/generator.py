@@ -1,4 +1,5 @@
 import random
+from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict, Any
 from .templates import QuizTemplateEngine
 from .distractors import DistractorPipeline
@@ -26,15 +27,16 @@ class QuizGenerator:
         # Select target items up to requested total count
         sampled_items = random.sample(vocab_items, min(len(vocab_items), count))
 
-        for idx, item in enumerate(sampled_items):
+        # Decide each item's question type up front so MULTIPLE_CHOICE/TRUE_FALSE
+        # distractor lookups (one blocking LLM call each) can be fired off
+        # concurrently below, instead of serially - sequentially they can add up
+        # to minutes for a multi-question quiz and the connection gets dropped
+        # before the response is ready.
+        item_plans = []
+        for item in sampled_items:
             word = item.get('simplified')
-            pinyin = item.get('pinyin', '')
-            meaning = item.get('meaning', '')
             context = item.get('contextSentence', '') or ''
-            translation = item.get('contextTranslation', '') or ''
-            vocab_item_id = item.get('id') or item.get('vocabularyListItemId')
 
-            # Filter allowed types for this specific item to ensure FILL_BLANK has a valid context sentence
             item_allowed_types = allowed_types.copy()
             if not (context and word in context):
                 if "FILL_BLANK" in item_allowed_types:
@@ -44,6 +46,31 @@ class QuizGenerator:
                     item_allowed_types = ["MULTIPLE_CHOICE", "SHORT_ANSWER", "TRUE_FALSE"]
 
             q_type = random.choice(item_allowed_types)
+            item_plans.append((item, q_type))
+
+        def fetch_distractors(plan):
+            item, q_type = plan
+            if q_type not in ("MULTIPLE_CHOICE", "TRUE_FALSE"):
+                return None
+            word = item.get('simplified')
+            context = item.get('contextSentence', '') or ''
+            return self.distractor_pipeline.rank_distractors(
+                target_word=word,
+                context_sentence=context,
+                candidate_pool=candidate_pool,
+                top_n=3
+            )
+
+        with ThreadPoolExecutor(max_workers=max(1, len(item_plans))) as executor:
+            distractors_by_idx = list(executor.map(fetch_distractors, item_plans))
+
+        for idx, (item, q_type) in enumerate(item_plans):
+            word = item.get('simplified')
+            pinyin = item.get('pinyin', '')
+            meaning = item.get('meaning', '')
+            context = item.get('contextSentence', '') or ''
+            translation = item.get('contextTranslation', '') or ''
+            vocab_item_id = item.get('id') or item.get('vocabularyListItemId')
 
             # Build declarative foundation payload matching downstream schemas
             question_data = {
@@ -59,12 +86,7 @@ class QuizGenerator:
 
             # --- RENDER BLOCK BY QUESTION TYPE ---
             if q_type == "MULTIPLE_CHOICE":
-                distractors = self.distractor_pipeline.rank_distractors(
-                    target_word=word,
-                    context_sentence=context,
-                    candidate_pool=candidate_pool,
-                    top_n=3
-                )
+                distractors = list(distractors_by_idx[idx] or [])
                 while len(distractors) < 3:
                     fallback = random.choice(candidate_pool)
                     if fallback != word and fallback not in distractors:
@@ -149,9 +171,7 @@ class QuizGenerator:
 
             elif q_type == "TRUE_FALSE":
                 should_be_true = random.choice([True, False])
-                smart_distractors = self.distractor_pipeline.rank_distractors(
-                    target_word=word, context_sentence=context, candidate_pool=candidate_pool, top_n=3
-                )
+                smart_distractors = distractors_by_idx[idx] or []
                 chosen_distractor = random.choice(smart_distractors) if smart_distractors else None
                 
                 # VARIETY BRANCHING FOR TRUE/FALSE MODALITY
