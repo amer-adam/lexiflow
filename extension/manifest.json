@@ -3,10 +3,13 @@
   "name": "LexiFlow for YouTube",
   "version": "0.1.0",
   "description": "Send any YouTube video to LexiFlow and study it with graded Chinese subtitles, word lookup, and TTS right on top of the player.",
-  "permissions": ["storage", "alarms", "activeTab"],
+  "permissions": [
+    "storage",
+    "alarms",
+    "activeTab"
+  ],
   "host_permissions": [
-    "https://api-test.amerai.top/*",
-    "https://test.amerai.top/*",
+    "https://api-lexiflow.amerai.top/*",
     "https://lexiflow.amerai.top/*"
   ],
   "background": {
@@ -18,20 +21,33 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://*.youtube.com/watch*"],
-      "js": ["content/youtube-overlay.js"],
+      "matches": [
+        "*://*.youtube.com/watch*"
+      ],
+      "js": [
+        "content/youtube-overlay.js"
+      ],
       "run_at": "document_idle"
     },
     {
-      "matches": ["https://test.amerai.top/*", "https://lexiflow.amerai.top/*"],
-      "js": ["content/auth-relay.js"],
+      "matches": [
+        "https://test.amerai.top/*",
+        "https://lexiflow.amerai.top/*"
+      ],
+      "js": [
+        "content/auth-relay.js"
+      ],
       "run_at": "document_idle"
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["content/overlay.css"],
-      "matches": ["*://*.youtube.com/*"]
+      "resources": [
+        "content/overlay.css"
+      ],
+      "matches": [
+        "*://*.youtube.com/*"
+      ]
     }
   ]
 }

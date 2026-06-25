@@ -6,8 +6,8 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 const DEFAULT_CONFIG = {
-  apiBase: "https://api-test.amerai.top/lexiflow",
-  appOrigin: "https://test.amerai.top",
+  apiBase: "https://api-lexiflow.amerai.top/lexiflow",
+  appOrigin: "https://lexiflow.amerai.top",
 };
 
 async function getConfig() {
@@ -47,7 +47,20 @@ async function setTrackedJob(videoId, job) {
 
 async function submitJob(videoId, url) {
   const res = await apiFetch("/jobs", { method: "POST", body: JSON.stringify({ url }) });
-  const job = { jobId: res.job_id, status: res.status ?? "queued", progress: 0, title: res.title, thumbnail: res.thumbnail, panelOpen: false };
+  // When the video is already cached on the backend, this response is the
+  // completed result itself (status: "completed", segments included) rather
+  // than a queue ticket - capture segments the same way pollJob does so the
+  // overlay has something to render without needing a first poll.
+  const segs = res?.result?.segments ?? res?.segments ?? [];
+  const job = {
+    jobId: res.job_id,
+    status: res.status ?? "queued",
+    progress: res.progress ?? 0,
+    title: res.title ?? res.result?.title,
+    thumbnail: res.thumbnail,
+    segments: segs.length ? segs : undefined,
+    panelOpen: false,
+  };
   await setTrackedJob(videoId, job);
   ensurePolling();
   return job;
@@ -112,7 +125,15 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         }
         case "GET_TRACKED_JOB": {
           const jobs = await getTrackedJobs();
-          sendResponse({ ok: true, job: jobs[msg.videoId] ?? null });
+          let job = jobs[msg.videoId] ?? null;
+          // Self-heal jobs saved before submitJob captured segments from a
+          // from_cache response (or any other way a completed job ended up
+          // without segments) - backfill via a poll instead of forcing the
+          // user to remove and re-add the video.
+          if (job && (job.status === "completed" || job.status === "done") && !job.segments?.length) {
+            job = await pollJob(msg.videoId).catch(() => job);
+          }
+          sendResponse({ ok: true, job });
           break;
         }
         case "SET_PANEL_OPEN": {
