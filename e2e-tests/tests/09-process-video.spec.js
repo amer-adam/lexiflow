@@ -38,8 +38,10 @@ test.describe('UC04 Add Content (full pipeline, real deployment)', () => {
     // Confirm it's actually watchable, not just a status flag. Source is a
     // YouTube URL, so VideoPlayer renders the YouTube iframe API player, not
     // an HTML <video> tag (that path is only for direct file uploads).
+    // This is a state-based SPA router (App.tsx swaps views by state, not a
+    // real URL change), so there's no navigation event/URL to wait for here -
+    // just wait for the player itself to mount.
     await page.getByRole('button', { name: /open in player/i }).click();
-    await page.waitForURL(/watch/i, { timeout: 15_000 });
     await expect(page.locator('iframe[src*="youtube"]')).toBeVisible({ timeout: 15_000 });
 
     // Capture the real video title (h1) so cleanup below deletes *this*
