@@ -11,7 +11,7 @@ const { test, expect } = require('@playwright/test');
 // translation + post-processing), so this test gets a much longer timeout
 // than the rest of the suite.
 test.describe('UC04 Add Content (full pipeline, real deployment)', () => {
-  test('TC-18: pasting a YouTube link produces a watchable, subtitled video, then cleans up', async ({ page }) => {
+  test('TC-18 @slow: pasting a YouTube link produces a watchable, subtitled video, then cleans up', async ({ page }) => {
     test.setTimeout(15 * 60 * 1000); // 15 minutes - real download + transcribe + translate
 
     const videoUrl = process.env.LEXIFLOW_TEST_VIDEO_URL

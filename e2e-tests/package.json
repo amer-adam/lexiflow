@@ -3,12 +3,15 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "playwright test",
+    "test:fast": "playwright test --grep-invert @slow",
+    "test:slow": "playwright test --grep @slow",
+    "report": "playwright show-report playwright-report"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Playwright end-to-end test suite for LexiFlow.",
   "devDependencies": {
     "@playwright/test": "^1.61.0"
   }

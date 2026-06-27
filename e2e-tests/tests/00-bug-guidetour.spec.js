@@ -36,7 +36,9 @@ async function freshLogin(page) {
   await page.fill('input[name="username"]', TEST_EMAIL);
   await page.fill('input[name="password"]', TEST_PASSWORD);
   await page.click('button[type="submit"], button[name="action"]');
-  await page.waitForURL(/test\.amerai\.top/, { timeout: 20_000 });
+  // Wait for the post-Auth0 redirect back to the app itself, whatever host
+  // that is (don't hardcode a specific domain -- baseURL is configurable).
+  await page.waitForURL((url) => !url.hostname.includes('auth0.com'), { timeout: 20_000 });
   await expect(page.getByText('Welcome to LexiFlow').first()).toBeVisible({ timeout: 10_000 });
 }
 
