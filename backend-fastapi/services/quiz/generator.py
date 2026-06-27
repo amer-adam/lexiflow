@@ -87,10 +87,16 @@ class QuizGenerator:
             # --- RENDER BLOCK BY QUESTION TYPE ---
             if q_type == "MULTIPLE_CHOICE":
                 distractors = list(distractors_by_idx[idx] or [])
-                while len(distractors) < 3:
-                    fallback = random.choice(candidate_pool)
-                    if fallback != word and fallback not in distractors:
-                        distractors.append(fallback)
+                # The only fallback source is the source vocabulary list
+                # itself, so cap how many distractors we can ever add: a
+                # list with fewer than 4 distinct words cannot supply 3
+                # fallback distractors, and retrying for more than exist
+                # would loop forever. Take whatever distinct words remain
+                # (possibly fewer than 3) instead of hanging the request.
+                remaining_pool = [w for w in set(candidate_pool) if w != word and w not in distractors]
+                random.shuffle(remaining_pool)
+                while len(distractors) < 3 and remaining_pool:
+                    distractors.append(remaining_pool.pop())
 
                 # VARIETY BRANCHING FOR MULTIPLE CHOICE
                 mc_variant = random.choice(["MEANING_TO_WORD", "WORD_TO_MEANING", "WORD_TO_PINYIN", "PINYIN_TO_WORD", "CONTEXT_CLOZE", "PINYIN_TO_MEANING", "MEANING_TO_PINYIN"])

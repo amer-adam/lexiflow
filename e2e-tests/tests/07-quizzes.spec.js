@@ -30,6 +30,15 @@ test.describe('UC14 Generate Quizzes', () => {
       return;
     }
 
+    // Explicitly pick a large official list (150 words) instead of trusting
+    // whichever list the page defaults to. The default is whatever the API
+    // returns first, which can be the tiny "Saved words" list (often just 1
+    // word for this shared test account) -- generating a multiple-choice
+    // quiz from a list with under 4 distinct words used to hang the backend
+    // forever (see backend-fastapi/services/quiz/generator.py, the
+    // distractor-fallback loop had no bound on the candidate pool size).
+    await page.getByRole('button', { name: /^HSK Level 1/ }).click();
+
     await page.getByRole('button', { name: 'Generate quiz' }).click();
     await expect(page.getByRole('button', { name: /Next|Finish & see score/i })).toBeVisible({ timeout: 2 * 60 * 1000 });
 
