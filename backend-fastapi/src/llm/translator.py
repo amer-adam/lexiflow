@@ -1,6 +1,9 @@
 import json
 import os
+from concurrent.futures import ThreadPoolExecutor
 from typing import List
+
+import requests
 
 from src.llm.llmProvider import LlmProvider
 
@@ -34,9 +37,26 @@ def translate_segments(segments: List[dict], source_language: str, target_langua
     chunk_minutes = chunk_minutes if chunk_minutes is not None else float(
         os.environ.get("LLM_TRANSLATE_CHUNK_MINUTES", DEFAULT_CHUNK_MINUTES))
     chunk_seconds = chunk_minutes * 60
+    chunks = _chunk_by_time(segments, chunk_seconds)
 
-    for chunk in _chunk_by_time(segments, chunk_seconds):
-        _translate_chunk(chunk, source_language, target_language, provider)
+    # Chunks are network calls (I/O-bound, not CPU-bound), so threading here
+    # actually buys wall-clock speedup unlike postprocess.py's CPU-bound work.
+    # Bounded small regardless - this only changes how overlapped the wait is,
+    # not the request rate, which the shared rate limiter already caps.
+    concurrency = max(1, int(os.environ.get("LLM_TRANSLATE_CONCURRENCY", "4")))
+
+    with ThreadPoolExecutor(max_workers=concurrency) as executor:
+        futures = [executor.submit(_translate_chunk, chunk, source_language, target_language, provider)
+                   for chunk in chunks]
+        for future in futures:
+            # A chunk that exhausts every fallback (network down, bad response,
+            # per-sentence retries all failing) must not take the rest of the
+            # video down with it - log and leave that chunk's segments without
+            # a translation rather than failing the whole job.
+            try:
+                future.result()
+            except Exception as e:
+                print(f"LLM translation: a chunk failed completely and was skipped: {e}")
 
     return segments
 
@@ -70,8 +90,10 @@ def _translate_chunk(chunk: List[dict], source_language: str, target_language: s
     translations = _request_translations(texts, target_language, provider)
 
     if translations is None:
-        # Persistent malformed JSON from the model - fall back to translating this
-        # chunk's sentences one at a time rather than failing the whole video.
+        # Persistent malformed JSON, or the batched request itself kept failing
+        # (network/timeout) - fall back to translating this chunk's sentences
+        # one at a time. _translate_single already swallows its own failures
+        # (returns ""), so this can't raise.
         print(f"LLM translation: falling back to per-sentence calls for a chunk of {len(texts)} segments")
         translations = [_translate_single(text, target_language, provider) for text in texts]
 
@@ -83,7 +105,15 @@ def _request_translations(texts: List[str], target_language: str, provider: LlmP
     system = SYSTEM_PROMPT.format(target_language=target_language, count=len(texts))
     user = json.dumps(texts, ensure_ascii=False)
 
-    content = provider.chat_complete(system=system, user=user, json_mode=True)
+    try:
+        content = provider.chat_complete(system=system, user=user, json_mode=True)
+    except requests.exceptions.RequestException as e:
+        # llmProvider already retries timeouts/connection errors internally;
+        # this only fires once that's exhausted. Don't let a network failure
+        # propagate out of translate_segments and kill the whole video job -
+        # let the caller fall back to per-sentence calls instead.
+        print(f"LLM translation: batched request failed ({e})")
+        return None
 
     try:
         parsed = json.loads(content)

@@ -24,7 +24,7 @@ setup('authenticate', async ({ page, context }) => {
   await page.fill('input[name="username"]', TEST_EMAIL);
   await page.fill('input[name="password"]', TEST_PASSWORD);
   await page.click('button[type="submit"], button[name="action"]');
-  await page.waitForURL(/test\.amerai\.top/, { timeout: 20_000 });
+  await page.waitForURL(/lexiflow\.amerai\.top/, { timeout: 20_000 });
   await expect(page.getByText(/Hello, /i)).toBeVisible({ timeout: 15_000 });
 
   await page.context().storageState({ path: 'storageState.json' });

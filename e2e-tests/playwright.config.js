@@ -14,7 +14,7 @@ module.exports = defineConfig({
     ['json', { outputFile: 'results/results.json' }],
   ],
   use: {
-    baseURL: 'https://test.amerai.top',
+    baseURL: 'https://lexiflow.amerai.top',
     screenshot: 'on',
     video: 'retain-on-failure',
     trace: 'retain-on-failure',

@@ -71,6 +71,14 @@ services:
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
       - LLM_RATE_LIMIT=60
       - LLM_TRANSLATE_CHUNK_MINUTES=5
+      # DeepSeek occasionally responds slowly or times out - LlmProvider retries
+      # timeouts/connection errors internally (see src/llm/llmProvider.py), and
+      # translate_segments() dispatches chunks concurrently (I/O-bound, so
+      # threading is safe/helpful here unlike postprocess.py) to cut wall-clock
+      # time without exceeding the rate limit above.
+      - LLM_CONNECT_TIMEOUT_SECONDS=10
+      - LLM_READ_TIMEOUT_SECONDS=90
+      - LLM_TRANSLATE_CONCURRENCY=4
       # Whisper transcription backend - "api" (Groq by default). See
       # backend-fastapi/src/whisper/apiWhisperContainer.py for provider env vars.
       - WHISPER_IMPLEMENTATION=api

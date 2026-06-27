@@ -117,7 +117,7 @@ def download_video(url: str, job_id: str) -> str:
         raise HTTPException(status_code=400, detail="Invalid URL format")
     file_path = download_url(
         url, maxDuration=-1, destinationDirectory=output_dir, playlistItems=None)
-    
+
     # Convert to 16kHz WAV for Whisper
     wav_path = file_path[0].rsplit('.', 1)[0] + "_16k.wav"
     subprocess.run([
@@ -125,7 +125,16 @@ def download_video(url: str, job_id: str) -> str:
         '-ar', '16000', '-ac', '1', '-c:a', 'pcm_s16le',
         wav_path
     ], check=True)
-    
+
+    # The pre-conversion download (mp3/webm/etc) is no longer needed once the
+    # WAV exists - nothing downstream cleaned this up before, so temp/ grew
+    # without bound on the server. wav_path itself is cleaned up by the caller
+    # (run_pipeline) once transcription is done with it.
+    try:
+        os.remove(file_path[0])
+    except OSError as e:
+        print(f"Warning: failed to remove temp download {file_path[0]}: {e}")
+
     return wav_path
 
 
@@ -194,6 +203,7 @@ async def start_processing(request: JobRequest) -> JobStatus:
 
 
 async def run_pipeline(job_id: str, url: str, is_local: bool = False):
+    downloaded_file_path = None
     try:
         overall_start = time.time()
 
@@ -242,6 +252,7 @@ async def run_pipeline(job_id: str, url: str, is_local: bool = False):
                 download_time = 0
             else:
                 file_path = await asyncio.to_thread(download_video, url, job_id)
+                downloaded_file_path = file_path  # cleaned up in the finally block below
                 download_time = time.time() - step_start
             print(f"Download completed in {download_time:.2f}s")
 
@@ -305,6 +316,16 @@ async def run_pipeline(job_id: str, url: str, is_local: bool = False):
         })
         print(f"Job {job_id} failed: {e}")
         print("Active jobs:", active_jobs)
+
+    finally:
+        # Nothing previously deleted the downloaded/converted audio file -
+        # temp/ grew without bound on the server. Clean up regardless of
+        # success or failure.
+        if downloaded_file_path and os.path.exists(downloaded_file_path):
+            try:
+                os.remove(downloaded_file_path)
+            except OSError as e:
+                print(f"Warning: failed to remove temp file {downloaded_file_path}: {e}")
 
 
 async def run_dummy_pipeline(job_id: str, url: str):

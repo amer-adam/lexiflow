@@ -1,19 +1,21 @@
 import json
 import time
-import concurrent
 from pypinyin import pinyin
 from pycccedict.cccedict import CcCedict
-from concurrent.futures import ThreadPoolExecutor
 import threading
 import re
 import jieba  # Added for smart word segmentation
 
-# Shared HSK data with lock for thread safety
+# This work (jieba tokenization, regex, dict lookups) is pure CPU-bound
+# Python, so a ThreadPoolExecutor here bought no real parallelism (the GIL
+# serializes it anyway) - it only added overhead and, worse, a *separate*
+# CcCedict instance (a full in-memory dictionary) per worker thread. On a
+# 2GB box that duplicate memory + thread contention was enough to crash the
+# server. One shared, lazily-built CcCedict + sequential processing instead.
 hsk_data = None
 hsk_lock = threading.Lock()
-
-# Thread-local storage for CcCedict
-thread_local = threading.local()
+_cccedict = None
+_cccedict_lock = threading.Lock()
 
 
 def initialize_hsk_data():
@@ -31,10 +33,14 @@ def initialize_hsk_data():
 
 
 def get_cccedict():
-    """Get thread-local CcCedict instance"""
-    if not hasattr(thread_local, "cccedict"):
-        thread_local.cccedict = CcCedict()
-    return thread_local.cccedict
+    """Get the single shared CcCedict instance (read-only after construction,
+    safe to share without per-lookup locking)."""
+    global _cccedict
+    if _cccedict is None:
+        with _cccedict_lock:
+            if _cccedict is None:
+                _cccedict = CcCedict()
+    return _cccedict
 
 
 def get_character_data(token):
@@ -155,8 +161,11 @@ def process_single_segment(text):
 
     return result
 
-def api_postprocess(result, max_workers=16):
-    """Post-process transcription results with multithreading"""
+def api_postprocess(result):
+    """Post-process transcription results. Processes segments sequentially -
+    this is CPU-bound (jieba/regex/dict lookups), so threading bought no real
+    speedup under the GIL while costing extra memory and CPU contention. On a
+    constrained box, slower-but-never-crashes beats fast-but-occasionally-OOMs."""
     if not result or "text" not in result or not result["text"]:
         return result
 
@@ -167,25 +176,17 @@ def api_postprocess(result, max_workers=16):
         initialize_hsk_data()
         print(f"HSK initialization took {time.time() - hsk_init_start:.2f}s")
 
-    # Process segments in parallel
-    print(f"Processing {len(result['segments'])} segments in parallel...")
+    print(f"Processing {len(result['segments'])} segments sequentially...")
     process_start = time.time()
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {
-            executor.submit(process_single_segment, segment['text']): segment
-            for segment in result['segments']
-        }
+    for segment in result['segments']:
+        try:
+            segment['characters'] = process_single_segment(segment['text'])
+        except Exception as e:
+            print(f"Error processing segment {segment['text']}: {str(e)}")
+            segment['characters'] = {}
 
-        for future in concurrent.futures.as_completed(futures):
-            segment = futures[future]
-            try:
-                segment['characters'] = future.result()
-            except Exception as e:
-                print(f"Error processing segment {segment['text']}: {str(e)}")
-                segment['characters'] = {}
-    
-    print(f"Parallel processing of segments took {time.time() - process_start:.2f}s")
-    
+    print(f"Processing of segments took {time.time() - process_start:.2f}s")
+
     save_start = time.time()
     with open('./result.json', 'w', encoding='utf-8') as f:
         json.dump(result, f, ensure_ascii=False, indent=4)

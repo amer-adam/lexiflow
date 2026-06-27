@@ -70,7 +70,7 @@ class LlmProvider:
             return limiter
 
     def chat_complete(self, system: str, user: str, json_mode: bool = False,
-                      temperature: float = 0.2, retry: int = 0) -> str:
+                      temperature: float = 0.2, retry: int = 0, max_retries: int = 3) -> str:
         url = f"{self.base_url}/chat/completions"
         headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
 
@@ -87,13 +87,31 @@ class LlmProvider:
 
         self.rate_limiter.acquire()
 
-        response = requests.post(url, headers=headers, json=payload, timeout=120)
+        # Split connect/read timeouts - a slow-to-respond provider (the read side)
+        # shouldn't be confused with an unreachable one (the connect side). Both
+        # configurable since "DeepSeek is just slow right now" calls for a longer
+        # read timeout, not necessarily a code change.
+        connect_timeout = float(os.environ.get("LLM_CONNECT_TIMEOUT_SECONDS", "10"))
+        read_timeout = float(os.environ.get("LLM_READ_TIMEOUT_SECONDS", "90"))
 
-        if response.status_code == 429 and retry < 3:
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=(connect_timeout, read_timeout))
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+            if retry >= max_retries:
+                raise
+            backoff = 2 ** retry
+            print(f"LLM provider '{self.provider}' request failed ({e}); retrying in {backoff}s "
+                  f"(attempt {retry + 1}/{max_retries})")
+            time.sleep(backoff)
+            return self.chat_complete(system, user, json_mode=json_mode, temperature=temperature,
+                                      retry=retry + 1, max_retries=max_retries)
+
+        if response.status_code == 429 and retry < max_retries:
             retry_after = float(response.headers.get("Retry-After", 2 ** retry))
             print(f"LLM provider '{self.provider}' rate limited (429); retrying in {retry_after:.1f}s")
             time.sleep(retry_after)
-            return self.chat_complete(system, user, json_mode=json_mode, temperature=temperature, retry=retry + 1)
+            return self.chat_complete(system, user, json_mode=json_mode, temperature=temperature,
+                                      retry=retry + 1, max_retries=max_retries)
 
         response.raise_for_status()
         data = response.json()
