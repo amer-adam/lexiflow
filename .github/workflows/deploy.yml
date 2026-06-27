@@ -143,3 +143,56 @@ jobs:
 
             # Clean up old, unused images to save disk space
             docker image prune -f
+
+  e2e-smoke-test:
+    needs: deploy
+    if: needs.deploy.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Playwright suite dependencies
+        working-directory: e2e-tests
+        run: npm ci
+
+      - name: Install Chromium for Playwright
+        working-directory: e2e-tests
+        run: npx playwright install --with-deps chromium
+
+      # The backend container(s) just restarted; give them a few seconds to
+      # actually come back up before hammering them with the test suite.
+      - name: Wait for the deployed app to respond
+        run: |
+          for i in $(seq 1 20); do
+            if curl -fsS -o /dev/null "${LEXIFLOW_BASE_URL:-https://lexiflow.amerai.top}"; then
+              echo "App is responding."
+              exit 0
+            fi
+            echo "Not up yet, retrying in 5s ($i/20)..."
+            sleep 5
+          done
+          echo "App never came back up after deploy." >&2
+          exit 1
+
+      - name: Run fast E2E suite against the live deployment
+        working-directory: e2e-tests
+        env:
+          CI: 'true'
+          LEXIFLOW_BASE_URL: ${{ secrets.LEXIFLOW_BASE_URL || 'https://lexiflow.amerai.top' }}
+          LEXIFLOW_TEST_EMAIL: ${{ secrets.LEXIFLOW_TEST_EMAIL }}
+          LEXIFLOW_TEST_PASSWORD: ${{ secrets.LEXIFLOW_TEST_PASSWORD }}
+        run: npm run test:fast
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e-tests/playwright-report/
+          retention-days: 14
