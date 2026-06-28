@@ -160,6 +160,31 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
           sendResponse({ ok: true, url });
           break;
         }
+        case "GET_LISTS": {
+          const lists = await apiFetch("/lists");
+          sendResponse({ ok: true, lists });
+          break;
+        }
+        case "CREATE_LIST": {
+          const list = await apiFetch("/lists", {
+            method: "POST",
+            body: JSON.stringify({ name: msg.name, type: "USER_CREATED" }),
+          });
+          sendResponse({ ok: true, list });
+          break;
+        }
+        case "ADD_WORD": {
+          await apiFetch(`/lists/${msg.listId}/words`, { method: "POST", body: JSON.stringify(msg.word) });
+          const { savedWordsCount } = await chrome.storage.local.get("savedWordsCount");
+          await chrome.storage.local.set({ savedWordsCount: (savedWordsCount ?? 0) + 1 });
+          sendResponse({ ok: true });
+          break;
+        }
+        case "GET_AUTH_CONFIG": {
+          const [config, token] = await Promise.all([getConfig(), getToken()]);
+          sendResponse({ ok: true, config, token });
+          break;
+        }
         default:
           sendResponse({ ok: false, error: "unknown message type" });
       }

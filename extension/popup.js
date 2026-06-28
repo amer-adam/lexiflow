@@ -11,6 +11,10 @@ const progressFill = progressEl.querySelector(".lf-progress-fill");
 const readySection = document.getElementById("ready-section");
 const togglePanelBtn = document.getElementById("toggle-panel-btn");
 const moreBtn = document.getElementById("more-btn");
+const exportSection = document.getElementById("export-section");
+const exportSelect = document.getElementById("export-select");
+const exportBtn = document.getElementById("export-btn");
+const exportStatus = document.getElementById("export-status");
 
 let activeTab = null;
 let currentVideoId = null;
@@ -36,8 +40,11 @@ async function refresh() {
   if (!connected) {
     videoSection.style.display = "none";
     notYoutubeEl.style.display = "none";
+    exportSection.style.display = "none";
     return;
   }
+
+  loadExportLists();
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   activeTab = tab;
@@ -130,6 +137,56 @@ moreBtn.addEventListener("click", async () => {
     const t = res?.time ? Math.floor(res.time) : 0;
     chrome.tabs.create({ url: `${config.appOrigin}/?id=${job.jobId}&t=${t}` });
   });
+});
+
+// ── Export saved words to Anki, reusing GET /lists/:id/export?format=anki
+//    (frontend/src/lib/api.ts exportList) — same endpoint the in-app
+//    Vocabulary view uses, so a word saved from the extension round-trips
+//    into a real .apkg deck with zero new backend work. ────────────────────
+async function loadExportLists() {
+  const { lists, error } = await send({ type: "GET_LISTS" });
+  if (error || !lists?.length) {
+    exportSection.style.display = "none";
+    return;
+  }
+  exportSection.style.display = "block";
+  exportSelect.innerHTML = "";
+  lists.forEach((l) => {
+    const opt = document.createElement("option");
+    opt.value = l.id;
+    opt.textContent = l.name;
+    exportSelect.appendChild(opt);
+  });
+}
+
+exportBtn.addEventListener("click", async () => {
+  const listId = exportSelect.value;
+  if (!listId) return;
+  exportBtn.disabled = true;
+  exportStatus.textContent = "Exporting…";
+  try {
+    const { config, token } = await send({ type: "GET_AUTH_CONFIG" });
+    const res = await fetch(`${config.apiBase}/lists/${listId}/export?format=anki`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    const blob = await res.blob();
+    const disposition = res.headers.get("content-disposition") ?? "";
+    const match = disposition.match(/filename="?([^"]+)"?/);
+    const filename = match?.[1] ?? `${exportSelect.selectedOptions[0]?.textContent ?? "lexiflow"}.apkg`;
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    exportStatus.textContent = "Downloaded ✓";
+  } catch (e) {
+    exportStatus.textContent = e?.message ?? "Export failed.";
+  } finally {
+    exportBtn.disabled = false;
+  }
 });
 
 refresh();

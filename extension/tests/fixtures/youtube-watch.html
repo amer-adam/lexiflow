@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Fake YouTube watch page</title>
+  <style>
+    body { margin: 0; background: #0f0f0f; }
+    #movie_player { position: relative; width: 900px; height: 506px; background: #000; }
+    video { width: 100%; height: 100%; display: block; }
+  </style>
+</head>
+<body>
+  <!-- Minimal stand-in for YouTube's real player DOM — just enough structure
+       for the content script's #movie_player / video.html5-main-video
+       selectors to find their anchors. -->
+  <div id="movie_player">
+    <div class="html5-video-container">
+      <video class="video-stream html5-main-video" tabindex="-1"></video>
+    </div>
+  </div>
+  <script>
+    // Real YouTube videos have real durations; give the fake <video> just
+    // enough of an API surface for currentTime/play/pause to behave.
+    const v = document.querySelector("video");
+    Object.defineProperty(v, "duration", { value: 120, configurable: true });
+    let t = 0;
+    let playing = false;
+    let raf;
+    const tick = () => {
+      if (playing) {
+        t += 0.05;
+        v.dispatchEvent(new Event("timeupdate"));
+        raf = requestAnimationFrame(tick);
+      }
+    };
+    Object.defineProperty(v, "currentTime", {
+      get: () => t,
+      set: (val) => { t = val; v.dispatchEvent(new Event("timeupdate")); },
+      configurable: true,
+    });
+    Object.defineProperty(v, "paused", { get: () => !playing, configurable: true });
+    v.play = () => { playing = true; v.dispatchEvent(new Event("play")); tick(); return Promise.resolve(); };
+    v.pause = () => { playing = false; v.dispatchEvent(new Event("pause")); cancelAnimationFrame(raf); };
+  </script>
+</body>
+</html>

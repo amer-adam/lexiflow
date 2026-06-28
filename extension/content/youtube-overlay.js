@@ -41,13 +41,15 @@ function getVideoEl() {
 const hskColor = (lvl) => `hsl(var(--hsk-${lvl ?? 0}))`;
 
 let root, host, stage, barWrap, bar, panelBody, translationEl, progressEl;
-let controlsEl, settingsPopover;
+let controlsEl, settingsPopover, wordPopover, toastEl;
 let currentVideoId = null;
 let lastSegments = null;
 let lastJobId = null;
 let activeSegIdx = -1;
+let lastTokens = [];
 let settings = DEFAULT_SETTINGS;
 let hideTimer = null;
+let cachedLists = null;
 
 async function ensureHost() {
   if (host) return;
@@ -85,6 +87,8 @@ function icon(name) {
     pauseEnd: '<rect x="4" y="4" width="6" height="16"/><rect x="14" y="4" width="6" height="16"/>',
     settings: '<path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm9 4a8.8 8.8 0 0 0-.15-1.6l2.1-1.65-2-3.45-2.45 1a8.6 8.6 0 0 0-2.8-1.6L15.3 2h-4.6l-.4 2.7a8.6 8.6 0 0 0-2.8 1.6l-2.45-1-2 3.45 2.1 1.65A8.8 8.8 0 0 0 3 12c0 .55.05 1.1.15 1.6l-2.1 1.65 2 3.45 2.45-1c.8.7 1.75 1.25 2.8 1.6l.4 2.7h4.6l.4-2.7a8.6 8.6 0 0 0 2.8-1.6l2.45 1 2-3.45-2.1-1.65c.1-.5.15-1.05.15-1.6z"/>',
     close: '<path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" fill="none"/>',
+    speaker: '<path d="M5 9v6h4l5 5V4L9 9H5z"/><path d="M16.5 8.5a4 4 0 010 7" stroke="currentColor" stroke-width="1.6" fill="none"/>',
+    plus: '<path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/>',
   };
   return `<svg viewBox="0 0 24 24" fill="currentColor">${paths[name] ?? ""}</svg>`;
 }
@@ -181,10 +185,217 @@ function buildStage() {
     if (settingsPopover.style.display === "block" && e.target !== settingsBtn && !settingsBtn.contains(e.target)) {
       settingsPopover.style.display = "none";
     }
+    if (wordPopover.style.display === "block" && !wordPopover.contains(e.target) && !panelBody.contains(e.target)) {
+      closeWordPopover();
+    }
   });
+
+  buildWordPopover();
+  stage.appendChild(wordPopover);
+
+  toastEl = document.createElement("div");
+  toastEl.className = "lf-toast";
+  toastEl.style.display = "none";
+  stage.appendChild(toastEl);
+
+  bindTokenSelection();
 
   root.appendChild(stage);
   syncToggleButtons();
+}
+
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.style.display = "block";
+  clearTimeout(toastEl._timer);
+  toastEl._timer = setTimeout(() => { toastEl.style.display = "none"; }, 2200);
+}
+
+// ── Phrase selection: drag across adjacent tokens to merge them into one
+//    save-able unit — fixes the "single word only" limitation reviewers
+//    call out in Language Reactor. A plain click is just a 1-token drag. ──
+let dragStartIdx = null;
+function bindTokenSelection() {
+  panelBody.addEventListener("mousedown", (e) => {
+    const tok = e.target.closest(".lf-tok");
+    if (!tok) return;
+    e.preventDefault();
+    dragStartIdx = Number(tok.dataset.idx);
+    highlightRange(dragStartIdx, dragStartIdx);
+    document.addEventListener("mousemove", onTokenDragMove);
+    document.addEventListener("mouseup", onTokenDragEnd);
+  });
+}
+function onTokenDragMove(e) {
+  if (dragStartIdx == null) return;
+  // `document.elementsFromPoint` does not pierce into our open shadow root
+  // (it stops at the host element) — hit-test against the shadow root's own
+  // composed tree instead.
+  const els = root.elementsFromPoint(e.clientX, e.clientY);
+  const tok = els.find((el) => el.classList?.contains("lf-tok"));
+  if (!tok) return;
+  highlightRange(dragStartIdx, Number(tok.dataset.idx));
+}
+function onTokenDragEnd() {
+  document.removeEventListener("mousemove", onTokenDragMove);
+  document.removeEventListener("mouseup", onTokenDragEnd);
+  if (dragStartIdx == null) return;
+  const selected = [...panelBody.querySelectorAll(".lf-tok.selected")];
+  if (selected.length) {
+    const indices = selected.map((el) => Number(el.dataset.idx));
+    openWordPopover(Math.min(...indices), Math.max(...indices));
+  }
+  dragStartIdx = null;
+}
+function highlightRange(a, b) {
+  const lo = Math.min(a, b), hi = Math.max(a, b);
+  panelBody.querySelectorAll(".lf-tok").forEach((el) => {
+    const idx = Number(el.dataset.idx);
+    el.classList.toggle("selected", idx >= lo && idx <= hi);
+  });
+}
+
+// ── Save-to-list popover: speak + merge tokens into one phrase + save with
+//    sentence context, reusing the same POST /lists/:id/words the in-app
+//    WordPanel uses (frontend/src/lib/api.ts addWord). ────────────────────
+function buildWordPopover() {
+  wordPopover = document.createElement("div");
+  wordPopover.className = "lf-word-popover";
+  wordPopover.style.display = "none";
+  wordPopover.addEventListener("click", (e) => e.stopPropagation());
+}
+
+async function openWordPopover(startIdx, endIdx) {
+  const tokens = lastTokens.slice(startIdx, endIdx + 1);
+  if (!tokens.length) return;
+  const merged = {
+    char: tokens.map((t) => t.char).join(""),
+    pinyin: tokens.map((t) => t.pinyin).filter(Boolean).join(" "),
+    hsk_level: Math.max(0, ...tokens.map((t) => t.hsk_level ?? 0)),
+    translations: [...new Set(tokens.flatMap((t) => t.translations ?? []))],
+  };
+  const seg = lastSegments?.[activeSegIdx];
+
+  wordPopover.innerHTML = "";
+  const head = document.createElement("div");
+  head.className = "lf-wp-head";
+  const charSpan = document.createElement("span");
+  charSpan.className = "lf-wp-char";
+  charSpan.textContent = merged.char;
+  charSpan.style.color = settings.showHskColors ? hskColor(merged.hsk_level) : "#fff";
+  const speakBtn = document.createElement("button");
+  speakBtn.className = "lf-icon-btn";
+  speakBtn.innerHTML = icon("speaker");
+  speakBtn.title = "Listen";
+  speakBtn.addEventListener("click", () => speak(merged.char));
+  head.appendChild(charSpan);
+  if (merged.pinyin) {
+    const py = document.createElement("span");
+    py.className = "lf-wp-pinyin";
+    py.textContent = merged.pinyin;
+    head.appendChild(py);
+  }
+  head.appendChild(speakBtn);
+  wordPopover.appendChild(head);
+
+  const tr = document.createElement("div");
+  tr.className = "lf-wp-translations";
+  tr.textContent = merged.translations.join("; ") || "No dictionary entry";
+  wordPopover.appendChild(tr);
+
+  const listRow = document.createElement("div");
+  listRow.className = "lf-wp-row";
+  const select = document.createElement("select");
+  select.className = "lf-wp-select";
+  select.innerHTML = `<option value="">Loading lists…</option>`;
+  listRow.appendChild(select);
+  wordPopover.appendChild(listRow);
+
+  const errEl = document.createElement("div");
+  errEl.className = "lf-wp-error";
+  wordPopover.appendChild(errEl);
+
+  const actions = document.createElement("div");
+  actions.className = "lf-wp-actions";
+  const saveBtn = document.createElement("button");
+  saveBtn.className = "lf-wp-save";
+  saveBtn.textContent = "Save";
+  const closeBtn = document.createElement("button");
+  closeBtn.className = "lf-wp-cancel";
+  closeBtn.textContent = "Cancel";
+  closeBtn.addEventListener("click", closeWordPopover);
+  actions.appendChild(closeBtn);
+  actions.appendChild(saveBtn);
+  wordPopover.appendChild(actions);
+
+  saveBtn.addEventListener("click", async () => {
+    errEl.textContent = "";
+    let listId = select.value;
+    if (listId === "__new__") {
+      const name = window.prompt("New list name:", "From YouTube");
+      if (!name) return;
+      saveBtn.disabled = true;
+      const { list, error } = await send({ type: "CREATE_LIST", name });
+      saveBtn.disabled = false;
+      if (error || !list?.id) { errEl.textContent = error || "Could not create list."; return; }
+      cachedLists = [...(cachedLists ?? []), list];
+      listId = list.id;
+    }
+    if (!listId) { errEl.textContent = "Choose a list first."; return; }
+    saveBtn.disabled = true;
+    const { error } = await send({
+      type: "ADD_WORD",
+      listId,
+      word: {
+        simplified: merged.char,
+        pinyin: merged.pinyin,
+        meaning: merged.translations.join("; "),
+        hskLevel: merged.hsk_level,
+        sourceVideoId: lastJobId,
+        contextSentence: seg?.text,
+        contextTranslation: seg?.translated_text,
+      },
+    });
+    saveBtn.disabled = false;
+    if (error) { errEl.textContent = error; return; }
+    showToast(`Saved "${merged.char}" ✓`);
+    closeWordPopover();
+  });
+
+  // Position near the selected tokens, above the controls.
+  const stageRect = stage.getBoundingClientRect();
+  wordPopover.style.display = "block";
+  wordPopover.style.left = "50%";
+  wordPopover.style.bottom = `${100 - settings.subtitlePositionY + 6}%`;
+
+  const { lists, error } = await loadLists();
+  select.innerHTML = "";
+  if (error) {
+    select.innerHTML = `<option value="">Could not load lists</option>`;
+  } else {
+    (lists ?? []).forEach((l) => {
+      const opt = document.createElement("option");
+      opt.value = l.id;
+      opt.textContent = l.name;
+      select.appendChild(opt);
+    });
+    const newOpt = document.createElement("option");
+    newOpt.value = "__new__";
+    newOpt.textContent = "+ New list…";
+    select.appendChild(newOpt);
+  }
+}
+
+async function loadLists() {
+  if (cachedLists) return { lists: cachedLists };
+  const { lists, error } = await send({ type: "GET_LISTS" });
+  if (!error) cachedLists = lists;
+  return { lists, error };
+}
+
+function closeWordPopover() {
+  wordPopover.style.display = "none";
+  panelBody.querySelectorAll(".lf-tok.selected").forEach((el) => el.classList.remove("selected"));
 }
 
 function syncToggleButtons() {
@@ -399,10 +610,15 @@ function renderActiveSegment(idx, force = false) {
     hsk_level: chars[key]?.hsk_level ?? 0,
     translations: chars[key]?.translations ?? [],
   }));
+  lastTokens = tokens;
 
-  tokens.forEach((tok) => {
+  // Click (a 1-token drag) or drag-select across adjacent tokens both open
+  // the save popover — see bindTokenSelection/openWordPopover below. Hover
+  // still shows the quick-glance tooltip.
+  tokens.forEach((tok, i) => {
     const btn = document.createElement("button");
     btn.className = "lf-tok";
+    btn.dataset.idx = i;
 
     if (settings.showPinyin) {
       const py = document.createElement("span");
@@ -421,7 +637,6 @@ function renderActiveSegment(idx, force = false) {
 
     btn.addEventListener("mouseenter", (e) => showTooltip(e, tok.char, tok));
     btn.addEventListener("mouseleave", hideTooltip);
-    btn.addEventListener("click", () => speak(tok.char));
     panelBody.appendChild(btn);
   });
 
