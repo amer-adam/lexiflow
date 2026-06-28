@@ -1,5 +1,4 @@
 import random
-from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict, Any
 from .templates import QuizTemplateEngine
 from .distractors import DistractorPipeline
@@ -28,10 +27,11 @@ class QuizGenerator:
         sampled_items = random.sample(vocab_items, min(len(vocab_items), count))
 
         # Decide each item's question type up front so MULTIPLE_CHOICE/TRUE_FALSE
-        # distractor lookups (one blocking LLM call each) can be fired off
-        # concurrently below, instead of serially - sequentially they can add up
-        # to minutes for a multi-question quiz and the connection gets dropped
-        # before the response is ready.
+        # distractor lookups can be sent to the LLM as one batched request
+        # (10 questions per call - see DistractorPipeline.BATCH_SIZE) instead
+        # of one blocking call per question, which can add up to minutes for
+        # a multi-question quiz and risks the connection dropping before the
+        # response is ready.
         item_plans = []
         for item in sampled_items:
             word = item.get('simplified')
@@ -48,21 +48,23 @@ class QuizGenerator:
             q_type = random.choice(item_allowed_types)
             item_plans.append((item, q_type))
 
-        def fetch_distractors(plan):
-            item, q_type = plan
+        distractor_requests = []
+        distractor_request_idx = []
+        for idx, (item, q_type) in enumerate(item_plans):
             if q_type not in ("MULTIPLE_CHOICE", "TRUE_FALSE"):
-                return None
-            word = item.get('simplified')
-            context = item.get('contextSentence', '') or ''
-            return self.distractor_pipeline.rank_distractors(
-                target_word=word,
-                context_sentence=context,
-                candidate_pool=candidate_pool,
-                top_n=3
-            )
+                continue
+            distractor_requests.append({
+                "target_word": item.get('simplified'),
+                "context_sentence": item.get('contextSentence', '') or '',
+                "candidate_pool": candidate_pool,
+            })
+            distractor_request_idx.append(idx)
 
-        with ThreadPoolExecutor(max_workers=max(1, len(item_plans))) as executor:
-            distractors_by_idx = list(executor.map(fetch_distractors, item_plans))
+        distractor_results = self.distractor_pipeline.rank_distractors_batch(distractor_requests, top_n=3)
+
+        distractors_by_idx = [None] * len(item_plans)
+        for idx, result in zip(distractor_request_idx, distractor_results):
+            distractors_by_idx[idx] = result
 
         for idx, (item, q_type) in enumerate(item_plans):
             word = item.get('simplified')

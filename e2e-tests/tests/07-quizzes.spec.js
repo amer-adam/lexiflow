@@ -59,8 +59,18 @@ test.describe('UC14 Generate Quizzes', () => {
       }
 
       const nextBtn = page.getByRole('button', { name: /Next|Finish & see score/i });
+      const isFinishStep = await nextBtn.filter({ hasText: /Finish & see score/i }).isVisible().catch(() => false);
       await expect(nextBtn).toBeEnabled({ timeout: 5_000 });
       await nextBtn.click();
+
+      if (isFinishStep) {
+        // Grading the final answer is a real backend call (and can take a
+        // while, like quiz generation itself) -- wait for the result screen
+        // directly instead of looping back to look for a Next button that
+        // no longer exists once the quiz is submitted.
+        await expect(resultHeading).toBeVisible({ timeout: 30_000 });
+        break;
+      }
       await page.waitForTimeout(300);
     }
 

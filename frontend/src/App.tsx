@@ -59,6 +59,12 @@ export default function App() {
     deepLink.get("id") ? { id: deepLink.get("id")!, ...(deepLink.get("t") ? { t: deepLink.get("t")! } : {}) } : {}
   );
   const [guideOpen, setGuideOpen] = useState(false);
+  // Sticky for the lifetime of this page load, independent of `hasSeenGuide`.
+  // `session.email` can resolve a render or two after `isAuthenticated` first
+  // flips true, which would otherwise recompute `autoGuide` against a
+  // different localStorage key after the user already dismissed the tour
+  // (LF-BUG-01) and spring it back open.
+  const [guideDismissed, setGuideDismissed] = useState(false);
   const session = useSession();
   const { api } = useApi();
 
@@ -76,7 +82,7 @@ export default function App() {
 
   // First sign-in on this browser/account → show the interactive guide once,
   // until the user dismisses it (which marks it seen) or opens it manually.
-  const autoGuide = session.isAuthenticated && !hasSeenGuide(session.email);
+  const autoGuide = session.isAuthenticated && !guideDismissed && !hasSeenGuide(session.email);
 
   // ── Auth gate ──────────────────────────────────────────────────
   if (session.isLoading) return <Splash />;
@@ -199,7 +205,7 @@ export default function App() {
         <GuideTour
           open={guideOpen || autoGuide}
           onOpenChange={setGuideOpen}
-          onFinish={() => markGuideSeen(session.email)}
+          onFinish={() => { setGuideDismissed(true); markGuideSeen(session.email); }}
         />
       </div>
     </NavContext.Provider>
