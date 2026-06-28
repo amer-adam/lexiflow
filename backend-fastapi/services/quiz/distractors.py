@@ -1,6 +1,7 @@
 import json
 import pypinyin
 import numpy as np
+from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict, Any
 
 from src.llm.llmProvider import LlmProvider
@@ -233,10 +234,18 @@ class DistractorPipeline:
 
         # 2. Fetch semantic scores in chunks of BATCH_SIZE questions per LLM
         # call (a single call if there are BATCH_SIZE or fewer questions).
+        # Multiple chunks are fired concurrently rather than one after
+        # another - sequential chunks were ending up SLOWER than the old
+        # one-call-per-question approach (which ran fully in parallel), and
+        # for a long quiz that pushed total wall time past the reverse
+        # proxy/CDN's idle timeout, killing the connection ("socket hang up")
+        # before a response ever came back.
+        chunks = [llm_items[start:start + self.BATCH_SIZE] for start in range(0, len(llm_items), self.BATCH_SIZE)]
         semantic_scores_by_index: Dict[int, Dict[str, float]] = {}
-        for start in range(0, len(llm_items), self.BATCH_SIZE):
-            chunk = llm_items[start:start + self.BATCH_SIZE]
-            semantic_scores_by_index.update(self.get_llm_plausibility_batch(chunk))
+        if chunks:
+            with ThreadPoolExecutor(max_workers=len(chunks)) as executor:
+                for chunk_result in executor.map(self.get_llm_plausibility_batch, chunks):
+                    semantic_scores_by_index.update(chunk_result)
 
         # 3. Combine semantic + structural scores per request and pick top_n.
         results: List[List[str]] = []
