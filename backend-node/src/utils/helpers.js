@@ -1,9 +1,43 @@
 const axios = require('axios');
 
+const BILIBILI_RE = /bilibili\.com\/video\/(BV[0-9A-Za-z]+)/;
+
+const isBilibiliUrl = (url) => BILIBILI_RE.test(url || '');
+
 const extractVideoId = (url) => {
     if (!url) return null;
     const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
-    return ytMatch ? ytMatch[1] : url;
+    if (ytMatch) return ytMatch[1];
+    const biliMatch = url.match(BILIBILI_RE);
+    if (biliMatch) return biliMatch[1];
+    return url;
+};
+
+const resolveBilibiliMetadata = async (url) => {
+    const bvMatch = url.match(BILIBILI_RE);
+    const bvid = bvMatch ? bvMatch[1] : null;
+    let title = 'Bilibili Video';
+    let thumbnail = '';
+
+    if (bvid) {
+        try {
+            const response = await axios.get(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, { timeout: 3000 });
+            const data = response.data && response.data.data;
+            if (data) {
+                title = data.title || title;
+                thumbnail = data.pic || thumbnail;
+            }
+        } catch (e) {
+            console.error(`[DEBUG] Bilibili metadata extraction failed for ${url}:`, e.message);
+        }
+    }
+
+    return { title, thumbnail };
+};
+
+const resolveVideoMetadata = async (url) => {
+    if (isBilibiliUrl(url)) return resolveBilibiliMetadata(url);
+    return resolveYouTubeMetadata(url);
 };
 
 const resolveYouTubeMetadata = async (url) => {
@@ -54,6 +88,8 @@ const isActuallyPrivate = (val) => {
 module.exports = {
     extractVideoId,
     resolveYouTubeMetadata,
+    resolveVideoMetadata,
+    isBilibiliUrl,
     formatDuration,
     isActuallyPrivate
 };

@@ -21,6 +21,12 @@ const youTubeId = (url: string) => {
   const m = url.match(/(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/);
   return m ? m[1] : null;
 };
+
+const isBilibili = (url: string) => /bilibili\.com\/video\//.test(url || "");
+const bilibiliId = (url: string) => {
+  const m = url.match(/bilibili\.com\/video\/(BV[0-9A-Za-z]+)/);
+  return m ? m[1] : null;
+};
 const mediaSrc = (url: string) => {
   if (/^https?:\/\//.test(url) && !url.includes("/media/")) return url;
   const file = url.split("/").pop()?.split("\\").pop() ?? "";
@@ -50,20 +56,26 @@ export const VideoPlayer = forwardRef<VideoHandle, Props>(function VideoPlayer(
 ) {
   const yt = isYouTube(url);
   const ytId = yt ? youTubeId(url) : null;
+  const bili = isBilibili(url);
+  const biliId = bili ? bilibiliId(url) : null;
   const mountRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<any>(null);
   const pollRef = useRef<number | undefined>(undefined);
 
+  // Bilibili's embed has no public, stable JS/postMessage API for play/pause/
+  // seek/getCurrentTime (unlike YouTube's IFrame API), so playback control and
+  // time-synced subtitles aren't available for it - play/pause/seek/getTime
+  // are no-ops and the subtitle overlay won't track its position.
   useImperativeHandle(ref, () => ({
-    play: () => { yt ? playerRef.current?.playVideo?.() : videoRef.current?.play(); },
-    pause: () => { yt ? playerRef.current?.pauseVideo?.() : videoRef.current?.pause(); },
+    play: () => { if (yt) playerRef.current?.playVideo?.(); else if (!bili) videoRef.current?.play(); },
+    pause: () => { if (yt) playerRef.current?.pauseVideo?.(); else if (!bili) videoRef.current?.pause(); },
     seekTo: (t: number) => {
       if (yt) playerRef.current?.seekTo?.(t, true);
-      else if (videoRef.current) videoRef.current.currentTime = t;
+      else if (!bili && videoRef.current) videoRef.current.currentTime = t;
     },
-    getTime: () => (yt ? playerRef.current?.getCurrentTime?.() ?? 0 : videoRef.current?.currentTime ?? 0),
-  }), [yt]);
+    getTime: () => (yt ? playerRef.current?.getCurrentTime?.() ?? 0 : bili ? 0 : videoRef.current?.currentTime ?? 0),
+  }), [yt, bili]);
 
   // YouTube setup
   useEffect(() => {
@@ -102,6 +114,20 @@ export const VideoPlayer = forwardRef<VideoHandle, Props>(function VideoPlayer(
     return (
       <div className="absolute inset-0 bg-black">
         <div ref={mountRef} className="h-full w-full" />
+      </div>
+    );
+  }
+
+  if (bili && biliId) {
+    return (
+      <div className="absolute inset-0 bg-black">
+        <iframe
+          className="h-full w-full"
+          src={`https://player.bilibili.com/player.html?bvid=${biliId}&autoplay=0&high_quality=1&danmaku=0`}
+          allowFullScreen
+          frameBorder="0"
+          scrolling="no"
+        />
       </div>
     );
   }

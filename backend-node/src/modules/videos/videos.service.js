@@ -6,7 +6,7 @@ const videosRepository = require('./videos.repository');
 const segmentCorrections = require('./segment-corrections');
 const workerRouter = require('../../services/workerRouter');
 const { checkJobInQueue, estimateWaitTime } = require('../../utils/queue');
-const { extractVideoId, resolveYouTubeMetadata, isActuallyPrivate } = require('../../utils/helpers');
+const { extractVideoId, resolveVideoMetadata, isActuallyPrivate } = require('../../utils/helpers');
 
 /**
  * Retrieve user and public video results in the library.
@@ -138,7 +138,7 @@ async function createJob({ url, user_id, is_private }) {
         throw new Error('Invalid video duration');
     }
 
-    const { title, thumbnail } = await resolveYouTubeMetadata(url);
+    const { title, thumbnail } = await resolveVideoMetadata(url);
 
     const jobId = uuidv4();
     const job = {
