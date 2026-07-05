@@ -49,8 +49,9 @@ async function bulkSyncCards(deckId, listItems, frontConfig, backConfig) {
 
 async function getOverdueCards(deckId) {
     return await prisma.flashcard.findMany({
-        where: { deckId },
+        where: { deckId, nextReviewDate: { lte: new Date() } },
         include: { vocabulary: true },
+        orderBy: { nextReviewDate: 'asc' },
         take: 1000
     });
 }

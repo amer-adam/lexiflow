@@ -261,9 +261,12 @@ export function FlashcardsView() {
         <div className="paper overflow-hidden">
           <div className="flex items-center justify-between px-5 py-3 border-b border-border">
             <h3 className="font-display text-lg font-semibold">Full deck</h3>
-            <button onClick={() => setLayoutOpen(true)} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-              <Settings2 className="h-4 w-4" /> Card layout <InfoTip id="cardLayout" />
-            </button>
+            <span className="inline-flex items-center gap-1">
+              <button onClick={() => setLayoutOpen(true)} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+                <Settings2 className="h-4 w-4" /> Card layout
+              </button>
+              <InfoTip id="cardLayout" />
+            </span>
           </div>
           <table className="w-full text-sm">
             <thead>
