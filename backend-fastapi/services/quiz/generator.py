@@ -199,20 +199,15 @@ class QuizGenerator:
                     question_data["correct_answer"] = "TRUE" if should_be_true else "FALSE"
             elif q_type == "FILL_BLANK":
                 question_data["correct_answer"] = word
-                res = QuizTemplateEngine.create_fill_blank(context, word)
+                res = QuizTemplateEngine.create_fill_blank(context, word, translation or None)
                 question_data["question_text"] = res["question_text"]
 
             elif q_type == "SHORT_ANSWER":
                 question_data["correct_answer"] = word
-                
-                # VARIETY BRANCHING FOR SHORT ANSWER
-                sa_variant = random.choice(["TRANSLATION_PROMPT", "PINYIN_DEFINITION"])
-                
-                if sa_variant == "TRANSLATION_PROMPT" and translation:
-                    question_data["question_text"] = f"Please write the Chinese word for the following English translation:\n“{translation}”"
-                else:
-                    pinyin_str = f"【{pinyin}】" if pinyin else ""
-                    question_data["question_text"] = f"Please write the Chinese word that corresponds to the Pinyin {pinyin_str} and definition below:\nDefinition: {meaning}"
+                pinyin_str = f" (Pinyin: {pinyin})" if pinyin else ""
+                question_data["question_text"] = QuizTemplateEngine.create_short_answer(
+                    f"{meaning}{pinyin_str}", translation or None
+                )
 
 
             questions.append(question_data)

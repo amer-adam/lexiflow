@@ -210,16 +210,19 @@ export function VocabView() {
             <Button variant="outline" className="w-full mt-3 gap-1.5 border-dashed" onClick={createList} disabled={busy}>
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} New list
             </Button>
-            <label className={cn("w-full mt-1.5 gap-1.5 inline-flex items-center justify-center rounded-md border border-dashed border-border px-3 py-2 text-sm font-medium cursor-pointer hover:bg-muted transition-colors", importBusy && "opacity-60 pointer-events-none")}>
-              {importBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} Import list <InfoTip id="importList" />
-              <input
-                type="file"
-                accept=".csv,.txt"
-                className="sr-only"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) importList(f); e.target.value = ""; }}
-                disabled={importBusy}
-              />
-            </label>
+            <div className="relative mt-1.5">
+              <label className={cn("w-full gap-1.5 inline-flex items-center justify-center rounded-md border border-dashed border-border px-3 py-2 text-sm font-medium cursor-pointer hover:bg-muted transition-colors", importBusy && "opacity-60 pointer-events-none")}>
+                {importBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} Import list
+                <input
+                  type="file"
+                  accept=".csv,.txt"
+                  className="sr-only"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) importList(f); e.target.value = ""; }}
+                  disabled={importBusy}
+                />
+              </label>
+              <InfoTip id="importList" className="absolute right-2 top-1/2 -translate-y-1/2" />
+            </div>
           </>
         )}
       </div>
